@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My eLearning App{% endblock %}</title>
+    <meta name="description" content="{% block description %}Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.{% endblock %}">
+
+    <!-- Include static files -->
+    {% block scripts %}
+    {% load static %}
+    
+    <script src="{% static 'scripts/htmx.min.js' %}" defer></script>
+    <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
+    {% endblock %}
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}">
+    
+    <!-- Open Graph and Twitter card meta tags -->
+    <meta property="og:title" content="eLearning App">
+    <meta property="og:description" content="Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://example.com/">
+    <meta property="og:image" content="https://example.com/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@yourtwitterhandle">
+    <meta name="twitter:title" content="Your eLearning App">
+    <meta name="twitter:description" content="Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.">
+    <meta name="twitter:image" content="https://example.com/twitter-image.jpg">
+</head>
+
+
+<body>
+    <!--- Navigation bar -->
+    <nav class="container navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Your eLearning App</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% block navbar %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/courses/">Courses</a>
+                        </li>
+                        {% if user.is_authenticated %}
+                            <!-- Show logout link if user is authenticated -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'profile' %}">profile</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                            </li>
+                        {% else %}
+                            <!-- Show login and register links if user is not authenticated -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'register' %}">Register</a>
+                            </li>
+                        {% endif %}
+                    {% endblock %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!--- Main content area -->
+    <main class="container">
+        {% block content %}
+        <!-- Your main content goes here -->
+        {% endblock %}
+    </main>
+
+    <!--- Footer -->
+    <footer class="container footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <span class="text-muted">&copy; 2024 Your eLearning App. All rights reserved.</span>
+        </div>
+    </footer>
+</body>
+
+</html>

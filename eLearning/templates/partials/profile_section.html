@@ -1,0 +1,18 @@
+<!-- Profile Section -->
+{% load static %}
+<div class="col-md-4">
+    <div class="card d-flex align-items-center justify-content-center p-3">
+        <div class="profile-picture">
+            {% if user.profile.picture %}
+            <img src="{{ user.profile.picture.url }}" alt="{{ user.username }}'s Profile Picture" class="profile-img">
+            {% else %}
+            <img src="{% static 'photos/default_profile_picture.png' %}" alt="Default Profile Picture" class="profile-img">
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">{{ user.get_full_name }}</h5>
+            <p class="card-text">Username: {{ user.username }}</p>
+            <p class="card-text">Email: {{ user.email }}</p>
+       </div>
+    </div>
+</div>

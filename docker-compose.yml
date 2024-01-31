@@ -1,0 +1,22 @@
+# version: '3.8' <-- optional as of Docker 1.27++
+
+services:
+  django:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"  # Expose Django on port 8000
+    volumes:
+      - .:/eLearningApp  # Mount the current directory to /eLearningApp in the container
+    environment:
+      - DJANGO_SETTINGS_MODULE=eLearningApp.settings
+    restart: always  # Restart the service automatically if it stops
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    restart: always  # Restart the service automatically if it stops

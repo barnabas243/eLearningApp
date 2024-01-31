@@ -1,0 +1,16 @@
+{% extends '../base/base.html' %}
+
+{% block title %}
+All Courses | eLearning App
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>All Courses</h1>
+    <ul>
+        {% for course in courses %}
+        <li>{{ course.title }}</li>  {# Assuming 'title' is a field in your Course model #}
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

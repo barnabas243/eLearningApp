@@ -1,0 +1,24 @@
+.valid {
+    color: green;
+}
+
+.invalid {
+    color: red;
+}
+
+.profile-picture {
+    width: 256px; /* Adjust width as needed */
+    height: 256px; /* Adjust height as needed */
+    border-radius: 50%; /* Make the container round */
+    overflow: hidden; /* Hide overflowing content (e.g., if image size exceeds container) */
+    border: 5px solid black; 
+    background-image: linear-gradient(to bottom right, #ff8080, #66b3ff); /* Gradient border colors */
+}
+
+.profile-img {
+    width: 100%; /* Ensure the image fills the container */
+    height: 100%; /* Ensure the image fills the container */
+    object-fit: cover; /* Maintain aspect ratio and cover the container */
+    border-radius: 50%; /* Make the image round */
+    border: 5px solid transparent; /* Transparent border to reserve space for the gradient border */
+}

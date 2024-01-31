@@ -1,0 +1,27 @@
+{% extends '../base/base.html' %}
+
+{% block title %}
+Register | My eLearning App
+{% endblock %}
+
+{% block description%}
+A registration page for the eLearning Application
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Register</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Register</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {% load static %}
+    {{ block.super }}
+    <!-- Include custom script here -->
+    <script src="{% static 'scripts/register.js' %}" defer></script>
+{% endblock %}

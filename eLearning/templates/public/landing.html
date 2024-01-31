@@ -1,0 +1,14 @@
+{% extends '../base/base.html' %}
+
+{% block title %}
+Welcome | eLearning App
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Welcome to eLearningApp</h1>
+    <p>Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.</p>
+    <!-- Use htmx to load the registration form dynamically -->
+    <a href="/register" class="btn btn-primary btn-lg" >Register now</a>
+</div>
+{% endblock %}
