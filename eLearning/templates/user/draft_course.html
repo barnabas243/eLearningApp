@@ -1,0 +1,44 @@
+{% extends '../base/base.html' %}
+{% load static %}
+
+{% block title %}
+Draft Course | {{ course.name }}
+{% endblock %}
+
+{% block description %}
+This is the draft page for teachers to edit the courses
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Week Selector Column -->
+        <div class="col-md-3">
+            <h3>Weeks</h3>
+            <ul class="list-group">
+                {% for week_number in weeks %}
+                <li class="list-group-item">
+                    <a href="#" hx-get="/get_week_materials/?course_name={{ course.name }}&week_number={{ week_number }}" hx-trigger="click" hx-target="#materials-container" hx-swap="innerHTML">
+                        Week {{ week_number }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Materials and Options Container -->
+        <div class="col-md-9" id="materials-container">
+            <!-- Content will be dynamically loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Script to load materials for the first week by default -->
+<script>
+    {% comment %} // Reload the page to load materials for the first week by default
+    window.onload = function() {
+        document.querySelector('[hx-get]').click();
+    }; {% endcomment %}
+</script>
+
+{% endblock %}

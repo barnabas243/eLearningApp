@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'eLearning',
     'django_htmx',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

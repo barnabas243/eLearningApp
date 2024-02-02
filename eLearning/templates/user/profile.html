@@ -1,0 +1,88 @@
+{% extends '../base/base.html' %}
+{% load static %}
+
+{% block title %}
+Profile | My eLearning App
+{% endblock %}
+
+{% block description %}
+View and manage your profile information on the eLearning App.
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4 mb-4">Profile</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="container d-flex flex-column align-items-center justify-content-center">
+                    <div class="profile-picture">
+                        {% if user.profile.picture %}
+                        <img src="{{ user.profile.picture.url }}" alt="{{ user.username }}'s Profile Picture" class="profile-img">
+                        {% else %}
+                        <img src="{% static 'photos/default_profile_picture.png' %}" alt="Default Profile Picture" class="profile-img">
+                        {% endif %}
+                    </div>
+    
+                    <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">Upload Picture</button>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Personal Information - {{ user.user_type }}</h5>
+                    <p class="card-text">Username: {{ user.username }}</p>
+                    <p class="card-text">First Name: {{ user.first_name }}</p>
+                    <p class="card-text">Last Name: {{ user.last_name }}</p>
+                    <p class="card-text">Email: {{ user.email }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Change Password</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" class="form-control" id="currentPassword" name="current_password">
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirmPassword" name="confirm_password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Picture Modal -->
+<div class="modal fade" id="uploadPictureModal" tabindex="-1" role="dialog" aria-labelledby="uploadPictureModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPictureModalLabel">Upload Profile Picture</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Form for profile picture upload -->
+                <form action="{% url 'upload_picture' %}"  urlmethod="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="profilePicture">Choose Picture</label>
+                        <input type="file" class="form-control-file" id="profilePicture" name="profile_picture">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

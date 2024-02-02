@@ -2,6 +2,8 @@ import os
 from django.contrib.auth.models import AbstractUser, Group as DjangoGroup, Permission
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from datetime import date
+
 
 class User(AbstractUser):
     """
@@ -14,6 +16,16 @@ class User(AbstractUser):
         first_name (str): The first name of the user.
         last_name (str): The last name of the user.
         email (EmailField): The email address of the user.
+        dob (DateField): The date of birth of the user.
+
+    Inherited Attributes from AbstractUser:
+        password (str): The password of the user.
+        last_login (DateTimeField): The date and time of the last login.
+        is_superuser (bool): Indicates whether the user has superuser privileges.
+        is_staff (bool): Indicates whether the user is staff.
+        date_joined (DateTimeField): The date and time when the user joined.
+        groups (ManyToManyField): The groups to which the user belongs.
+        user_permissions (ManyToManyField): The permissions granted to the user.
 
     """
 
@@ -33,7 +45,8 @@ class User(AbstractUser):
     )
 
     # Add custom fields
-    photo = models.ImageField(upload_to='static/photos/', null=True, blank=True)
+    photo = models.ImageField(upload_to='static/photos/', null=True, blank=True, default='photos/default_profile_picture.png')
+    dob = models.DateField(_('Date of Birth'), null=True, blank=True)
     
     # Set max_length
     first_name = models.CharField(_('First name'), max_length=30)
@@ -41,15 +54,37 @@ class User(AbstractUser):
     email = models.EmailField(_('Email address'), max_length=254)
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'dob', 'user_type']
+
+    def calculate_age(self):
+        """
+        Calculate the age of the user based on their date of birth.
+
+        Returns:
+            int: The age of the user.
+        """
+        today = date.today()
+
+        try: 
+            birthday = self.dob.replace(year=today.year)
+        # raised when birth date is February 29 and the current year is not a leap year
+        except ValueError:
+            birthday = self.dob.replace(year=today.year, day=self.dob.day-1)
+
+        if birthday > today:
+            return today.year - self.dob.year - 1
+        else:
+            return today.year - self.dob.year
 
     def __str__(self):
         return "{}".format(self.username)
 
     class Meta:
         """Meta class containing permissions for the User model."""
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
         permissions = [
-            ("can_view_student_records", "Can view student records"),
+           # ("can_view_student_records", "Can view student records"),
             # Add more permissions as needed
         ]
 
@@ -81,6 +116,10 @@ class StatusUpdate(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = _('Status Update')
+        verbose_name_plural = _('Status Updates')
+
 class Feedback(models.Model):
     """
     Model representing feedback for a course.
@@ -97,6 +136,10 @@ class Feedback(models.Model):
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = _('Feedback')
+        verbose_name_plural = _('Feedback')
+
 class Course(models.Model):
     """
     Model representing a course.
@@ -106,15 +149,29 @@ class Course(models.Model):
         description (str): A brief description of the course.
         teacher (ForeignKey): Relationship to the User model representing the teacher.
         duration_weeks (PositiveIntegerField): The duration of the course in weeks.
+        status (str): Indicates whether the course is in draft or official mode.
 
     """
+    DRAFT = 'draft'
+    OFFICIAL = 'official'
+    STATUS_CHOICES = [
+        (DRAFT, _('Draft')),
+        (OFFICIAL, _('Official')),
+    ]
+
     name = models.CharField(max_length=100)
     description = models.TextField()
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses')
     duration_weeks = models.PositiveIntegerField(_('Duration (weeks)'), default=20)  # Default duration is 20 weeks
+    status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default=DRAFT)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = _('Course')
+        verbose_name_plural = _('Courses')
+        unique_together = ('name', 'teacher')
 
 def material_upload_path(instance, filename):
     """
@@ -151,9 +208,54 @@ class Material(models.Model):
         (PDF, _('PDF')),
         (IMAGE, _('Image')),
     ]
-    course = models.ManyToManyField(Course, related_name='materials')
     file = models.FileField(upload_to=material_upload_path)
     type = models.CharField(_('Material Type'), max_length=20, choices=MATERIAL_TYPE_CHOICES)
+
+    class Meta:
+        verbose_name = _('Material')
+        verbose_name_plural = _('Materials')
+
+class CourseMaterial(models.Model):
+    """
+    Model representing the linking of course materials to weeks of a course.
+
+    Attributes:
+        course (ForeignKey): The course to which the material is linked.
+        materials (ManyToManyField): Relationship to Material model.
+        week_number (PositiveIntegerField): The week number to which the materials are linked.
+
+    """
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='course_materials')
+    materials = models.ManyToManyField(Material, related_name='course_materials')
+    week_number = models.PositiveIntegerField(_('Week Number'))
+
+    class Meta:
+        verbose_name = _('Course Material')
+        verbose_name_plural = _('Course Materials')
+        unique_together = ['course', 'week_number'] 
+
+class Assignment(models.Model):
+    """
+    Model representing an assignment for a course.
+
+    Attributes:
+        course (ForeignKey): The course to which the assignment belongs.
+        name (str): The name of the assignment.
+        description (TextField): Description of the assignment.
+        duration_days (PositiveIntegerField): The duration of the assignment in days.
+
+    """
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    duration_days = models.PositiveIntegerField(_('Duration (days)'))
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('Assignment')
+        verbose_name_plural = _('Assignments')
 
 class Enrollment(models.Model):
     """
@@ -169,3 +271,6 @@ class Enrollment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     start_date = models.DateField()
 
+    class Meta:
+        verbose_name = _('Enrollment')
+        verbose_name_plural = _('Enrollments')

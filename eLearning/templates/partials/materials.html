@@ -1,0 +1,30 @@
+<div class="card">
+    <div class="card-header">
+        Week {{ selected_week }}
+    </div>
+    <div class="card-body">
+        <!-- Display Materials -->
+        <h5>Materials</h5>
+        <ul>
+            {% for material in materials %}
+            <li>{{ material }}</li>
+            {% endfor %}
+        </ul>
+
+        <!-- Upload File Form -->
+        <h5>Upload File</h5>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="file">
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+
+        <!-- Delete File Option -->
+        <h5>Delete File</h5>
+        <form method="post">
+            {% csrf_token %}
+            <!-- File deletion logic here -->
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+    </div>
+</div>
