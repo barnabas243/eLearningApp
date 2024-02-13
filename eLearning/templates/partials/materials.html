@@ -1,30 +1,41 @@
 <div class="card">
     <div class="card-header">
-        Week {{ selected_week }}
+        Week {{ week_number }}
     </div>
     <div class="card-body">
+        {% include 'partials/messages.html' %}
         <!-- Display Materials -->
         <h5>Materials</h5>
-        <ul>
-            {% for material in materials %}
-            <li>{{ material }}</li>
+        
+        <ul id="materials-list">
+            {% for course_material in course_materials %}
+            <li>
+                <a href="{{ course_material.material.url }}" download>{{ course_material.get_base_name }}</a>
+
+                <!-- Delete Material Form with htmx -->
+                {% if user.is_authenticated and teacher == user %}
+                <div id="delete-material-{{ course_material.id }}" class="delete-materials"
+                    hx-delete="{% url 'delete_course_material' course_material.id %}" 
+                    hx-confirm="Are you sure you want to delete this material?" 
+                    hx-swap="innerHTML"
+                    hx-target="#materials-container"
+                    hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'>
+                                    
+                    <button type="button" class="btn btn-danger">Delete</button>
+                </div>
+                {% endif %}
+            </li>
             {% endfor %}
         </ul>
-
-        <!-- Upload File Form -->
+        
+        <!-- Upload File Form with htmx -->
+        {% if user.is_authenticated and teacher == user %}
         <h5>Upload File</h5>
-        <form method="post" enctype="multipart/form-data">
+        <form hx-post="{% url 'upload_material' course_id week_number %}" hx-target="#materials-container" hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }' enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="file" name="file">
+            {{ materialUploadForm }}
             <button type="submit" class="btn btn-primary">Upload</button>
         </form>
-
-        <!-- Delete File Option -->
-        <h5>Delete File</h5>
-        <form method="post">
-            {% csrf_token %}
-            <!-- File deletion logic here -->
-            <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
+        {% endif %}
     </div>
 </div>

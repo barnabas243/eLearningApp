@@ -1,5 +1,5 @@
 <nav class="container navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid">
+     <div class="container-fluid">
         <a class="navbar-brand" href="/">Your eLearning App</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
             aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -9,10 +9,13 @@
             <ul class="navbar-nav ms-auto">
                 {% block navbar %}
                     <li class="nav-item">
-                        <a class="nav-link" href="/courses/">Courses</a>
+                        <a class="nav-link" href="{% url 'courses' %}">Courses</a>
                     </li>
                     {% if user.is_authenticated %}
                         <!-- Show logout link if user is authenticated -->
+                        <input class="form-control me-2" type="search" id="searchInput" name="q" placeholder="Search users" aria-label="Search" list="searchOptions" hx-get="{% url 'autocomplete' %}" hx-trigger="keyup changed delay:500ms" hx-target="#searchOptions">
+                        <datalist id="searchOptions"></datalist>
+   
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
                         </li>
@@ -22,6 +25,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'logout' %}">Logout</a>
                         </li>
+
                     {% else %}
                         <!-- Show login and register links if user is not authenticated -->
                         <li class="nav-item">

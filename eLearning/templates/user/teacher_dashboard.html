@@ -15,11 +15,10 @@ Teacher Dashboard - {{ user.username }}
     </div>
 
     <!-- Draft and Official Courses Section -->
-    <h2 class="mb-4">Courses</h2>
     <div class="row">
         <!-- Draft Courses Section -->
         <div class="col-md-6">
-            <h3>Draft Courses</h3>
+            <h2>Draft Courses</h2>
 
             <!-- Create Course Button -->
             <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createCourseModal">Create New Course</button>
@@ -30,8 +29,8 @@ Teacher Dashboard - {{ user.username }}
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
-                            <p class="card-text">{{ course.description }}</p>
-                            <a href="{% url 'draft' course.name %}" class="btn btn-primary">Edit Course</a>
+                            <p class="card-text">{{ course.summary }}</p>
+                            <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
 
                         </div>
                     </div>
@@ -45,15 +44,17 @@ Teacher Dashboard - {{ user.username }}
         </div>
         <!-- Official Courses Section -->
         <div class="col-md-6">
-            <h3>Official Courses</h3>
+            <h2>Official Courses</h2>
             <div class="row">
                 {% for course in official_courses %}
                 <div class="col-md-6 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
-                            <p class="card-text">{{ course.description }}</p>
-                            <a href="#" class="btn btn-primary">View Course</a>
+                            <p class="card-text">{{ course.summary }}</p>
+                            <a href="{% url 'official' course.id %}" class="btn btn-primary">View Course Materials</a>
+                            
+                            <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
                         </div>
                     </div>
                 </div>
@@ -68,23 +69,37 @@ Teacher Dashboard - {{ user.username }}
 
     <!-- Modal -->
     <div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="createCourseModalLabel">Create New Course</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form method="post" action="{% url 'create_course' %}">
+                    <form method="post" action="{% url 'create_course' %}" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        {{ createCourseForm }}
+                        {% include 'partials/messages.html' %}
+                        <div class="mb-3">
+                            {{ createCourseForm.name.label_tag }}
+                            {{ createCourseForm.name }}
+                            <div class="invalid-feedback">{{ createCourseForm.name.errors }}</div>  
+                        </div>
+                        <div class="mb-3">
+                            {{ createCourseForm.summary.label_tag }}
+                            {{ createCourseForm.summary }}
+                            <div class="invalid-feedback">{{ createCourseForm.summary.errors }}</div>
+                        </div>
+                        <div class="mb-3">
+                            {{ createCourseForm.duration_weeks.label_tag }}
+                            {{ createCourseForm.duration_weeks }}
+                            <div class="invalid-feedback">{{ createCourseForm.duration_weeks.errors }}</div>
+                        </div>
                         <button type="submit" class="btn btn-primary">Create</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+    
 </div>
 {% endblock %}

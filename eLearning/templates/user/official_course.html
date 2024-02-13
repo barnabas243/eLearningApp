@@ -1,0 +1,37 @@
+{% extends '../base/base.html' %}
+{% load static %}
+
+{% block title %}
+Official Course | {{ course.name }}
+{% endblock %}
+
+{% block description %}
+This is the official page for students to view the course materials
+{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-3">
+        <h3>Weeks</h3>
+        <ul class="list-group">
+            {% for week_number in weeks %}
+            <li class="list-group-item">
+                <a href="#" hx-get="{% url 'get_week_materials' course.id week_number %}" hx-trigger="click" hx-target="#materials-container" hx-swap="innerHTML" >
+                    Week {{ week_number }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="col-md-9" id="materials-container">
+        <!-- Content will be dynamically loaded here -->
+    </div>
+</div>
+
+
+<script>
+    // Reload the page to load materials for the first week by default
+    document.querySelector('[hx-get]').click();
+
+</script>
+{% endblock %}

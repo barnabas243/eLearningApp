@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, UserCreationForm
-from .models import User,Course  # Import your User model
+from .models import User,Course, CourseMaterial # Import your User model
 from django.forms.widgets import DateInput
+from ckeditor.widgets import CKEditorWidget
 from datetime import date
 
 class UserLoginForm(AuthenticationForm):
@@ -69,29 +70,55 @@ class UserPasswordChangeForm(PasswordChangeForm):
         super().__init__(*args, **kwargs)
         for field_name in ['old_password', 'new_password1', 'new_password2']:
             self.fields[field_name].widget.attrs.update({'class': 'form-control'})
-
-class ProfilePictureForm(forms.Form):
-    profile_picture = forms.ImageField()
-
-    def save(self, user):
-        # Get the uploaded file
-        profile_picture = self.cleaned_data['profile_picture']
-        # Save the file to the user's profile_picture field or any other desired location
-        user.profile_picture = profile_picture
-        user.save()
+            
+class ProfilePictureForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['photo']
         
 class CreateCourseForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ['name', 'description','duration_weeks']  # Add other fields as needed
+        fields = ['name', 'summary', 'duration_weeks']
+
+        labels = {
+            'name': 'Course Name',
+            'summary': 'summary',
+            'duration_weeks': 'Duration (weeks)'
+        }
+
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter course name'}),
+            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter course summary'}),
+            'duration_weeks': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter duration in weeks'}),
+        }
+
+
+class CourseForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ['name', 'summary', 'start_date','description']
+    
+        labels = {
+            'name': 'Course Name',
+            'summary': 'summary',
+            'start_date': 'Start Date',
+            'description': 'Description'
+        }
+
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter course name'}),
+            'summary': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter course summary'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'description' : forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter course description'}),
+        }
+
+        
+class MaterialUploadForm(forms.ModelForm):
+    class Meta:
+        model = CourseMaterial
+        fields = ['material',]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Customize form fields if needed
-        self.fields['name'].label = 'Course Name'
-        self.fields['description'].label = 'Description'
-        
-class MaterialUploadForm(forms.Form):
-    file = forms.FileField()
-    week_number = forms.IntegerField(widget=forms.HiddenInput)
-    course = forms.CharField(widget=forms.HiddenInput)

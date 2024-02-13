@@ -22,14 +22,25 @@ This is the dashboard page for the user
  
     <!-- Registered Courses -->
     <h2>Registered Courses</h2>
-    <ul class="registered-courses">
+    <div class="row">
         {% for course in registered_courses %}
-        <li>{{ course.title }}</li>
-        <!-- Add more details about the registered courses -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.name }}</h5>
+                    <p class="card-text">{{ course.summary }}</p>
+                    <!-- Add more details about the registered courses -->
+                    <a href="{% url 'official' course.id %}" class="btn btn-primary">View Course Materials</a>
+                </div>
+            </div>
+        </div>
         {% empty %}
-        <p>You haven't enrolled into any courses yet.</p>
+        <div class="col-md-12">
+            <p>You haven't enrolled into any courses yet.</p>
+            <a href="{% url 'courses' %}" class="btn btn-primary">View Courses</a>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
 
     <!-- Latest Status Updates -->
     <h2>Latest Status Updates</h2>

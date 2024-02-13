@@ -8,7 +8,9 @@ click-plugins==1.1.1
 click-repl==0.3.0
 coverage==7.3.3
 Django==5.0
+django-ckeditor==6.7.0
 django-htmx==1.17.2
+django-js-asset==2.2.0
 djangorestframework==3.14.0
 drf-yasg==1.21.7
 inflection==0.5.1

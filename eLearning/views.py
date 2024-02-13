@@ -1,32 +1,22 @@
+from datetime import datetime
+import json
 from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout,get_user_model
 from django.contrib.auth.views import PasswordChangeView
-from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, View, ListView, FormView
+from django.contrib.auth.mixins import UserPassesTestMixin
 from .forms import *
 from .models import *
-from rest_framework import status
-from .serializers import UserSerializer
-
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.template.loader import render_to_string
-from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
-from functools import wraps
 from django.urls import reverse
+from .decorators import custom_login_required 
+from django.db.models import Q
 
-def custom_login_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            # Add the ?next parameter to redirect back to the original URL after login
-            next_url = request.path_info
-            login_url = f"{reverse('login')}?next={next_url}"
-            messages.error(request, "You need to log in to access this page.")
-            return redirect(login_url)  # Redirect to the login page with ?next parameter
-        return view_func(request, *args, **kwargs)
-    return wrapper
 
 class LandingView(TemplateView):
     template_name = 'public/landing.html'
@@ -110,7 +100,32 @@ class CoursesView(ListView):
     model = Course
     template_name = 'public/courses.html'
     context_object_name = 'courses'
+    
 
+def course_details(request, course_id):
+    # Retrieve the course object from the database
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Check if the current user is authenticated and if so, check if they are enrolled in the course
+    is_enrolled = False
+    if request.user.is_authenticated:
+        is_enrolled = Enrollment.is_student_enrolled(request.user,course)
+    
+    # Render the course details template with the course object and enrollment status
+    return render(request, 'public/course_details.html', {'course': course, 'is_enrolled': is_enrolled})
+
+@custom_login_required
+def enroll(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Check if the user is already enrolled in the course
+    if Enrollment.objects.filter(student=request.user, course=course).exists():
+        return JsonResponse({'message': 'You are already enrolled in this course.'}, status=400)
+    
+    # Create a new enrollment for the user and course
+    Enrollment.objects.create(student=request.user, course=course)
+    
+    return JsonResponse({'message': 'Enrollment successful.'})
 
 class DashboardView(View):
     @method_decorator(custom_login_required)
@@ -120,7 +135,12 @@ class DashboardView(View):
     def get(self, request, *args, **kwargs):
         user = request.user
         if user.user_type == User.STUDENT:
-            registered_courses = user.courses.all()
+            # Retrieve all enrollments for the student
+            enrollments = Enrollment.objects.filter(student=user)
+            # Extract the courses from enrollments
+            registered_courses = [enrollment.course for enrollment in enrollments]
+            
+            # Now you have the list of registered courses for the user
             status_updates = StatusUpdate.objects.filter(user=user).order_by('-created_at')[:5]
             context = {
                 'user': user,
@@ -130,8 +150,8 @@ class DashboardView(View):
             return render(request, 'user/student_dashboard.html', context)
         elif user.user_type == User.TEACHER:
             teacher = request.user
-            draft_courses = teacher.courses.filter(status='draft')
-            official_courses = teacher.courses.filter(status='official')
+            draft_courses = teacher.courses_taught.filter(status='draft')
+            official_courses = teacher.courses_taught.filter(status='official')
 
             context = {
                 'user': teacher,
@@ -141,30 +161,95 @@ class DashboardView(View):
             }
 
             return render(request, 'user/teacher_dashboard.html', context)
+ 
 
+class AutocompleteView(View):
+    def get(self, request, *args, **kwargs):
+        search_query = request.GET.get('q', '')
+        print("Search query:", search_query)  # Debugging: Print the search query
+        
+        User = get_user_model()
+        
+        if request.user.user_type == "student":
+            # Fetch only students if the current user is a student
+            users = User.objects.filter(
+                Q(user_type='student') &
+                (Q(username__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query))
+            ).distinct()
+        else:
+            # Fetch both students and teachers if the current user is a teacher
+            users = User.objects.filter(
+                (Q(user_type='student') | Q(user_type='teacher')) &
+                (Q(username__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query))
+            ).distinct()
+            
+        print("Users:", users)  # Debugging: Print the queryset
+        
+        options_html = render_to_string('partials/autocomplete_options.html', {'users': users})
+        return HttpResponse(options_html)
+    
+# def autocomplete_users(request):
+#     query = request.GET.get('q', '')
+#     users = User.objects.filter(username__icontains=query) | User.objects.filter(first_name__icontains=query) | User.objects.filter(last_name__icontains=query)
+#     usernames = [user.username for user in users]
+#     fullnames = [f'{user.first_name} {user.last_name}' for user in users]
+#     return JsonResponse({'usernames': usernames, 'fullnames': fullnames})
 
 class ProfileView(View):
     @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
         user = request.user
-        return render(request, 'user/profile.html', {'user': user})
+        return render(request, 'user/profile.html', {'user': user,'profileForm': ProfilePictureForm})
 
+    @method_decorator(custom_login_required)
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        try:
+            
+            # Retrieve data from the request body
+            print("request.body: ", request.body)
+            data = json.loads(request.body)
+            print("data: ",data)
+            # Iterate over each key-value pair in the data
+            for field_name, field_value in data.items():
+                # Check if the field exists in the user model and update it
+                if hasattr(request.user, field_name):
+                    setattr(request.user, field_name, field_value)
+                else:
+                    return JsonResponse({'error': f'Invalid field name: {field_name}'}, status=400)
 
+            # Save the user object to persist changes
+            user.save()
+
+            # Return success response
+            return JsonResponse({'success': 'Profile updated successfully'})
+        except json.JSONDecodeError:
+            # Return error response for invalid JSON data
+            print("error: invalid JSON data")
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            # Return error response for unexpected errors
+            return JsonResponse({'error': str(e)}, status=500)
+        
 class UploadPictureView(FormView):
     form_class = ProfilePictureForm
 
     def form_valid(self, form):
-        # Save the uploaded file
-        form.save(self.request.user)
+        # Get the current user instance
+        user = self.request.user
+        # Save the uploaded file to the user's photo field
+        user.photo = form.cleaned_data['photo']
+        user.save()
         return super().form_valid(form)
 
     def get_success_url(self):
         return reverse('profile')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Add any additional context data if needed
-        return context
 
 @custom_login_required
 def create_course(request):
@@ -173,23 +258,44 @@ def create_course(request):
         if form.is_valid():
             course = form.save(commit=False)
             course.teacher = request.user
-            course.save()
-            messages.success(request, 'Course created successfully.')
-            return redirect(reverse('draft', args=[course.name]))
+            
+            # Check if a course with the same name already exists for the current user
+            try:
+                existing_course = Course.objects.get(name=course.name, teacher=request.user)
+                messages.error(request, 'Course with the same name already exists.')
+                return redirect('dashboard')
+            except ObjectDoesNotExist:
+                course.save()
+                messages.success(request, 'Course created successfully.')
+                return redirect(reverse('draft', args=[course.id]))
         else:
             print(form.errors)
             messages.error(request, 'Failed to create course. Please check the form.')
     return redirect('dashboard')
 
-class DraftCourseView(TemplateView):
+class DraftCourseView(UserPassesTestMixin,TemplateView):
     template_name = 'user/draft_course.html'
-
+    
+    @method_decorator(custom_login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    def test_func(self):
+        course_id = self.kwargs.get('course_id')
+        course = get_object_or_404(Course, id=course_id)
+        
+        # Check if the current user is the teacher of the course
+        if self.request.user == course.teacher:
+            return True
+        
+        return False
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        course_name = self.kwargs.get('course_name')
+        course_id = self.kwargs.get('course_id')
         
         # Fetch the draft course for the current teacher
-        course = get_object_or_404(Course, name=course_name, teacher=self.request.user, status='draft')
+        course = get_object_or_404(Course, id=course_id, teacher=self.request.user)
         context['course'] = course
 
         # Generate a range of numbers from 1 to course.duration_weeks
@@ -197,56 +303,145 @@ class DraftCourseView(TemplateView):
 
         # Fetch materials for the selected week (default to week 1)
         course_materials = CourseMaterial.objects.filter(course=course, week_number=1)
-        context['materials'] = course_materials
+        context['course_materials'] = course_materials
         context['selected_week'] = 1
 
+        context['form'] = CourseForm(instance=course)
+        
         return context
+    
+    def post(self, request, *args, **kwargs):
+        course_id = self.kwargs.get('course_id')
+        course = get_object_or_404(Course, id=course_id, teacher=request.user)
+        print("failed: ",request.POST)
+        # Instantiate the CourseForm with the POST data and instance of the Course model
+        form = CourseForm(request.POST, instance=course)
+        
+        if form.is_valid():
+            # Save the course and update the last_modified field
+            last_modified_date = datetime.now()
+            course = form.save(commit=False)
+            course.last_modified = last_modified_date
+            course.save()
+            messages.success(request, 'Course details updated successfully.')
+            return JsonResponse({'last_modified': last_modified_date.strftime('%Y-%m-%d %H:%M:%S')})
+        else:
+            # Return only HTTP status code on failure
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+            return JsonResponse({}, status=400)
 
+class OfficialCourseView(UserPassesTestMixin,TemplateView):
+    template_name = 'user/official_course.html'
+    
+    @method_decorator(custom_login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    def test_func(self):
+        course_id = self.kwargs.get('course_id')
+        course = get_object_or_404(Course, id=course_id)
+        
+        # Check if the current user is the teacher of the course
+        if self.request.user == course.teacher:
+            return True
+        
+        # Check if the current user is enrolled in the course
+        if Enrollment.objects.filter(student=self.request.user, course=course).exists():
+            return True
+        
+        return False
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course_id = self.kwargs.get('course_id')
+        
+        # Fetch the draft course for the current teacher
+        course = get_object_or_404(Course, id=course_id,)
+        context['course'] = course
+
+        # Generate a range of numbers from 1 to course.duration_weeks
+        context['weeks'] = range(1, course.duration_weeks + 1)
+
+        # Fetch materials for the selected week (default to week 1)
+        course_materials = CourseMaterial.objects.filter(course=course, week_number=1)
+        context['course_materials'] = course_materials
+        context['selected_week'] = 1
+        
+        return context
+    
 @custom_login_required
-def get_week_materials(request):
+def get_week_materials(request,course_id,week_number):
+    print("get_week_materials: ",request.method)
     if request.method == 'GET':
-        # Get parameters from the request URL
-        course_name = request.GET.get('course_name')
-        week_number = request.GET.get('week_number')
-
+        print("redirecting")
         try:
             # Query the database to retrieve materials for the specified week of the course
-            course_materials = CourseMaterial.objects.filter(course__name=course_name, week_number=week_number)
+            course = Course.objects.get(id=course_id)
+            course_materials = CourseMaterial.objects.filter(course=course, week_number=week_number)
+            
         except CourseMaterial.DoesNotExist:
             # Handle the case where no materials are found for the specified week
             return JsonResponse({'error': 'No materials found for the specified week'}, status=404)
         except Course.DoesNotExist:
             # Handle the case where the specified course does not exist
             return JsonResponse({'error': 'Course not found'}, status=404)
+        except Exception as e:
+            print(e)
+            return JsonResponse({'error': 'An error occurred'}, status=500)
 
+        print("redirect passed")
         # Instantiate the MaterialUploadForm
         material_upload_form = MaterialUploadForm()
 
         # Render the materials template with the materials data and the upload form
-        return render(request, 'partials/materials.html', {'selected_week': week_number, 'materials': course_materials, 'materialUploadForm': material_upload_form})
+        return render(request, 'partials/materials.html', {'course_id': course_id,'week_number': week_number, 'course_materials': course_materials, 'materialUploadForm': material_upload_form,'teacher': course.teacher})
 
-    
+
 @custom_login_required
-def upload_material(request):
+def delete_course_material(request, course_material_id):
+    if request.method == 'DELETE':
+        material = get_object_or_404(CourseMaterial, id=course_material_id)
+        material.delete()
+        messages.success(request, 'Material deleted successfully.')
+        
+        # Construct the URL for the get_week_materials view
+        redirect_url = reverse('get_week_materials', kwargs={'course_id': material.course_id, 'week_number': material.week_number})
+        
+        # Return a redirect response with status code 303
+        return HttpResponse(status=303, headers={'Location': redirect_url})
+    else:
+        # Return a method not allowed response
+        return HttpResponse(status=405)
+
+@custom_login_required
+def upload_material(request, course_id, week_number):
+    course = get_object_or_404(Course, id=course_id, teacher=request.user)
+
     if request.method == 'POST':
         form = MaterialUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            # Save the file to Material model
-            material = Material(file=request.FILES['file'])
-            material.save()
-
-            # Create CourseMaterial entry linking material to course and week
-            course_name = form.cleaned_data['course']
-            week_number = form.cleaned_data['week_number']
-            course = Course.objects.get(name=course_name, teacher=request.user)
-            course_material = CourseMaterial(course=course, week_number=week_number)
-            course_material.save()
-            
-            # Add the material to the CourseMaterial materials field
-            course_material.materials.add(material)
-
-            # Return success JSON response
-            return JsonResponse({'success': True})
+            # Save the file to CourseMaterial model
+            material = request.FILES['material']
+            course_material = CourseMaterial.objects.create(course=course, week_number=week_number, material=material)
+            messages.success(request, 'Material uploaded successfully.')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     
-    # Return failure JSON response if form is not valid or method is not POST
-    return JsonResponse({'success': False})
+    return redirect('get_week_materials', course_id=course_id, week_number=week_number)
+
+@custom_login_required
+def publish_course(request, course_id):
+    # Get the course object
+    if request.method == 'POST':
+        course = get_object_or_404(Course, id=course_id)
+    
+        # Implement the logic to publish the course (e.g., update the course status)
+        course.status = 'official'
+        course.save()
+    
+        messages.success(request, 'Course created successfully')
+        return redirect('dashboard')

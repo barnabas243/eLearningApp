@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'eLearning',
     'django_htmx',
     'rest_framework',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -122,6 +124,42 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# CKEditor configuration
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': [
+            ['Format', 'Font', 'FontSize'],
+            ['Bold', 'Italic', 'Underline', 'Strike', 'Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['Image', 'Table', 'HorizontalRule', 'SpecialChar'],
+            ['TextColor', 'BGColor'],
+            ['Source', 'Maximize'],
+            ['Upload', 'Embed', 'Iframe'],
+        ],
+        'height': 300,
+        'width': '100%',
+        'filebrowserWindowWidth': 800,
+        'filebrowserWindowHeight': 500,
+        'filebrowserUploadUrl': '/ckeditor/upload/',
+        'filebrowserUploadMethod': 'xhr',
+        'filebrowserBrowseUrl': '/ckeditor/browse/',
+        'filebrowserUploadAllowedExtensions': ['pdf', 'doc', 'docx'],
+        'extraPlugins': ','.join(['codesnippet']),  # Add extra CKEditor plugins
+    },
+}
+# CKEditor Uploader settings
+CKEDITOR_UPLOAD_PATH = "uploads/"  # Path where uploaded files will be stored
+CKEDITOR_UPLOAD_SLUGIFY_FILENAME = True  # Enable filename slugification
+CKEDITOR_ALLOW_NONIMAGE_FILES = True  # Allow uploading non-image files, including PDFs
+
+# Define CKEditor file upload handler URL
+CKEDITOR_REST_URL = '/ckeditor/upload/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

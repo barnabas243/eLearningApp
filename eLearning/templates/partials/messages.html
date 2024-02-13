@@ -1,0 +1,13 @@
+{% if messages %}
+    {% for message in messages %}   
+        <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% endif %} d-flex align-items-center alert-dismissible fade show" role="alert">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="{% if message.tags == 'error' %}Danger{% elif message.tags == 'success' %}Success{% endif %}:">
+                <use xlink:href="#{% if message.tags == 'error' %}exclamation-triangle-fill{% elif message.tags == 'success' %}check-circle-fill{% endif %}"/>
+            </svg>
+            <div>
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+{% endif %}

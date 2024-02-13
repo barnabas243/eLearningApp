@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, Course
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,3 +22,4 @@ class UserSerializer(serializers.ModelSerializer):
         instance.photo = validated_data.get('photo', instance.photo)
         instance.save()
         return instance
+

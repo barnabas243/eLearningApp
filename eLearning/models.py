@@ -1,9 +1,28 @@
 import os
-from django.contrib.auth.models import AbstractUser, Group as DjangoGroup, Permission
+from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-from datetime import date
+from datetime import date, timezone
+from django.utils.text import slugify
+from ckeditor.fields import RichTextField
+from django.db.models.signals import post_save
 
+def profile_picture_upload_path(instance, filename):
+    """
+    Function to determine the upload path for profile pictures.
+
+    Args:
+        instance: The user instance for which the profile picture is uploaded.
+        filename (str): The original filename of the profile picture being uploaded.
+
+    Returns:
+        str: The upload path for the profile picture.
+
+    """
+    # Construct the upload path based on the user's username
+    username = instance.username
+    return os.path.join('photos', f'{username}', filename)
 
 class User(AbstractUser):
     """
@@ -16,7 +35,7 @@ class User(AbstractUser):
         first_name (str): The first name of the user.
         last_name (str): The last name of the user.
         email (EmailField): The email address of the user.
-        dob (DateField): The date of birth of the user.
+        date_of_birth (DateField): The date of birth of the user.
 
     Inherited Attributes from AbstractUser:
         password (str): The password of the user.
@@ -45,8 +64,8 @@ class User(AbstractUser):
     )
 
     # Add custom fields
-    photo = models.ImageField(upload_to='static/photos/', null=True, blank=True, default='photos/default_profile_picture.png')
-    dob = models.DateField(_('Date of Birth'), null=True, blank=True)
+    photo = models.ImageField(upload_to=profile_picture_upload_path, null=True, blank=True, default='eLearning/static/img/default_profile_picture.png')
+    date_of_birth = models.DateField(_('Date of Birth'), null=True, blank=True)
     
     # Set max_length
     first_name = models.CharField(_('First name'), max_length=30)
@@ -54,7 +73,7 @@ class User(AbstractUser):
     email = models.EmailField(_('Email address'), max_length=254)
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'dob', 'user_type']
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'date_of_birth', 'user_type']
 
     def calculate_age(self):
         """
@@ -66,15 +85,15 @@ class User(AbstractUser):
         today = date.today()
 
         try: 
-            birthday = self.dob.replace(year=today.year)
+            birthday = self.date_of_birth.replace(year=today.year)
         # raised when birth date is February 29 and the current year is not a leap year
         except ValueError:
-            birthday = self.dob.replace(year=today.year, day=self.dob.day-1)
+            birthday = self.date_of_birth.replace(year=today.year, day=self.date_of_birth.day-1)
 
         if birthday > today:
-            return today.year - self.dob.year - 1
+            return today.year - self.date_of_birth.year - 1
         else:
-            return today.year - self.dob.year
+            return today.year - self.date_of_birth.year
 
     def __str__(self):
         return "{}".format(self.username)
@@ -87,20 +106,17 @@ class User(AbstractUser):
            # ("can_view_student_records", "Can view student records"),
             # Add more permissions as needed
         ]
+        unique_together = (('username', 'email'),)
 
-    # Define related_name for groups and user_permissions fields
-    groups = models.ManyToManyField(
-        DjangoGroup,
-        verbose_name=_('groups'),
-        blank=True,
-        related_name='custom_user_groups'  # Specify a unique related_name for groups
-    )
-    user_permissions = models.ManyToManyField(
-        Permission,
-        verbose_name=_('user permissions'),
-        blank=True,
-        related_name='custom_user_permissions'  # Specify a unique related_name for user_permissions
-    )
+@receiver(post_save, sender=User)
+def assign_user_to_group(sender, instance, created, **kwargs):
+    if created:
+        if instance.user_type == User.STUDENT:
+            student_group, created = Group.objects.get_or_create(name="student")
+            instance.groups.add(student_group)
+        elif instance.user_type == User.TEACHER:
+            teacher_group, created = Group.objects.get_or_create(name="teacher")
+            instance.groups.add(teacher_group)
 
 class StatusUpdate(models.Model):
     """
@@ -146,7 +162,8 @@ class Course(models.Model):
 
     Attributes:
         name (str): The name of the course.
-        description (str): A brief description of the course.
+        summary (str): The summary of the course
+        description (str): The Details concerning the course
         teacher (ForeignKey): Relationship to the User model representing the teacher.
         duration_weeks (PositiveIntegerField): The duration of the course in weeks.
         status (str): Indicates whether the course is in draft or official mode.
@@ -160,25 +177,56 @@ class Course(models.Model):
     ]
 
     name = models.CharField(max_length=100)
-    description = models.TextField()
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses')
+    summary = models.TextField()
+    description = RichTextField()  # CKEditor
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses_taught')
     duration_weeks = models.PositiveIntegerField(_('Duration (weeks)'), default=20)  # Default duration is 20 weeks
     status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default=DRAFT)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_modified = models.DateTimeField(null=True)
+    
+    start_date = models.DateTimeField(null=True)
+    
     def __str__(self):
         return self.name
 
+    def end_date(self):
+        # Calculate end date based on course duration
+        duration = self.duration_weeks
+        return self.start_date + timezone.timedelta(weeks=duration)
+    
     class Meta:
         verbose_name = _('Course')
         verbose_name_plural = _('Courses')
         unique_together = ('name', 'teacher')
 
+# class DraftCourseVersion(models.Model):
+#     """
+#     Model representing a draft version of a course.
+
+#     Attributes:
+#         course (ForeignKey): Relationship to the Course model.
+#         name (str): The name of the draft version.
+#         summary (str): A brief summary of the draft version.
+#         description (str): Detailed information about the draft version.
+#         created_at (DateTimeField): The date and time when the draft version was created.
+
+#     """
+#     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='draft_versions')
+#     name = models.CharField(max_length=100)
+#     summary = models.TextField()
+#     description = RichTextField() # CKEditor 6.7
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return f"{self.course.name} - Draft Version {self.id}"
+    
 def material_upload_path(instance, filename):
     """
     Function to determine the upload path for material files.
 
     Args:
-        instance: The Material instance being uploaded.
+        instance: The CourseMaterial instance being uploaded.
         filename (str): The original filename of the file being uploaded.
 
     Returns:
@@ -186,34 +234,9 @@ def material_upload_path(instance, filename):
 
     """
     # Construct the upload path based on the course name
-    course_name = instance.course.name
-    return os.path.join('static', course_name, 'materials', filename)
-
-class Material(models.Model):
-    """
-    Model representing course materials.
-
-    Attributes:
-        PDF (str): Constant representing PDF material type.
-        IMAGE (str): Constant representing image material type.
-        MATERIAL_TYPE_CHOICES (list of tuple): Choices for the material type field.
-        course (ManyToManyField): Relationship to Course model.
-        file (FileField): Field for uploading material files.
-        type (CharField): Field for specifying material type.
-
-    """
-    PDF = 'pdf'
-    IMAGE = 'image'
-    MATERIAL_TYPE_CHOICES = [
-        (PDF, _('PDF')),
-        (IMAGE, _('Image')),
-    ]
-    file = models.FileField(upload_to=material_upload_path)
-    type = models.CharField(_('Material Type'), max_length=20, choices=MATERIAL_TYPE_CHOICES)
-
-    class Meta:
-        verbose_name = _('Material')
-        verbose_name_plural = _('Materials')
+    course_id = instance.course.id
+    course_name = slugify(instance.course.name)  # Convert course name to a valid filename
+    return os.path.join('materials', f'{course_id}-{course_name}', filename)
 
 class CourseMaterial(models.Model):
     """
@@ -226,13 +249,19 @@ class CourseMaterial(models.Model):
 
     """
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='course_materials')
-    materials = models.ManyToManyField(Material, related_name='course_materials')
+    material = models.FileField(upload_to=material_upload_path)
     week_number = models.PositiveIntegerField(_('Week Number'))
 
     class Meta:
         verbose_name = _('Course Material')
         verbose_name_plural = _('Course Materials')
-        unique_together = ['course', 'week_number'] 
+        unique_together = ['material', 'course', 'week_number']
+        
+    def get_base_name(self):
+        """
+        Method to return the base name of the uploaded file.
+        """
+        return os.path.basename(self.material.name)
 
 class Assignment(models.Model):
     """
@@ -243,13 +272,15 @@ class Assignment(models.Model):
         name (str): The name of the assignment.
         description (TextField): Description of the assignment.
         duration_days (PositiveIntegerField): The duration of the assignment in days.
+        is_submitted (bool): Indicates if the assignment is submitted or not.
 
     """
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
     name = models.CharField(max_length=100)
     description = models.TextField()
     duration_days = models.PositiveIntegerField(_('Duration (days)'))
-
+    is_submitted = models.BooleanField(default=False)
+    
     def __str__(self):
         return self.name
 
@@ -264,12 +295,18 @@ class Enrollment(models.Model):
     Attributes:
         student (ForeignKey): The student who is enrolled in the course.
         course (ForeignKey): The course in which the student is enrolled.
-        start_date (DateField): The start date of the enrollment.
 
     """
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    start_date = models.DateField()
+
+    @staticmethod
+    def is_student_enrolled(student, course):
+        # Check if there exists an enrollment record for the student and course
+        return Enrollment.objects.filter(student=student, course=course).exists()
+
+    def __str__(self):
+        return f"{self.student.username} enrolled in {self.course.name}"
 
     class Meta:
         verbose_name = _('Enrollment')

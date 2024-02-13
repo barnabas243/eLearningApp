@@ -1,0 +1,23 @@
+{% extends '../base/base.html' %}
+{% load static %}
+
+{% block title %}
+Search User | My eLearning App
+{% endblock %}
+
+{% block description %}
+Search for student or teacher home pages
+{% endblock %}
+
+{% block content %}
+  <h2>Search Results for "{{ query }}"</h2>
+  {% if users %}
+    <ul>
+      {% for user in users %}
+        <li>{{ user.username }} ({{ user.email }})</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No users found.</p>
+  {% endif %}
+{% endblock %}
