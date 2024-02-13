@@ -178,7 +178,7 @@ class AutocompleteView(View):
                 Q(email__icontains=search_query) |
                 Q(first_name__icontains=search_query) |
                 Q(last_name__icontains=search_query))
-            ).distinct()
+            ).exclude(id=request.user.id).distinct()
         else:
             # Fetch both students and teachers if the current user is a teacher
             users = User.objects.filter(
@@ -187,7 +187,7 @@ class AutocompleteView(View):
                 Q(email__icontains=search_query) |
                 Q(first_name__icontains=search_query) |
                 Q(last_name__icontains=search_query))
-            ).distinct()
+            ).exclude(id=request.user.id).distinct()
             
         print("Users:", users)  # Debugging: Print the queryset
         
@@ -254,6 +254,7 @@ class SearchUsersView(UserPassesTestMixin, ListView):
         current_user = self.request.user
         
         if user_type == User.STUDENT:
+            print("reached here")
             users = User.objects.annotate(
                 full_name=Concat('first_name', Value(' '), 'last_name')
             ).filter(
