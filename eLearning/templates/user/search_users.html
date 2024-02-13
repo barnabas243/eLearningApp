@@ -10,13 +10,31 @@ Search for student or teacher home pages
 {% endblock %}
 
 {% block content %}
-  <h2>Search Results for "{{ query }}"</h2>
+  <h1>Search Results for "{{ query }}"</h1>
   {% if users %}
-    <ul>
+    <div class="row">
       {% for user in users %}
-        <li>{{ user.username }} ({{ user.email }})</li>
+        <div class="col-md-12">
+          <div class="card mb-3">
+            <div class="row g-0">
+              <div class="col-md-2 m-3 profile-picture" style="max-height: 10rem;max-width: 10rem;">
+                <img src="{{ user.photo.url }}" class="profile-img"  alt="User Photo">
+              </div>
+              <div class="col-md-8">
+                <div class="card-body">
+                  <h5 class="card-title">{{ user.get_full_name }}</h5>
+                  <p class="card-text">
+                    <strong>Username:</strong> {{ user.username }}<br>
+                    <strong>Email:</strong> {{ user.email }}
+                  </p>
+                  <a href="{% url 'user_home' user.username %}" class="btn btn-primary">View Profile</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       {% endfor %}
-    </ul>
+    </div>
   {% else %}
     <p>No users found.</p>
   {% endif %}

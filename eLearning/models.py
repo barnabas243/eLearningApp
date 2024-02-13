@@ -64,7 +64,7 @@ class User(AbstractUser):
     )
 
     # Add custom fields
-    photo = models.ImageField(upload_to=profile_picture_upload_path, null=True, blank=True, default='eLearning/static/img/default_profile_picture.png')
+    photo = models.ImageField(upload_to=profile_picture_upload_path, null=True, blank=True, default='/photos/default_profile_picture.png')
     date_of_birth = models.DateField(_('Date of Birth'), null=True, blank=True)
     
     # Set max_length
@@ -75,6 +75,9 @@ class User(AbstractUser):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'date_of_birth', 'user_type']
 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
+    
     def calculate_age(self):
         """
         Calculate the age of the user based on their date of birth.

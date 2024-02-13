@@ -17,6 +17,7 @@ Teacher Dashboard - {{ user.username }}
     <!-- Draft and Official Courses Section -->
     <div class="row">
         <!-- Draft Courses Section -->
+        {% if not current_user %}
         <div class="col-md-6">
             <h2>Draft Courses</h2>
 
@@ -25,13 +26,12 @@ Teacher Dashboard - {{ user.username }}
 
             <div class="row">
                 {% for course in draft_courses %}
-                <div class="col-md-6 mb-4">
+                <div class="col-md-12 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
                             <p class="card-text">{{ course.summary }}</p>
                             <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
-
                         </div>
                     </div>
                 </div>
@@ -42,18 +42,22 @@ Teacher Dashboard - {{ user.username }}
                 {% endfor %}
             </div>
         </div>
+        {% endif %}
         <!-- Official Courses Section -->
-        <div class="col-md-6">
+        {% if not current_user%}
+        <section class="col-md-6">
+        {% else %}
+        <div class="col-md-12">
+        {% endif %}
             <h2>Official Courses</h2>
             <div class="row">
                 {% for course in official_courses %}
-                <div class="col-md-6 mb-4">
+                <div class="col-md-12 mb-4">
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
                             <p class="card-text">{{ course.summary }}</p>
                             <a href="{% url 'official' course.id %}" class="btn btn-primary">View Course Materials</a>
-                            
                             <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
                         </div>
                     </div>
@@ -66,6 +70,35 @@ Teacher Dashboard - {{ user.username }}
             </div>
         </div>
     </div>
+
+    <!-- Pagination -->
+    {% if draft_courses.has_other_pages or official_courses.has_other_pages %}
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <ul class="pagination justify-content-center">
+                {% if draft_courses.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1">&laquo;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ draft_courses.previous_page_number }}">{{ draft_courses.previous_page_number }}</a>
+                </li>
+                {% endif %}
+                <li class="page-item active">
+                    <a class="page-link" href="?page={{ draft_courses.number }}">{{ draft_courses.number }}</a>
+                </li>
+                {% if draft_courses.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ draft_courses.next_page_number }}">{{ draft_courses.next_page_number }}</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ draft_courses.paginator.num_pages }}">&raquo;</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Modal -->
     <div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">

@@ -15,8 +15,8 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from django.template.loader import render_to_string
 from django.urls import reverse
 from .decorators import custom_login_required 
-from django.db.models import Q
-
+from django.db.models import Q, Value
+from django.db.models.functions import Concat
 
 class LandingView(TemplateView):
     template_name = 'public/landing.html'
@@ -192,15 +192,92 @@ class AutocompleteView(View):
         print("Users:", users)  # Debugging: Print the queryset
         
         options_html = render_to_string('partials/autocomplete_options.html', {'users': users})
+        print(options_html)
         return HttpResponse(options_html)
-    
-# def autocomplete_users(request):
-#     query = request.GET.get('q', '')
-#     users = User.objects.filter(username__icontains=query) | User.objects.filter(first_name__icontains=query) | User.objects.filter(last_name__icontains=query)
-#     usernames = [user.username for user in users]
-#     fullnames = [f'{user.first_name} {user.last_name}' for user in users]
-#     return JsonResponse({'usernames': usernames, 'fullnames': fullnames})
 
+class UserHomePage(View):
+    @method_decorator(custom_login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+        username = kwargs['username']  # Retrieve the username from URL parameters
+        
+        if request.user.username == username:
+            # Redirect the current user to the dashboard
+            return redirect('dashboard')
+        
+        user = get_object_or_404(User, username=username)
+        
+        
+        if user.user_type == User.STUDENT:
+            # Retrieve all enrollments for the student
+            enrollments = Enrollment.objects.filter(student=user)
+            # Extract the courses from enrollments
+            registered_courses = [enrollment.course for enrollment in enrollments]
+            
+            # Now you have the list of registered courses for the user
+            status_updates = StatusUpdate.objects.filter(user=user).order_by('-created_at')[:5]
+            context = {
+                'current_user': request.user,
+                'user': user,
+                'registered_courses': registered_courses,
+                'status_updates': status_updates,
+            }
+            return render(request, 'user/student_dashboard.html', context)
+        elif user.user_type == User.TEACHER:
+            teacher = user
+            official_courses = teacher.courses_taught.filter(status='official')
+
+            context = {
+                'current_user': request.user,
+                'user': teacher,
+                'draft_courses': [],
+                'official_courses': official_courses,
+                'createCourseForm': CreateCourseForm,  # Assuming CourseForm is your form for creating a new course
+            }
+
+            return render(request, 'user/teacher_dashboard.html', context)
+ 
+class SearchUsersView(UserPassesTestMixin, ListView):
+    template_name = 'user/search_users.html'
+    context_object_name = 'users'
+    paginate_by = 10
+
+    def test_func(self):
+        user = self.request.user
+        return user.user_type == User.STUDENT or user.user_type == User.TEACHER
+
+    def get_queryset(self):
+        query = self.request.GET.get('q', '')
+        user_type = self.request.user.user_type
+        current_user = self.request.user
+        
+        if user_type == User.STUDENT:
+            users = User.objects.annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name')
+            ).filter(
+                Q(username__icontains=query, user_type=User.STUDENT) |
+                Q(email__icontains=query, user_type=User.STUDENT) |
+                Q(full_name__icontains=query, user_type=User.STUDENT)
+            ).exclude(id=current_user.id)
+        elif user_type == User.TEACHER:
+            users = User.objects.annotate(
+                full_name=Concat('first_name', Value(' '), 'last_name')
+            ).filter(
+                Q(username__icontains=query) |
+                Q(email__icontains=query) |
+                Q(full_name__icontains=query)
+            ).exclude(id=current_user.id)
+        
+        return users
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query'] = self.request.GET.get('q', '')  # Include the query in the context
+        return context
+    
+    
 class ProfileView(View):
     @method_decorator(custom_login_required)
     def get(self, request, *args, **kwargs):
@@ -313,24 +390,25 @@ class DraftCourseView(UserPassesTestMixin,TemplateView):
     def post(self, request, *args, **kwargs):
         course_id = self.kwargs.get('course_id')
         course = get_object_or_404(Course, id=course_id, teacher=request.user)
-        print("failed: ",request.POST)
-        # Instantiate the CourseForm with the POST data and instance of the Course model
+        
         form = CourseForm(request.POST, instance=course)
         
         if form.is_valid():
-            # Save the course and update the last_modified field
             last_modified_date = datetime.now()
             course = form.save(commit=False)
             course.last_modified = last_modified_date
             course.save()
             messages.success(request, 'Course details updated successfully.')
-            return JsonResponse({'last_modified': last_modified_date.strftime('%Y-%m-%d %H:%M:%S')})
+            
+            # Redirect to the same page after successful form submission
+            return HttpResponseRedirect(reverse('draft', kwargs={'course_id': course_id}))
         else:
-            # Return only HTTP status code on failure
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'{field}: {error}')
-            return JsonResponse({}, status=400)
+                    
+        # Redirect to the same page after successful form submission
+        return HttpResponseRedirect(reverse('draft', kwargs={'course_id': course_id}))
 
 class OfficialCourseView(UserPassesTestMixin,TemplateView):
     template_name = 'user/official_course.html'
