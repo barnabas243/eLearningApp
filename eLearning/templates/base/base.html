@@ -4,9 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff"/>
+  
   <title>{% block title %}My eLearning App{% endblock %}</title>
   <meta name="description" content="{% block description %}Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.{% endblock %}">
 
+  <link rel="canonical" href="https://localhost{% block canonical_path %}/{% endblock %}"/>
   {% load static %}
   <!-- Include static files -->
   {% block scripts %}

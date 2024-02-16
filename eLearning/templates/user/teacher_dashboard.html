@@ -5,6 +5,8 @@
 Teacher Dashboard - {{ user.username }}
 {% endblock %}
 
+{% block canonical_path %}/dashboard/{% endblock %}
+
 {% block content %}
 <div class="container mt-5 text-center">
     <h1 class="mb-4">Teacher Dashboard</h1>
@@ -45,9 +47,9 @@ Teacher Dashboard - {{ user.username }}
         {% endif %}
         <!-- Official Courses Section -->
         {% if not current_user%}
-        <section class="col-md-6">
+            <section class="col-md-6">
         {% else %}
-        <div class="col-md-12">
+            <div class="col-md-12">
         {% endif %}
             <h2>Official Courses</h2>
             <div class="row">
@@ -57,7 +59,9 @@ Teacher Dashboard - {{ user.username }}
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
                             <p class="card-text">{{ course.summary }}</p>
-                            <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
+                            {% if not current_user %}
+                                <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
