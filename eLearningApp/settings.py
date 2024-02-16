@@ -25,24 +25,28 @@ SECRET_KEY = 'django-insecure-kt@57@9xcrs*5=c^-%m99!h!_1cq!!9qx&3!a=1(o=i&$i#b98
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000','https://localhost']
-ALLOWED_HOSTS = ['localhost']
-CORS_ORIGIN_WHITELIST = ['http://localhost:8000','https://localhost']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000','https://localhost','http://127.0.0.1:8000']
+ALLOWED_HOSTS = ['localhost','127.0.0.1']
+CORS_ORIGIN_WHITELIST = ['http://localhost:8000','https://localhost','http://127.0.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'eLearning',
+    'chat',
+    'django_htmx',
+    'rest_framework',
+    'ckeditor',
+    'ckeditor_uploader',
+    "channels",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'eLearning',
-    'django_htmx',
-    'rest_framework',
-    'ckeditor',
-    'ckeditor_uploader',
+
 ]
 
 MIDDLEWARE = [
@@ -55,7 +59,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "django_htmx.middleware.HtmxMiddleware",
-    
 ]
 
 ROOT_URLCONF = 'eLearningApp.urls'
@@ -77,7 +80,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'eLearningApp.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -153,7 +155,7 @@ CKEDITOR_CONFIGS = {
         'filebrowserUploadUrl': '/ckeditor/upload/',
         'filebrowserUploadMethod': 'xhr',
         'filebrowserBrowseUrl': '/ckeditor/browse/',
-        'filebrowserUploadAllowedExtensions': ['pdf', 'doc', 'docx'],
+        'filebrowserUploadAllowedExtensions': ['pdf', 'doc', 'docx'], 
         'extraPlugins': ','.join(['codesnippet']),  # Add extra CKEditor plugins
     },
 }
@@ -177,8 +179,24 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'awdtest04@gmail.com'
-EMAIL_HOST_PASSWORD = 'khfm yqfy sagi ociu' # Google-generated App Password. email passsowrd auth is deprecated.
+EMAIL_HOST_PASSWORD = 'khfm yqfy sagi ociu' # Google-generated App Password. email password auth is deprecated.
 
 # Celery backend
-CELERY_BROKER_URL = 'redis://redis:6379/0'
-CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
+#CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0' # docker redis config. change to localhost:6379 if running directly from django
+#CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0' # docker redis config. change to localhost:6379 if running directly from django
+CELERY_BROKER_URL = 'redis://redis:6379/0' # docker redis config. change to localhost:6379 if running directly from django
+CELERY_RESULT_BACKEND = 'redis://redis:6379/0' # docker redis config. change to localhost:6379 if running directly from django
+
+# daphne
+ASGI_APPLICATION = 'eLearningApp.asgi.application'
+
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            #'hosts': [('127.0.0.1', 6379)], # docker redis config. change to localhost if running directly from django
+            'hosts': [('redis', 6379)], # docker redis config. change to localhost if running directly from django
+        },
+    },
+}

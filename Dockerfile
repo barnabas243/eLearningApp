@@ -48,5 +48,6 @@ COPY . .
 
 # Expose the port that the application listens on.
 EXPOSE 8000
-# Define the command to run the Django app
-CMD gunicorn 'eLearningApp.wsgi' --bind=0.0.0.0:8000
+
+# Define the command to run the Django app with Daphne
+CMD daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application

@@ -19,11 +19,13 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from ckeditor_uploader.views import upload
+from chat import routing
 from eLearning.decorators import custom_login_required 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('eLearning.urls')),
+    path("chat/", include("chat.urls")),  # Include the chat app's URLs under the 'chat/' path
     path('ckeditor/upload/', custom_login_required(upload), name='ckeditor_upload'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

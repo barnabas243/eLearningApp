@@ -334,7 +334,7 @@ class Enrollment(models.Model):
     @staticmethod
     def is_student_enrolled(student, course):
         # Check if there exists an enrollment record for the student and course
-        return Enrollment.objects.filter(student=student, course=course).exists()
+        return Enrollment.objects.filter(student__username=student.username, course=course).exists()
         
     def __str__(self):
         return f"{self.student.username} enrolled in {self.course.name}"

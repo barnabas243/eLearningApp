@@ -14,14 +14,16 @@ services:
     restart: always
     depends_on:
       - redis
-    links:
-      - redis
+    networks:
+      - mynetwork
 
   redis:
     image: redis
     ports:
       - "6379:6379"
     restart: always
+    networks:
+      - mynetwork
 
   celery:
     build:
@@ -35,6 +37,8 @@ services:
     depends_on:
       - redis
     command: celery -A eLearningApp worker -l INFO
+    networks:
+      - mynetwork
 
   nginx:
     image: nginx:latest
@@ -46,3 +50,22 @@ services:
       - ./certs/localhost.crt:/etc/nginx/certs/fullchain.pem
       - ./certs/localhost.key:/etc/nginx/certs/privkey.pem
     restart: always
+    networks:
+      - mynetwork
+
+  # daphne:
+  #   build: 
+  #     context: .
+  #     dockerfile: Dockerfile  # You might have a separate Dockerfile for Daphne
+  #   command: daphne -b localhost -p 8001 eLearningApp.asgi:application  # Adjust as needed
+  #   depends_on:
+  #     - django
+  #   ports:
+  #     - "8001:8001"  # Expose Daphne port
+  #   restart: always
+  #   networks:
+  #     - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge
