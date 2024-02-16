@@ -19,6 +19,7 @@ urlpatterns = [
     path('official/<int:course_id>/', views.OfficialCourseView.as_view(), name='official'),
     path('draft/<int:course_id>/', views.DraftCourseView.as_view(), name='draft'),
     path('get_week_materials/<int:course_id>/<int:week_number>/', views.get_week_materials, name='get_week_materials'),
+    path('week/<int:course_id>/', views.WeekView.as_view(), name='week'),
     path('upload-material/<int:course_id>/<int:week_number>/', views.upload_material, name='upload_material'),
     path('delete_course_material/<int:course_material_id>/', views.delete_course_material, name='delete_course_material'),
     path('publish-course/<int:course_id>/', views.publish_course, name='publish_course'),

@@ -2,39 +2,37 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My eLearning App{% endblock %}</title>
-    <meta name="description" content="{% block description %}Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.{% endblock %}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}My eLearning App{% endblock %}</title>
+  <meta name="description" content="{% block description %}Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.{% endblock %}">
 
-    <!-- Include static files -->
-    {% block scripts %}
-    {% load static %}
+  {% load static %}
+  <!-- Include static files -->
+  {% block scripts %}
     
-    <script src="{% static 'scripts/htmx.min.js' %}" defer></script>
-    <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
-    <script  src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
-    <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
-    <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
-    {% endblock %}
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}">
-    
-    <!-- Open Graph and Twitter card meta tags -->
-    <meta property="og:title" content="eLearning App">
-    <meta property="og:description" content="Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://example.com/">
-    <meta property="og:image" content="https://example.com/og-image.jpg">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@yourtwitterhandle">
-    <meta name="twitter:title" content="Your eLearning App">
-    <meta name="twitter:description" content="Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.">
-    <meta name="twitter:image" content="https://example.com/twitter-image.jpg">
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+
+  <!-- Site Manifest -->
+  <link rel="manifest" href="{% static 'site.webmanifest' %}">
+
+  <!-- Scripts -->
+  <script src="{% static 'scripts/htmx.min.js' %}" defer type="text/javascript"></script>
+  <script src="https://unpkg.com/htmx.org/dist/ext/response-targets.js" defer type="text/javascript"></script>
+  <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer type="text/javascript"></script>
+  <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
+  <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+  <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script>
+  
+  
+  {% endblock %}
+  
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}">
 </head>
-
 
 <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">

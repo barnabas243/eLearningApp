@@ -17,6 +17,8 @@ from django.urls import reverse
 from .decorators import custom_login_required 
 from django.db.models import Q, Value
 from django.db.models.functions import Concat
+from django.views.decorators.csrf import csrf_exempt
+from django.core.mail import send_mail
 
 class LandingView(TemplateView):
     template_name = 'public/landing.html'
@@ -98,22 +100,48 @@ class PasswordChangeViewCustom(PasswordChangeView):
 
 class CoursesView(ListView):
     model = Course
-    template_name = 'public/courses.html'
+    template_name = 'public/view_courses.html'
     context_object_name = 'courses'
+    @csrf_exempt
+    def get_queryset(self):
+        # Filter courses with status "official"
+        return Course.objects.filter(status="official")
     
 
 def course_details(request, course_id):
-    # Retrieve the course object from the database
-    course = get_object_or_404(Course, id=course_id)
-    
-    # Check if the current user is authenticated and if so, check if they are enrolled in the course
-    is_enrolled = False
-    if request.user.is_authenticated:
-        is_enrolled = Enrollment.is_student_enrolled(request.user,course)
-    
-    # Render the course details template with the course object and enrollment status
-    return render(request, 'public/course_details.html', {'course': course, 'is_enrolled': is_enrolled})
+    if request.method == "GET":
+        # Retrieve the course object from the database
+        course = get_object_or_404(Course, id=course_id)
+        
+        # Check if the current user is authenticated and if so, check if they are enrolled in the course
+        is_enrolled = False
+        if request.user.is_authenticated:
+            is_enrolled = Enrollment.is_student_enrolled(request.user,course)
+        
+        # Render the course details template with the course object and enrollment status
+        return render(request, 'public/course_details.html', {'course': course, 'is_enrolled': is_enrolled})
 
+
+def enrolmentEmail(user,course):
+    subject = f"Successful Enrolment to {course.name}"
+    message = (
+        f"Dear {user.get_full_name},\n\n"
+        f"Congratulations! You have successfully enrolled in the course '{course.name}'.\n"
+        f"We're excited to have you on board and look forward to seeing you excel in the course.\n\n"
+        f"Course Details:\n"
+        f"Name: {course.name}\n"
+        f"Description: {course.description}\n"
+        f"Start Date: {course.start_date}\n"
+        f"Duration: {course.duration} weeks\n"
+        f"Teacher: {course.teacher} - {course.teacher__email}\n\n"
+        f"If you have any questions or need assistance, feel free to contact us.\n\n"
+        f"Best regards,\nThe Course Management Team"
+    )
+    from_email = "awdtest04@gmail.com"  # Update with your email
+    recipient_list = [user.email]
+
+    send_mail(subject, message, from_email, recipient_list)
+    
 @custom_login_required
 def enroll(request, course_id):
     course = get_object_or_404(Course, id=course_id)
@@ -125,13 +153,17 @@ def enroll(request, course_id):
     # Create a new enrollment for the user and course
     Enrollment.objects.create(student=request.user, course=course)
     
-    return JsonResponse({'message': 'Enrollment successful.'})
+    enrolmentEmail(request.user,course)
+    return HttpResponse('<a href="{% url \'official\' course.id %}" class="btn btn-primary">View Course Materials</a>', status=201)
+
+
 
 class DashboardView(View):
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
+    @csrf_exempt
     def get(self, request, *args, **kwargs):
         user = request.user
         if user.user_type == User.STUDENT:
@@ -164,6 +196,7 @@ class DashboardView(View):
  
 
 class AutocompleteView(View):
+    @csrf_exempt
     def get(self, request, *args, **kwargs):
         search_query = request.GET.get('q', '')
         print("Search query:", search_query)  # Debugging: Print the search query
@@ -195,11 +228,13 @@ class AutocompleteView(View):
         print(options_html)
         return HttpResponse(options_html)
 
+
 class UserHomePage(View):
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
     
+    @csrf_exempt
     def get(self, request, *args, **kwargs):
         username = kwargs['username']  # Retrieve the username from URL parameters
         
@@ -239,6 +274,7 @@ class UserHomePage(View):
 
             return render(request, 'user/teacher_dashboard.html', context)
  
+ 
 class SearchUsersView(UserPassesTestMixin, ListView):
     template_name = 'user/search_users.html'
     context_object_name = 'users'
@@ -247,7 +283,8 @@ class SearchUsersView(UserPassesTestMixin, ListView):
     def test_func(self):
         user = self.request.user
         return user.user_type == User.STUDENT or user.user_type == User.TEACHER
-
+    
+    @csrf_exempt
     def get_queryset(self):
         query = self.request.GET.get('q', '')
         user_type = self.request.user.user_type
@@ -291,20 +328,19 @@ class ProfileView(View):
         try:
             
             # Retrieve data from the request body
-            print("request.body: ", request.body)
             data = json.loads(request.body)
-            print("data: ",data)
             # Iterate over each key-value pair in the data
             for field_name, field_value in data.items():
                 # Check if the field exists in the user model and update it
                 if hasattr(request.user, field_name):
                     setattr(request.user, field_name, field_value)
                 else:
+                    print("failed")
                     return JsonResponse({'error': f'Invalid field name: {field_name}'}, status=400)
 
             # Save the user object to persist changes
             user.save()
-
+            
             # Return success response
             return JsonResponse({'success': 'Profile updated successfully'})
         except json.JSONDecodeError:
@@ -313,7 +349,9 @@ class ProfileView(View):
             return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             # Return error response for unexpected errors
+            print("error: ",e)
             return JsonResponse({'error': str(e)}, status=500)
+        
         
 class UploadPictureView(FormView):
     form_class = ProfilePictureForm
@@ -325,9 +363,10 @@ class UploadPictureView(FormView):
         user.photo = form.cleaned_data['photo']
         user.save()
         return super().form_valid(form)
-
+    
     def get_success_url(self):
         return reverse('profile')
+
 
 @custom_login_required
 def create_course(request):
@@ -351,8 +390,9 @@ def create_course(request):
             messages.error(request, 'Failed to create course. Please check the form.')
     return redirect('dashboard')
 
+
 class DraftCourseView(UserPassesTestMixin,TemplateView):
-    template_name = 'user/draft_course.html'
+    template_name = 'user/course.html'
     
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -368,6 +408,7 @@ class DraftCourseView(UserPassesTestMixin,TemplateView):
         
         return False
     
+    @csrf_exempt
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         course_id = self.kwargs.get('course_id')
@@ -411,8 +452,47 @@ class DraftCourseView(UserPassesTestMixin,TemplateView):
         # Redirect to the same page after successful form submission
         return HttpResponseRedirect(reverse('draft', kwargs={'course_id': course_id}))
 
+
+class WeekView(View):
+    def post(self, request, *args, **kwargs):
+        course_id = kwargs['course_id']
+        course = get_object_or_404(Course, id=course_id)
+
+        # Determine the next week number based on existing weeks
+        new_week_number = course.duration_weeks + 1
+
+        # Update the course's duration_weeks
+        course.duration_weeks = new_week_number
+        course.save()
+        
+        # Render the HTML markup for the new week
+        new_week_html = render_to_string('partials/week_item.html', {'course_id': course_id, 'week_number': new_week_number}, request=request)
+
+        return HttpResponse(new_week_html)
+    
+    def delete(self, request, *args, **kwargs):
+        course_id = kwargs['course_id']
+        course = get_object_or_404(Course, id=course_id)
+
+        # Determine the next week number based on existing weeks
+        new_week_number = course.duration_weeks - 1
+
+        if new_week_number < 1:
+            # Ensure the duration_weeks does not go below 1
+            messages.error(request, "Weeks can not be lesser than 1")
+            error_msg= render_to_string('partials/messages.html', {'messages':  messages.get_messages(request)}, request=request)
+
+            return HttpResponse(error_msg,status=400)
+
+        # Update the course's duration_weeks
+        course.duration_weeks = new_week_number
+        course.save()
+        
+        return HttpResponse(status=200)
+
+
 class OfficialCourseView(UserPassesTestMixin,TemplateView):
-    template_name = 'user/official_course.html'
+    template_name = 'user/course.html'
     
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -432,6 +512,7 @@ class OfficialCourseView(UserPassesTestMixin,TemplateView):
         
         return False
     
+    @csrf_exempt
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         course_id = self.kwargs.get('course_id')
@@ -448,9 +529,13 @@ class OfficialCourseView(UserPassesTestMixin,TemplateView):
         context['course_materials'] = course_materials
         context['selected_week'] = 1
         
+        context['form'] = CourseForm(instance=course)
+        
         return context
-    
+
+
 @custom_login_required
+@csrf_exempt
 def get_week_materials(request,course_id,week_number):
     print("get_week_materials: ",request.method)
     if request.method == 'GET':
@@ -473,9 +558,9 @@ def get_week_materials(request,course_id,week_number):
         print("redirect passed")
         # Instantiate the MaterialUploadForm
         material_upload_form = MaterialUploadForm()
-
+        
         # Render the materials template with the materials data and the upload form
-        return render(request, 'partials/materials.html', {'course_id': course_id,'week_number': week_number, 'course_materials': course_materials, 'materialUploadForm': material_upload_form,'teacher': course.teacher})
+        return render(request, 'partials/materials.html', {'course_id': course_id,'week_number': week_number, 'course_materials': course_materials, 'materialUploadForm': material_upload_form,'teacher': course.teacher == request.user})
 
 
 @custom_login_required
@@ -494,6 +579,7 @@ def delete_course_material(request, course_material_id):
         # Return a method not allowed response
         return HttpResponse(status=405)
 
+
 @custom_login_required
 def upload_material(request, course_id, week_number):
     course = get_object_or_404(Course, id=course_id, teacher=request.user)
@@ -505,13 +591,16 @@ def upload_material(request, course_id, week_number):
             material = request.FILES['material']
             course_material = CourseMaterial.objects.create(course=course, week_number=week_number, material=material)
             messages.success(request, 'Material uploaded successfully.')
+            
+            # send notification to all students in the course
         else:
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'{field}: {error}')
-    
+
     return redirect('get_week_materials', course_id=course_id, week_number=week_number)
 
+    
 @custom_login_required
 def publish_course(request, course_id):
     # Get the course object
@@ -522,5 +611,5 @@ def publish_course(request, course_id):
         course.status = 'official'
         course.save()
     
-        messages.success(request, 'Course created successfully')
+        messages.success(request, 'Course published successfully')
         return redirect('dashboard')

@@ -11,8 +11,8 @@
     height: 256px; /* Adjust height as needed */
     border-radius: 50%; /* Make the container round */
     overflow: hidden; /* Hide overflowing content (e.g., if image size exceeds container) */
-    border: 5px solid black; 
-    background-image: linear-gradient(to bottom right, #ff8080, #66b3ff); /* Gradient border colors */
+    border: 3px solid black; 
+    background-image: linear-gradient(to bottom right, #ff8080, #66b3ff); /*  Gradient border colors */
 }
 
 .profile-img {

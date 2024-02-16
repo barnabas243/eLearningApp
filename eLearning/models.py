@@ -7,6 +7,7 @@ from datetime import date, timezone
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 from django.db.models.signals import post_save
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 def profile_picture_upload_path(instance, filename):
     """
@@ -74,7 +75,7 @@ class User(AbstractUser):
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'first_name', 'last_name', 'date_of_birth', 'user_type']
-
+        
     def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
     
@@ -139,25 +140,6 @@ class StatusUpdate(models.Model):
         verbose_name = _('Status Update')
         verbose_name_plural = _('Status Updates')
 
-class Feedback(models.Model):
-    """
-    Model representing feedback for a course.
-
-    Attributes:
-        user (ForeignKey): The user who provided the feedback.
-        course (ForeignKey): The course for which the feedback is provided.
-        content (TextField): The content of the feedback.
-        created_at (DateTimeField): The date and time when the feedback was created.
-
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    course = models.ForeignKey('Course', on_delete=models.CASCADE)
-    content = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = _('Feedback')
-        verbose_name_plural = _('Feedback')
 
 class Course(models.Model):
     """
@@ -183,7 +165,11 @@ class Course(models.Model):
     summary = models.TextField()
     description = RichTextField()  # CKEditor
     teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='courses_taught')
-    duration_weeks = models.PositiveIntegerField(_('Duration (weeks)'), default=20)  # Default duration is 20 weeks
+    duration_weeks = models.PositiveIntegerField(
+        _('Duration (weeks)'),
+        default=20,
+        validators=[MinValueValidator(1)] 
+    )
     status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default=DRAFT)
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(null=True)
@@ -203,27 +189,7 @@ class Course(models.Model):
         verbose_name_plural = _('Courses')
         unique_together = ('name', 'teacher')
 
-# class DraftCourseVersion(models.Model):
-#     """
-#     Model representing a draft version of a course.
 
-#     Attributes:
-#         course (ForeignKey): Relationship to the Course model.
-#         name (str): The name of the draft version.
-#         summary (str): A brief summary of the draft version.
-#         description (str): Detailed information about the draft version.
-#         created_at (DateTimeField): The date and time when the draft version was created.
-
-#     """
-#     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='draft_versions')
-#     name = models.CharField(max_length=100)
-#     summary = models.TextField()
-#     description = RichTextField() # CKEditor 6.7
-#     created_at = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"{self.course.name} - Draft Version {self.id}"
-    
 def material_upload_path(instance, filename):
     """
     Function to determine the upload path for material files.
@@ -259,12 +225,16 @@ class CourseMaterial(models.Model):
         verbose_name = _('Course Material')
         verbose_name_plural = _('Course Materials')
         unique_together = ['material', 'course', 'week_number']
-        
+    
+    def __str__(self):
+        return f"{self.course.name} - {self.get_base_name()}"
+    
     def get_base_name(self):
         """
         Method to return the base name of the uploaded file.
         """
         return os.path.basename(self.material.name)
+
 
 class Assignment(models.Model):
     """
@@ -282,7 +252,6 @@ class Assignment(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     duration_days = models.PositiveIntegerField(_('Duration (days)'))
-    is_submitted = models.BooleanField(default=False)
     
     def __str__(self):
         return self.name
@@ -290,7 +259,64 @@ class Assignment(models.Model):
     class Meta:
         verbose_name = _('Assignment')
         verbose_name_plural = _('Assignments')
+    
 
+class AssignmentSubmission(models.Model):
+    """
+    Model representing a submission of an assignment by a student.
+
+    Attributes:
+        assignment (ForeignKey): The assignment that was submitted.
+        student (ForeignKey): The student who submitted the assignment.
+        submitted_at (DateTimeField): The datetime when the assignment was submitted.
+
+    """
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='assignment_submissions')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.student} - {self.assignment}"
+
+    class Meta:
+        verbose_name = _('Assignment Submission')
+        verbose_name_plural = _('Assignment Submissions')
+
+
+class Feedback(models.Model):
+    """
+    Model representing feedback for a course.
+
+    Attributes:
+        user (ForeignKey): The user who provided the feedback.
+        course (ForeignKey): The course for which the feedback is provided.
+        course_rating (IntegerField): The rating assigned to the course.
+        teacher_rating (IntegerField): The rating assigned to the teacher.
+        comments (TextField): The content of the feedback.
+        created_at (DateTimeField): The date and time when the feedback was created.
+
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'))
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name=_('Course'))
+    course_rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name=_('Course Rating')
+    )
+    teacher_rating = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        verbose_name=_('Teacher Rating')
+    )
+    comments = models.TextField(verbose_name=_('Comments'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
+
+    class Meta:
+        verbose_name = _('Feedback')
+        verbose_name_plural = _('Feedback')
+
+    def __str__(self):
+        return f"Feedback for {self.course} by {self.user}"
+
+            
 class Enrollment(models.Model):
     """
     Model representing a student's enrollment in a course.
@@ -302,12 +328,14 @@ class Enrollment(models.Model):
     """
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
-
+    is_banned = models.BooleanField(default=False)
+    is_completed = models.BooleanField(default=False)
+    
     @staticmethod
     def is_student_enrolled(student, course):
         # Check if there exists an enrollment record for the student and course
         return Enrollment.objects.filter(student=student, course=course).exists()
-
+        
     def __str__(self):
         return f"{self.student.username} enrolled in {self.course.name}"
 

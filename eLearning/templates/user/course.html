@@ -1,0 +1,214 @@
+{% extends '../base/base.html' %}
+{% load static %}
+
+{% block title %}
+Draft Course | {{ course.name }}
+{% endblock %}
+
+{% block description %}
+This is the draft page for teachers to edit the courses
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Publish Button -->
+    {% if course.status == "draft" %}
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <form action="{% url 'publish_course' course.id %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">
+                    Publish
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    <!-- Tabs -->
+    {% if user == course.teacher %}
+    <ul class="nav nav-tabs mt-3" id="courseTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="editCourseDetails-tab" data-bs-toggle="tab" data-bs-target="#editCourseDetails" type="button" role="tab" aria-controls="editCourseDetails" aria-selected="true">Edit Course Details</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="courseMaterials-tab" data-bs-toggle="tab" data-bs-target="#courseMaterials" type="button" role="tab" aria-controls="courseMaterials" aria-selected="false">Course Materials</button>
+        </li>
+    </ul>
+    
+    <!-- Tab content -->
+    <div class="tab-content" id="courseTabsContent">
+        <!-- Edit Course Details Tab -->
+        <div class="tab-pane fade show active" id="editCourseDetails" role="tabpanel" aria-labelledby="editCourseDetails-tab">
+            <div class="row mt-3">
+                <div class="col-md-8">
+                    {% include 'partials/messages.html' %}
+                    <form id="editCourseForm" method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Name</label>
+                            {{ form.name}}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_summary" class="form-label">Summary</label>
+                            {{ form.summary}}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_start_date" class="form-label">Start Date</label>
+                            {{ form.start_date}}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description</label>
+                            {{ form.description}}
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <button type="submit" id="saveBtn" class="btn btn-primary">Save Changes</button>
+                            <p class="mx-3">
+                                <span id="lastModifiedDate">
+                                    {% if course.last_modified %}
+                                        Last Modified: {{ course.last_modified }}
+                                    {% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </form>
+                                     
+                </div>
+            </div>
+        </div>
+        
+        <!-- Course Materials Tab -->
+        <div class="tab-pane fade" id="courseMaterials" role="tabpanel" aria-labelledby="courseMaterials-tab">
+        {% endif %}
+            <div class="row mt-3 mb-3">
+                <div class="col-md-3"  hx-ext="response-targets">              
+                    <ul class="list-group" id="week-list">
+                        {% for week_number in weeks %}
+                            {% include 'partials/week_item.html' %}
+                        {% endfor %}
+                    </ul>
+                    <!-- Buttons wrapper -->
+                    {% if user == course.teacher %}
+                        <div class="d-flex my-3 justify-content-center">
+                            <!-- Add new week button -->
+                            <button class="btn btn-primary btn-sm me-2 wkBtn"
+                                    hx-post="{% url 'week' course.id %}"
+                                    hx-target="#week-list"
+                                    hx-swap="beforeend"
+                                    hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'>
+                                Add Week
+                            </button>
+                            <!-- Delete week button -->
+                            <button class="btn btn-danger btn-sm wkBtn"
+                                    hx-delete="{% url 'week' course.id %}"
+                                    hx-target="#week-list a:last-child" 
+                                    hx-confirm="Are you sure you want to remove the latest week? Materials deleted is non-recoverable"
+                                    hx-swap="outerHTML"
+                                    hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'
+                                    hx-target-400="#del-error-message">
+                                   
+                                Delete latest Week
+                            </button>
+                        </div>
+                        
+                        <div id="del-error-message">
+                            <!-- Error message content will be updated here -->
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-9" id="materials-container">
+                    <!-- Content will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Icons -->
+        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <!-- Red X icon -->
+            <symbol id="red-x-icon" viewBox="0 0 16 16">
+                <path fill="#ff0000" d="M8,6.586L5.414,4L4,5.414L6.586,8L4,10.586L5.414,12L8,9.414L10.586,12L12,10.586L9.414,8L12,5.414L10.586,4L8,6.586Z"></path>
+            </symbol>
+        </svg>
+    </div>
+</div>
+
+<!-- Script to load materials for the first week by default -->
+<script>
+    // Reload the page to load materials for the first week by default
+    window.onload = function() {
+        document.querySelector('a[hx-get]').click();
+        
+    };
+
+    const saveBtn = document.getElementById('saveBtn')
+
+    if (saveBtn) {
+        document.getElementById('saveBtn').addEventListener('click', function() {
+            // Get the CKEditor instance
+            var editor = CKEDITOR.instances.id_description;
+                    
+            // Get the CKEditor content
+            var content = editor.getData();
+                    
+            // Set the content to a hidden input field
+            document.getElementById('id_description').value = content;
+        });
+    }
+
+
+    // Define the click event listener function
+    function weekLinkClickHandler() {
+        // Remove active class from all <a> elements
+        weekLinks.forEach(function(link) {
+            link.classList.remove('active');
+        });
+
+        // Add active class to the clicked <a> element
+        this.classList.add('active');
+    }
+
+    // Get all the <a> elements inside the week-list
+    let weekLinks = document.querySelectorAll('#week-list a');
+
+    // Function to attach or detach event listeners
+    function attachWeekEventListeners(option) {
+        // add/remove click event listener to each <a> element
+        weekLinks.forEach(function(weekLink) {
+            if (option === "add") {
+                // Add the click event listener
+                weekLink.addEventListener('click', weekLinkClickHandler);
+            } else if (option === "remove") {
+                // Remove the click event listener
+                weekLink.removeEventListener('click', weekLinkClickHandler);
+            }
+        });
+    }
+
+    // Initial attachment of event listeners
+    attachWeekEventListeners("add");
+
+    // Button click event to remove and re-add event listeners
+    const weekBtns = document.querySelectorAll('.wkBtn');
+
+    weekBtns.forEach(function(wkBtn) {
+        wkBtn.addEventListener('click', function() {
+            // Remove event listeners
+            attachWeekEventListeners("remove");
+    
+            // Reset active state
+            weekLinks.forEach(function(link) {
+                link.classList.remove('active');
+            });
+    
+            // Re-add event listeners after a short delay to allow time for htmx to update the DOM
+            setTimeout(function() {
+                // Refresh the weekLinks list
+                weekLinks = document.querySelectorAll('#week-list a');
+    
+                // Re-add event listeners
+                attachWeekEventListeners("add");
+            }, 100); // Adjust the delay as needed
+        });
+    });
+</script>
+
+{% endblock %}

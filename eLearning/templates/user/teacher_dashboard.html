@@ -57,7 +57,6 @@ Teacher Dashboard - {{ user.username }}
                         <div class="card-body">
                             <h5 class="card-title">{{ course.name }}</h5>
                             <p class="card-text">{{ course.summary }}</p>
-                            <a href="{% url 'official' course.id %}" class="btn btn-primary">View Course Materials</a>
                             <a href="{% url 'draft' course.id %}" class="btn btn-success">Edit Course</a>
                         </div>
                     </div>
