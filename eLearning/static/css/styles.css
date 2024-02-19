@@ -1,3 +1,10 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+
 .valid {
     color: green;
 }
@@ -22,3 +29,59 @@
     border-radius: 50%; /* Make the image round */
     border: 5px solid transparent; /* Transparent border to reserve space for the gradient border */
 }
+
+.grey-out {
+    opacity: 0.3; /* Adjust the opacity value as needed */
+    background-color: #ccc; /* Adjust the background color as needed */
+}
+
+.message-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 10px;
+}
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+.other-user-message {
+    background-color: #f1f0f0;
+    float: left;
+}
+.current-user-message {
+    background-color: #a2cbf7;
+    float: right;
+}
+.message-arrow {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 10px;
+}
+/* .other-user-arrow {
+    border-color: transparent #e0e0e0 transparent transparent;
+    margin-right: 10px;
+}
+.current-user-arrow {
+    border-color: transparent transparent transparent #007bff;
+    margin-left: 10px;
+} */
+
+.message-username {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Style time text */
+.time-right {
+    float: right;
+    color: #494949;
+  }
+  
+/* Style time text */
+.time-left {
+    float: left;
+    color: #0672ff;
+  }

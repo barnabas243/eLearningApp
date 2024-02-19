@@ -13,6 +13,7 @@ This is the dashboard page for the user
 
 {% block content %}
 <div class="container text-center">
+    {% include 'partials/messages.html' %}
     <h1>Welcome, {{ user.username }}</h1>
 
     <!-- Profile Section -->

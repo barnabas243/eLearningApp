@@ -33,7 +33,7 @@ class Message(models.Model):
         User,
         on_delete=models.CASCADE,
     )
-    content = models.TextField(validators=[URLValidator()])
+    content = models.TextField()
     
     file = models.FileField(upload_to=message_file_path, blank=True, null=True, help_text='Optional file attachment.')
     
