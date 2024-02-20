@@ -1,33 +1,35 @@
 {% extends '../base/base.html' %}
 
-{% block canonical_path %}/courses/{% endblock %}
+{% block canonical_path %}
+  /courses/
+{% endblock %}
 
 {% block title %}
-All Courses | eLearning App
+  All Courses | eLearning App
 {% endblock %}
 
 {% block description %}
-This is the courses page for the public to view available courses
+  This is the courses page for the public to view available courses
 {% endblock %}
 
 {% block content %}
-<div class="container">
+  <div class="container">
     {% include 'partials/messages.html' %}
     <h1 class="my-4">All Courses</h1>
     <div class="row">
-        {% for course in courses %}
+      {% for course in courses %}
         <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <h5 class="card-title">{{ course.name }}</h5>
-                    <p class="card-text">{{ course.summary }}</p>
-                </div>
-                <div class="card-footer">
-                    <a href="{% url 'course_details' course.id %}" class="btn btn-primary">View Details</a>
-                </div>
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">{{ course.name }}</h5>
+              <p class="card-text">{{ course.summary }}</p>
             </div>
+            <div class="card-footer">
+              <a href="{% url 'course_details' course.id %}" class="btn btn-primary">View Details</a>
+            </div>
+          </div>
         </div>
-        {% endfor %}
+      {% endfor %}
     </div>
-</div>
+  </div>
 {% endblock %}

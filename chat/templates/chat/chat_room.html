@@ -1,230 +1,167 @@
 <!-- chat/templates/chat/room.html -->
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="theme-color" content="#ffffff"/>
-        
-        <title>{% block title %}My eLearning App{% endblock %}</title>
-        <meta name="description" content="{% block description %}Start your learning journey today with eLearningApp. Access a wide range of courses, tutorials, and resources to enhance your knowledge and skills.{% endblock %}">
-      
-        <link rel="canonical" href="https://localhost{% block canonical_path %}/chat/{{ room_name}} {% endblock %}"/>
-        {% load static %}
-        <!-- Include static files -->
-        {% block scripts %}
-          
-        <!-- Favicon -->
-        <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
-      
-        <!-- Site Manifest -->
-        <link rel="manifest" href="{% static 'site.webmanifest' %}">
-      
-        <!-- Scripts -->
-        {% comment %} <script src="{% static 'scripts/htmx.min.js' %}" defer type="text/javascript"></script>
-        <script src="https://unpkg.com/htmx.org/dist/ext/response-targets.js" defer type="text/javascript"></script> {% endcomment %}
-        <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer type="text/javascript"></script>
-        {% comment %} <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script> {% endcomment %}
-        
-        
-        {% endblock %}
-        
-        <!-- CSS -->
-        <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-        <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}">
-      </head>
-<body>
-    <h1>{{ room_name }}</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <title>
+      {% block title %}
+        My eLearning App
+      {% endblock %}
+    </title>
+    <meta name="description"
+      content="{% block description %}
+      {% endblock %}" />
+
+    <link rel="canonical"
+      href="https://localhost{% block canonical_path %}
+        {{ room_name }}
+      {% endblock %}" />
+    {% load static %}
+    <!-- Include static files -->
+    {% block scripts %}
+      <!-- Favicon -->
+      <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" />
+
+      <!-- Site Manifest -->
+      <link rel="manifest" href="{% static 'site.webmanifest' %}" />
+
+      <!-- Scripts -->
+      <script src="{% static 'scripts/chat.js' %}" defer type="text/javascript"></script>
+      <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer type="text/javascript"></script>
+      <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
+    {% endblock %}
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/chat.css' %}" />
+    <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}" />
+  </head>
+  <body>
+    <!-- - Navigation bar -->
+    {% include 'partials/navbar.html' %}
+
     <main class="container">
-        <div class="row mt-5">
-            <!-- Left column for user profile -->
-            <section class="col-md-3 mt-5">
-                <div class="card card-body">
-                <!--  Users Container -->
-                    <div class="mb-4">
-                        <button class="btn btn-primary btn-block text-start" type="button" data-bs-toggle="collapse" data-bs-target="#usersListDiv" aria-expanded="true" aria-controls="usersList">
-                            Online
-                        </button>
-                        <!-- Add list of online users here -->
-                        <div class="collapse show mt-3" id="usersListDiv">
-                            <ul class="list-group borderless" id="usersList" >
-                                {% for user in users %}
-                                    <li id="{{ user.username}}" class="list-group-item border-0 grey-out">
-                                        <a href="{% url 'user_home' user.username  %}">{{ user.username }}</a>
-                                    </li>
-                                {% endfor %}
-                                <li class="list-group-item">User 4</li>
-                                <li class="list-group-item">User 5</li>
-                                <li class="list-group-item">User 6</li>
-                            </ul>
+      <div class="row mt-5">
+        <!-- Left column for user profile -->
+        <section class="col-md-3">
+          <div class="chat-card">
+            <div class="card-header text-primary">{{ room_name }}</div>
+            <!-- Users Container -->
+            <div class="card-body mb-4">
+              <button class="btn btn-primary btn-block text-start" type="button" data-bs-toggle="collapse" data-bs-target="#usersListDiv" aria-expanded="true" aria-controls="usersList">Online</button>
+              <!-- Add list of online users here -->
+              <div class="collapse show mt-3" id="usersListDiv">
+                <ul class="list-group" id="usersList">
+                  {% for user in users %}
+                    <div class="row align-items-center mb-3">
+                      <!-- Image column -->
+                      <div class="col-12 col-md-6 order-1 order-md-0">
+                        <div class="profile-picture-md">
+                          <img 
+                            {% if user.photo %}
+                              src="{{ user.photo.url }}"
+                              data-image-src="{{ user.photo.url }}"
+                            {% else %}
+                              src="{% static 'img/default_profile_picture.png' %}"
+                              data-image-src="{% static 'img/default_profile_picture.png' %}"
+                            {% endif %}
+                            alt="{{ user.username }}'s Profile Picture"
+                            class="profile-img" 
+                            data-bs-toggle="modal" 
+                            data-bs-target="#imageModal"
+                            />
                         </div>
-                    </div>
-                </div>
-            </section>
-            
+                      </div>
 
-            <!-- Right column for message container -->
-            <section class="col-md-9 mt-5">
-                <div class="card">
-                    <div class="card-header">Chat Room</div>
-                    <div class="card-body">
-                        <div id="messageContainer" class="container">
-                            {% for message in messages%}
+                      <!-- Username and online status column -->
+                      <div class="col-12 col-md-6 order-0 order-md-1">
+                        <div class="d-flex flex-column justify-content-between align-items-start">
+                          <!-- full_name -->
+                          <a href="{% url 'user_home' user.username %}" class="text-decoration-none">{{ user.get_full_name }}</a>
 
-                                <div class="row">
-                                    <div class="col">
-                                        <div class="message {% if message.user.username == current_user %}current-user-message {% else %}other-user-message {% endif %}">
-                                            <div class="message-content">
-                                                {% if message.user.username != current_user %}
-                                                    <div class="message-username">{{message.user.get_full_name}}</div>
-                                                {% endif %}
-                                                <div class="message-text">{{ message.content}}</div>
-                                            </div>
-                                            <span class="{% if message.user.username == current_user %}time-left{% else %}time-right{% endif %}">{{message.timestamp}}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                          <!-- Online status -->
+                          <div class="d-flex align-items-center gap-2">
+                            <span id="{{ user.username }}_status_badge" class="p-1 bg-secondary border rounded-circle"></span>
+                            <span id="{{ user.username }}_status_text" class="text text-secondary">Offline</span>
+                          </div>
                         </div>
+                      </div>
                     </div>
-                    <div class="card-footer">
-                        <form id="chat-message-form">
-                            <!-- Hidden input fields for chat_room_id and user_id -->
-                            <input type="hidden" id="chat-room-id" value="{{ chat_room_id }}">
-                            <!-- Message input and send button -->
-                            <div class="input-group mb-3">
-                                <input type="text" id="chat-message-input" class="form-control" placeholder="Type your message..." aria-label="Type your message..." aria-describedby="button-addon2">
-                                <button class="btn btn-primary" type="submit">Send</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-            </section>
-        </div>
-    </main>
-    {{ room_name|json_script:"room-name" }}
-    <script>
-        const roomName = JSON.parse(document.getElementById('room-name').textContent);
-        const currentUserName = "{{ current_user}}";
-        const chatSocket = new WebSocket(
-            'wss://'
-            + window.location.host
-            + '/ws/chat/'
-            + roomName
-            + '/'
-        );
+                  {% endfor %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        // Event handler for when the connection is established
-        chatSocket.onopen = function(event) {
-            console.log('WebSocket connection established.');
-            // Send a message to request user data
-            chatSocket.send(JSON.stringify({'action': "get_user_data"}));
-        };
-
-        // Event handler for receiving messages from the server
-        chatSocket.onmessage = function(event) {
-            // Parse the received data (assuming it's JSON)
-            const data = JSON.parse(event.data);
-            console.log("data: ", data)
-            // Check the type of message received
-            if (data.type === 'chat.user_data') {
-                if (data.action === "user_connected") {
-                    // Process the user data
-                    const users = data.users;
-                    console.log(users);
-            
-                    // Your code to remove the 'grey-out' class
-                    users.forEach((user) => {
-                        const userElement = document.getElementById(user);
-                        if (userElement) {
-                            userElement.classList.remove('grey-out');
-                        } else {
-                            console.error(`Element with ID '${user}' not found.`);
-                        }
-                    });
-                } else if (data.action === "user_disconnected") {
-                    // Process the user data
-                    const user = data.user;
-                    console.log(user);
-            
-                    const userElement = document.getElementById(user);
-            
-                    // Add grey layer to the disconnected user
-                    userElement.classList.add('grey-out');
-                }
-            } else if (data.type === 'chat.message') {
-                if (data.action === "send_message") {
-                    // Handle other types of messages
-                    appendMessage(data.message);
-            }
-        }
-        };
-
-        // Function to append a new message to the chat log
-        function appendMessage(message) {
-            const chatLog = document.querySelector('#messageContainer');
-            const messageElement = document.createElement('div');
-            
-            // Check if the message is from the current user
-            const isCurrentUserMessage = message.username === currentUserName;
-            
-            // Add appropriate CSS class based on whether it's the current user's message or not
-            const messageClass = isCurrentUserMessage ? 'current-user-message' : 'other-user-message';
-            const show_name = isCurrentUserMessage ? '' : message.full_name;
-            
-            messageElement.innerHTML = `
-                <div class="row">
+        <!-- Right column for message container -->
+        <section class="col-md-9">
+          <div class="chat-card">
+            <div class="card-header text-primary">{{ room_name }}</div>
+            <div class="card-body">
+              <div id="messageContainer" class="container">
+                {% for message in messages %}
+                  <div class="row">
                     <div class="col">
-                        <div class="message ${messageClass}">
-                            <div class="message-content">
-                                <div class="message-username">${show_name}</div>
-                                <div class="message-text">${message.content}</div>
-                            </div>
-                            <span class="time-left">${message.timestamp}</span>
+                      <div class="message text-break {% if message.user.username == current_user %}current-user-message{% else %}other-user-message{% endif %}">
+                        <div class="message-content">
+                          {% if message.user.username != current_user %}
+                            <div class="message-username">{{ message.user.get_full_name }}</div>
+                          {% endif %}
+                          <div class="message-text">{{ message.content }}</div>
                         </div>
+                        <span class="{% if message.user.username == current_user %}time-left{% else %}time-right{% endif %}">{{ message.timestamp }}</span>
+                      </div>
                     </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="card-footer">
+              <form id="chat-message-form">
+                <!-- Hidden input fields for chat_room_id and user_id -->
+                <input type="hidden" id="chat-room-id" value="{{ chat_room_id }}" />
+                <!-- Message input and send button -->
+                <div class="input-group mb-3">
+                  <div class="my-2 me-3 fs-5">
+                    <label for="file-input" id="file-input-label"><i class="fa fa-paperclip" aria-hidden="true"></i></label>
+                    <input type="file" id="file-input" name="file" class="visually-hidden" />
+                  </div>
+                  <div id="chat-message-input" class="form-control overflow-auto" contenteditable="true" style="max-height: 10em;"  placeholder="Type your message..." aria-label="Type your message..."></div>
+                  <button class="btn btn-primary" type="submit">Send</button>
                 </div>
-            `;
-            
-            chatLog.appendChild(messageElement);
-            // Scroll to the bottom of the chat log
-            chatLog.scrollTop = chatLog.scrollHeight;
-        }
-    
-    
-       // Event handler for errors
-        chatSocket.onerror = function(error) {
-            console.error('WebSocket error:', error);
-        };
+              </form>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
 
-        // Event handler for when the connection is closed
-        chatSocket.onclose = function(event) {
-            console.log('WebSocket connection closed.');
-        };
+    <!-- Enlarged (transparent) Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-transparent border-0">
+          <div class="modal-body text-center">
+            <div class="profile-picture-xl">
+              <img id="enlargedImage"
+                src=""
+                alt="enlarged {{ user.username }}'s Profile Picture"
+                class="profile-img" 
+                />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        document.querySelector('#chat-message-input').focus();
-        document.querySelector('#chat-message-form').onsubmit = function(e) {
-            e.preventDefault();
-            const messageInputDom = document.querySelector('#chat-message-input');
-            const content = messageInputDom.value;
-            const chatRoomId = document.querySelector('#chat-room-id').value;
-
-            // Ensure all required fields are provided
-            if (content && chatRoomId) {
-                const message = {
-                    'chat_room': chatRoomId,
-                    'content': content
-                };
-
-                chatSocket.send(JSON.stringify({
-                    'message': message
-                }));
-                messageInputDom.value = '';
-            } else {
-                console.error("Missing required fields for message creation.");
-            }
-        }
+    {{ room_name|json_script:'room-name' }}
+    <script>
+      const currentUserName = '{{ current_user}}'
     </script>
-</body>
+
+    {% include 'partials/footer.html' %}
+  </body>
 </html>

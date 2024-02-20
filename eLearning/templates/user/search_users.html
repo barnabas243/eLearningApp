@@ -1,14 +1,16 @@
 {% extends '../base/base.html' %}
 {% load static %}
 
-{% block canonical_path %}/dashboard/search/{% endblock %}
+{% block canonical_path %}
+  /dashboard/search/
+{% endblock %}
 
 {% block title %}
-Search User | My eLearning App
+  Search User | My eLearning App
 {% endblock %}
 
 {% block description %}
-Search for student or teacher home pages
+  Search for student or teacher home pages
 {% endblock %}
 
 {% block content %}
@@ -20,13 +22,13 @@ Search for student or teacher home pages
           <div class="card mb-3">
             <div class="row g-0">
               <div class="col-md-2 m-3 profile-picture" style="max-height: 10rem;max-width: 10rem;">
-                <img src="{{ user.photo.url }}" class="profile-img"  alt="User Photo">
+                <img src="{{ user.photo.url }}" class="profile-img" alt="User Photo" />
               </div>
               <div class="col-md-8">
                 <div class="card-body">
                   <h5 class="card-title">{{ user.get_full_name }}</h5>
                   <p class="card-text">
-                    <strong>Username:</strong> {{ user.username }}<br>
+                    <strong>Username:</strong> {{ user.username }}<br />
                     <strong>Email:</strong> {{ user.email }}
                   </p>
                   <a href="{% url 'user_home' user.username %}" class="btn btn-primary">View Profile</a>

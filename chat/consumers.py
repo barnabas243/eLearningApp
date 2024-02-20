@@ -12,18 +12,19 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
-    connected_users = {} # maintain the connected clients without group_channels. 
-    
+    connected_users = {}  # maintain the connected clients without group_channels.
+
     async def connect(self):
         logger.info("Reached the chatconsumer")
 
         # Check if the user is authenticated
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
+        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
         self.room_group_name = f"chat_{self.room_name}"
 
-        logger.debug("User: %s", self.scope['user'])
-        if isinstance(self.scope['user'], AnonymousUser):
+        logger.debug("User: %s", self.scope["user"])
+        if isinstance(self.scope["user"], AnonymousUser):
             logger.error("Anonymous Users are not allowed")
             await self.close(code=4003, reason="Anonymous Users are not allowed")
             return
@@ -48,20 +49,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         logger.debug("Authorized.")
 
-        username = self.scope['user'].username  # Assuming user ID is used as a unique identifier
+        username = self.scope[
+            "user"
+        ].username  # Assuming user ID is used as a unique identifier
         if username not in self.connected_users:
             self.connected_users[username] = []
-            
-        self.connected_users[username].append(self.channel_name)
+
+        self.connected_users[username].append(self.room_group_name)
 
         await self.accept()
 
         # Join the room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
-        
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
     async def disconnect(self, close_code):
         """
@@ -71,9 +70,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
             close_code: The code indicating the reason for the disconnection.
         """
         try:
-            logger.info("Disconnecting WebSocket connection")
+            # Log the disconnection reason code and reason text
+            logger.info(f"Disconnecting WebSocket connection.")
 
-            # Notify online users about the disconnection
+            # Handle specific disconnection scenarios based on the reason code
+            # if close_code == 1000:
+            #     # Normal closure, no action needed
+            #     pass
+            # elif close_code == 1001:
+            #     # Going away, handle as needed
+            #     pass
+            # elif close_code == 1006:
+            #     # Abnormal closure, handle as needed
+            #     pass
+            # else:
+            #     # Other close codes, handle as needed
+            #     pass
+            # # Notify online users about the disconnection
             await self.notify_user_disconnected()
 
             # Remove user from connected_users
@@ -95,10 +108,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
-                    'type': 'chat.user_data',
-                    'action': 'user_disconnected',
-                    'user': self.scope['user'],
-                }
+                    "type": "chat.user_data",
+                    "action": "user_disconnected",
+                    "users": self.scope["user"].username,
+                },
             )
             logger.debug("User disconnected message sent successfully to room group")
         except Exception as e:
@@ -110,9 +123,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         Removes the disconnected user from the connected_users dictionary.
         """
         try:
-            if self.scope['user'] in self.connected_users:
-                self.connected_users[self.scope['user']].remove(self.channel_name)
+            username = self.scope["user"].username
+            # Iterate over the list and remove all occurrences of self.room_group_name
+            while self.room_group_name in self.connected_users[username]:
+                self.connected_users[username].remove(self.room_group_name)
                 logger.debug("User removed from self.connected_users")
+
         except Exception as e:
             logger.error("Failed to remove user from self.connected_users: %s", e)
             # Handle removal failure
@@ -123,14 +139,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         try:
             await self.channel_layer.group_discard(
-                self.room_group_name,
-                self.channel_name
+                self.room_group_name, self.channel_name
             )
             logger.debug("Left the room group successfully")
         except Exception as e:
             logger.error("Failed to leave the room group: %s", e)
             # Handle leave failure
-
 
     async def receive(self, text_data):
         """
@@ -148,23 +162,38 @@ class ChatConsumer(AsyncWebsocketConsumer):
             logger.debug("Received message_data: %s", message_data)
 
             # Check if the message is a request to retrieve user data
-            if 'action' in message_data and message_data['action'] == 'get_user_data':
-                logger.info("Received request to get user data")
-                logger.info("Connected users: %s", self.connected_users)
-                # Retrieve list of connected users
-                users = self.get_connected_users()
-                logger.debug("Connected users: %s", users)
+            if "action" in message_data:
+                if message_data["action"] == "get_user_data":
+                    logger.info("Received request to get user data")
+                    logger.info("Connected users: %s", self.connected_users)
+                    # Retrieve list of connected users
+                    users = self.get_connected_users()
+                    logger.debug("Connected users: %s", users)
 
-                # Send user data to room group
-                await self.send_user_data(users)
+                    # Send user data to room group
+                    await self.send_user_data(users)
+                elif message_data["action"] == "close_user_connection":
+                    logger.info(
+                        "Received request to close %s connection to %s",
+                        self.scope["user"].username,
+                        self.room_group_name,
+                    )
+
+                    # Define the close code based on the reason for disconnection
+                    close_code = int(
+                        message_data["close_code"]
+                    )  # Use CLOSE_NORMAL for a normal closure
+
+                    # Call the disconnect method and pass the close code
+                    await self.disconnect(close_code)
 
             else:
                 # Add the user_id to the message data
-                message_data['message']['user'] = self.scope['user'].id
-                logger.info("Full name: %s", self.scope['user'].get_full_name())
+                message_data["message"]["user"] = self.scope["user"].id
+                logger.info("Full name: %s", self.scope["user"].get_full_name())
                 # Deserialize the message using the MessageSerializer
                 serializer = await database_sync_to_async(MessageSerializer)(
-                    data=message_data['message']
+                    data=message_data["message"]
                 )
 
                 # Check if the serializer data is valid
@@ -174,41 +203,45 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     logger.info("Message data is valid.")
                 else:
                     # Use database_sync_to_async for logging.error since it's a synchronous operation
-                    await database_sync_to_async(logger.error)("Message data is invalid: %s", serializer.errors)
+                    await database_sync_to_async(logger.error)(
+                        "Message data is invalid: %s", serializer.errors
+                    )
                     raise ValueError("Invalid message data")
-                
+
                 # Save the validated message object to the database within a transaction
                 cleaned_message = await database_sync_to_async(serializer.save)()
-                await database_sync_to_async(logger.info)("Message saved to database: %s", cleaned_message.content)
+                await database_sync_to_async(logger.info)(
+                    "Message saved to database: %s", cleaned_message.content
+                )
 
                 # Send the message to the room group
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {
-                        'type': 'chat.message',
-                        'action': "send_message",
-                        'message': {
+                        "type": "chat.message",
+                        "action": "send_message",
+                        "message": {
                             # 'id': cleaned_message.id,
-                            'content': cleaned_message.content,
-                            'username': cleaned_message.user.username,  # Access the associated user's username
-                            'full_name': cleaned_message.user.get_full_name(),
-                            'timestamp': cleaned_message.timestamp.isoformat(),
+                            "content": cleaned_message.content,
+                            "username": cleaned_message.user.username,  # Access the associated user's username
+                            "full_name": cleaned_message.user.get_full_name(),
+                            "timestamp": cleaned_message.timestamp.isoformat(),
                             # Add any other fields you want to send
-                        }
-                    }
+                        },
+                    },
                 )
                 logger.info("Message sent to room group: %s", self.room_group_name)
-                                
+
         except json.JSONDecodeError as e:
             logger.error("Failed to parse JSON message: %s", e)
             # Handle JSON decoding error
             # Example: Send an error response to the client
-            
+
         except ValidationError as e:
             logger.error("Validation error while saving message: %s", e)
             # Handle validation error
             # Example: Send an error response to the client
-            
+
         except Exception as e:
             logger.error("An error occurred while processing the message: %s", e)
             # Handle other exceptions
@@ -220,17 +253,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         try:
             # Retrieve user data from the event
-            users = event['users']
-            action = event['action']
-            
+            users = event["users"]
+            action = event["action"]
+
             logger.info("Sending user data to client: %s", users)
-            
+
             # Send the user data to the client
-            await self.send(text_data=json.dumps({
-                'type': 'chat.user_data',
-                'action': action,
-                'users': users
-            }))
+            await self.send(
+                text_data=json.dumps(
+                    {"type": "chat.user_data", "action": action, "users": users}
+                )
+            )
         except Exception as e:
             logger.error("Error handling 'chat.user_data' event: %s", e)
             # Handle event handling error
@@ -241,17 +274,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         try:
             # Extract message data from the event
-            message = event['message']
-            action = event['action']
-            
+            message = event["message"]
+            action = event["action"]
+
             logger.info("Sending message to client: %s", message)
-            
+
             # Send the message to the client
-            await self.send(text_data=json.dumps({
-                'type': 'chat.message',
-                'action': action,
-                'message': message
-            }))
+            await self.send(
+                text_data=json.dumps(
+                    {"type": "chat.message", "action": action, "message": message}
+                )
+            )
         except Exception as e:
             logger.error("Error handling 'chat.message' event: %s", e)
             # Handle event handling error
@@ -259,19 +292,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def is_user_authorized(self):
         # Get the user associated with the WebSocket connection
-        user = self.scope['user']
-        
+        user = self.scope["user"]
+
         # Check if the user is enrolled in the course
-        is_enrolled = Enrollment.is_student_enrolled(user,self.course)
-        print("is_enrolled: ",is_enrolled)
-        
+        is_enrolled = Enrollment.is_student_enrolled(user, self.course)
+        print("is_enrolled: ", is_enrolled)
+
         # Check if the user is the teacher of the course
         is_teacher = self.course.teacher == user
-        print("is_teacher: ",is_teacher)
-        
+        print("is_teacher: ", is_teacher)
+
         # User is authorized if they are enrolled in the course or if they are the teacher
         return is_enrolled or is_teacher
-    
+
     @database_sync_to_async
     def get_course_for_room(self):
         # Retrieve the course associated with the room
@@ -284,7 +317,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return room.course
         except ChatRoom.DoesNotExist:
             return None
-    
+
     def get_connected_users(self):
         """
         Retrieves list of connected users.
@@ -293,11 +326,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             list: List of connected users.
         """
         users = []
-        for username, channels in self.connected_users.items():
-            if self.channel_name in channels:
+        for username, room_group_name in self.connected_users.items():
+            if self.room_group_name in room_group_name:
                 users.append(username)
         return users
-    
+
     async def send_user_data(self, users):
         """
         Sends user data to the room group.
@@ -308,11 +341,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             await self.channel_layer.group_send(
                 self.room_group_name,
-                {
-                    'type': 'chat.user_data',
-                    'action': 'user_connected',
-                    'users': users
-                }
+                {"type": "chat.user_data", "action": "user_connected", "users": users},
             )
             logger.info("User data sent successfully to room group")
         except Exception as e:
@@ -320,9 +349,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             # Handle send failure
 
     @database_sync_to_async
-    def get_chat_room_instance(self,chat_room_id):
+    def get_chat_room_instance(self, chat_room_id):
         return ChatRoom.objects.get(id=chat_room_id)
-    
+
     @database_sync_to_async
-    def get_user_instance(self,user_id):
+    def get_user_instance(self, user_id):
         return User.objects.get(id=user_id)

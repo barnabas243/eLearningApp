@@ -1,0 +1,66 @@
+.message-container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 10px;
+    overflow: auto; 
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 80%;
+}
+
+.other-user-message {
+    background-color: #f1f0f0;
+    float: left;
+}
+
+.current-user-message {
+    background-color: #d0e7ff;
+    float: right;
+}
+
+.message-username {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+/* Style time text */
+.time-right {
+    float: right;
+    color: #494949;
+}
+
+/* Style time text */
+.time-left {
+    float: left;
+    color: #0672ff;
+}
+
+.chat-card {
+    height: 90vh;
+    /* Make the card take up the entire viewport height */
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-card .card-body {
+    flex: 1;
+    /* Allow the card body to grow to fill available space */
+    overflow-y: auto;
+    /* Enable vertical scrolling */
+}
+
+.chat-card .card-footer {
+    flex-shrink: 0;
+    /* Prevent the footer from growing */
+}
+
+[contenteditable=true]:empty:before{
+    content: attr(placeholder);
+    pointer-events: none;
+    display: block; /* For Firefox */
+  }
+  

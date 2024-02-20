@@ -1,69 +1,71 @@
 {% extends '../base/base.html' %}
 {% load static %}
 
-{% block canonical_path %}/dashboard/{% endblock %}
+{% block canonical_path %}
+  /dashboard/
+{% endblock %}
 
 {% block title %}
-Student Dashboard | {{ user.username }}
+  Student Dashboard | {{ user.username }}
 {% endblock %}
 
 {% block description %}
-This is the dashboard page for the user
+  This is the dashboard page for the user
 {% endblock %}
 
 {% block content %}
-<div class="container text-center">
+  <div class="container text-center">
     {% include 'partials/messages.html' %}
     <h1>Welcome, {{ user.username }}</h1>
 
     <!-- Profile Section -->
     <div class="row mb-5 d-flex align-items-center justify-content-center">
-        {% include 'partials/profile_section.html' %}
+      {% include 'partials/profile_section.html' %}
     </div>
 
     <!-- Registered Courses and Status Updates -->
     <div class="row">
-        <!-- Registered Courses -->
-        <div class="col-md-6">
-            <h2>Registered Courses</h2>
-            <div class="row">
-                {% for course in registered_courses %}
-                <div class="col-md-12 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ course.name }}</h5>
-                            <p class="card-text">{{ course.summary }}</p>
-                            <!-- Only show the "View Course Materials" button if the current user is the student enrolled in the course or the teacher who created the course -->
-                            {% if not current_user %}
-                                <a href="{% url 'official' course.id %}" class="btn btn-primary">View Course Materials</a>
-                            {% endif %}
-                        </div>
-                    </div>
+      <!-- Registered Courses -->
+      <div class="col-md-6">
+        <h2>Registered Courses</h2>
+        <div class="row">
+          {% for course in registered_courses %}
+            <div class="col-md-12 mb-4">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">{{ course.name }}</h5>
+                  <p class="card-text">{{ course.summary }}</p>
+                  <!-- Only show the "View Course Materials" button if the current user is the student enrolled in the course or the teacher who created the course -->
+                  {% if not current_user %}
+                    <a href="{% url 'official' course.id %}" class="btn btn-primary">View Course Materials</a>
+                  {% endif %}
                 </div>
-                {% empty %}
-                <div class="col-md-12">
-                    <p>You haven't enrolled into any courses yet.</p>
-                    <a href="{% url 'courses' %}" class="btn btn-primary">View Courses</a>
-                </div>
-                {% endfor %}
+              </div>
             </div>
+            {% empty %}
+            <div class="col-md-12">
+              <p>You haven't enrolled into any courses yet.</p>
+              <a href="{% url 'courses' %}" class="btn btn-primary">View Courses</a>
+            </div>
+          {% endfor %}
         </div>
+      </div>
 
-        <!-- Status Updates -->
-        <div class="col-md-6">
-            <h2>Latest Status Updates</h2>
-            <div class="status-updates">
-                {% for update in status_updates %}
-                <div class="update">
-                    <p>{{ update.content }}</p>
-                    <p>Posted by: {{ update.user }}</p>
-                    <p>Posted at: {{ update.timestamp|date:"D, d M Y H:i:s" }}</p>
-                </div>
-                {% empty %}
-                <p>No status updates yet.</p>
-                {% endfor %}
+      <!-- Status Updates -->
+      <div class="col-md-6">
+        <h2>Latest Status Updates</h2>
+        <div class="status-updates">
+          {% for update in status_updates %}
+            <div class="update">
+              <p>{{ update.content }}</p>
+              <p>Posted by: {{ update.user }}</p>
+              <p>Posted at: {{ update.timestamp|date:'D, d M Y H:i:s' }}</p>
             </div>
+            {% empty %}
+            <p>No status updates yet.</p>
+          {% endfor %}
         </div>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

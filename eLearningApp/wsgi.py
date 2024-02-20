@@ -14,7 +14,6 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eLearningApp.settings')
 
 # Replace the default Django WSGI application with Gunicorn
-from django.core.wsgi import get_wsgi_application
 from django.conf import settings
 
 # Define the WSGI application callable for Gunicorn

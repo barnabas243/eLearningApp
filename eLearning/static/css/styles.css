@@ -13,75 +13,50 @@ body {
     color: red;
 }
 
+.profile-picture-sm {
+    /* 24px / 16px = 1.5rem */
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.profile-picture-md {
+    /* 128px / 16px = 8rem */
+    width: 8rem;
+    height: 8rem;
+}
+
 .profile-picture {
-    width: 256px; /* Adjust width as needed */
-    height: 256px; /* Adjust height as needed */
-    border-radius: 50%; /* Make the container round */
-    overflow: hidden; /* Hide overflowing content (e.g., if image size exceeds container) */
-    border: 3px solid black; 
-    background-image: linear-gradient(to bottom right, #ff8080, #66b3ff); /*  Gradient border colors */
+    /* 256px / 16px = 16rem */
+    width: 16rem;
+    height: 16rem;
+}
+.profile-picture-xl {
+    /* 512px / 16px = 32rem */
+    width: 32rem;
+    height: 32rem;
+}
+.profile-picture-sm,
+.profile-picture-md,
+.profile-picture,
+.profile-picture-xl {
+    /* Make the container round */
+    border-radius: 50%;
+    /* Hide overflowing content (e.g., if image size exceeds container) */
+    overflow: hidden;
+    border: 3px solid black;
+    /*  Gradient bg colours colors */
+    background-image: linear-gradient(to bottom right, #ff8080, #66b3ff);
 }
 
 .profile-img {
-    width: 100%; /* Ensure the image fills the container */
-    height: 100%; /* Ensure the image fills the container */
-    object-fit: cover; /* Maintain aspect ratio and cover the container */
-    border-radius: 50%; /* Make the image round */
-    border: 5px solid transparent; /* Transparent border to reserve space for the gradient border */
+    width: 100%;
+    /* Ensure the image fills the container */
+    height: 100%;
+    /* Ensure the image fills the container */
+    object-fit: cover;
+    /* Maintain aspect ratio and cover the container */
+    border-radius: 50%;
+    /* Make the image round */
+    border: 5px solid transparent;
+    /* Transparent border to reserve space for the gradient border */
 }
-
-.grey-out {
-    opacity: 0.3; /* Adjust the opacity value as needed */
-    background-color: #ccc; /* Adjust the background color as needed */
-}
-
-.message-container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 10px;
-}
-.message {
-    margin-bottom: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    max-width: 80%;
-}
-.other-user-message {
-    background-color: #f1f0f0;
-    float: left;
-}
-.current-user-message {
-    background-color: #a2cbf7;
-    float: right;
-}
-.message-arrow {
-    width: 0;
-    height: 0;
-    border-style: solid;
-    border-width: 10px;
-}
-/* .other-user-arrow {
-    border-color: transparent #e0e0e0 transparent transparent;
-    margin-right: 10px;
-}
-.current-user-arrow {
-    border-color: transparent transparent transparent #007bff;
-    margin-left: 10px;
-} */
-
-.message-username {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
-
-/* Style time text */
-.time-right {
-    float: right;
-    color: #494949;
-  }
-  
-/* Style time text */
-.time-left {
-    float: left;
-    color: #0672ff;
-  }

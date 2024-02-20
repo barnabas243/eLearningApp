@@ -1,182 +1,185 @@
 {% extends '../base/base.html' %}
 {% load static %}
 
-{% block canonical_path %}/profile/{% endblock %}
+{% block canonical_path %}
+  /profile/
+{% endblock %}
 
 {% block title %}
-Profile | My eLearning App
+  Profile | My eLearning App
 {% endblock %}
 
 {% block description %}
-View and manage your profile information on the eLearning App.
+  View and manage your profile information on the eLearning App.
 {% endblock %}
 
 {% block content %}
-<div class="container">
+  <div class="container">
     <h2 class="mt-4 mb-4">Profile</h2>
     <div class="row">
-        <div class="col-md-6 mb-3">
-            <div class="card">
-                <div class="container d-flex flex-column align-items-center justify-content-center my-2">
-                    <div class="profile-picture">
-                        {% if user.photo %}
-                        <img src="{{ user.photo.url }}" alt="{{ user.username }}'s Profile Picture" class="profile-img">
-                        {% else %}
-                        <img src="{% static 'img/default_profile_picture.png' %}" alt="Default Profile Picture" class="profile-img">
-                        {% endif %}
-                    </div>
-    
-                    <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">Upload Picture</button>
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">Personal Information - {{ user.user_type }}</h5>
-                    <p class="card-text">
-                        <label for="username">Username:</label>
-                        <span id="username" contenteditable="false" >{{ user.username }}</span>
-                        <i class="fas fa-pencil-alt edit-icon" data-field="username"></i>
-                    </p>
-                    <p class="card-text">
-                        <label for="first_name">First Name:</label>
-                        <span id="first_name" contenteditable="false">{{ user.first_name }}</span>
-                        <i class="fas fa-pencil-alt edit-icon" data-field="first_name"></i>
-                    </p>
-                    <p class="card-text">
-                        <label for="last_name">Last Name:</label>
-                        <span id="last_name" contenteditable="false">{{ user.last_name }}</span>
-                        <i class="fas fa-pencil-alt edit-icon" data-field="last_name"></i>
-                    </p>
-                    <p class="card-text">
-                        <label for="email">Email:</label>
-                        <span id="email" contenteditable="false">{{ user.email }}</span>
-                        <i class="fas fa-pencil-alt edit-icon" data-field="email"></i>
-                    </p>
-                    <!-- Placeholder for success or error message -->
-                    <p id="profile-message"></p>
-                </div>
-                
+      <div class="col-md-6 mb-3">
+        <div class="card">
+          <div class="container d-flex flex-column align-items-center justify-content-center my-2">
+            <div class="profile-picture">
+              {% if user.photo %}
+                <img src="{{ user.photo.url }}" alt="{{ user.username }}'s Profile Picture" class="profile-img" />
+              {% else %}
+                <img src="{% static 'img/default_profile_picture.png' %}" alt="Default Profile Picture" class="profile-img" />
+              {% endif %}
             </div>
+
+            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">Upload Picture</button>
+          </div>
+          <div class="card-body">
+            <h5 class="card-title">Personal Information - {{ user.user_type }}</h5>
+            <p class="card-text">
+              <label for="username">Username:</label>
+              <span id="username" contenteditable="false">{{ user.username }}</span>
+              <i class="fas fa-pencil-alt edit-icon" data-field="username"></i>
+            </p>
+            <p class="card-text">
+              <label for="first_name">First Name:</label>
+              <span id="first_name" contenteditable="false">{{ user.first_name }}</span>
+              <i class="fas fa-pencil-alt edit-icon" data-field="first_name"></i>
+            </p>
+            <p class="card-text">
+              <label for="last_name">Last Name:</label>
+              <span id="last_name" contenteditable="false">{{ user.last_name }}</span>
+              <i class="fas fa-pencil-alt edit-icon" data-field="last_name"></i>
+            </p>
+            <p class="card-text">
+              <label for="email">Email:</label>
+              <span id="email" contenteditable="false">{{ user.email }}</span>
+              <i class="fas fa-pencil-alt edit-icon" data-field="email"></i>
+            </p>
+            <!-- Placeholder for success or error message -->
+            <p id="profile-message"></p>
+          </div>
         </div>
-        {% comment %} <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Change Password</h5>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="currentPassword">Current Password</label>
-                            <input type="password" class="form-control" id="currentPassword" name="current_password">
-                        </div>
-                        <div class="form-group">
-                            <label for="newPassword">New Password</label>
-                            <input type="password" class="form-control" id="newPassword" name="new_password">
-                        </div>
-                        <div class="form-group">
-                            <label for="confirmPassword">Confirm New Password</label>
-                            <input type="password" class="form-control" id="confirmPassword" name="confirm_password">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Change Password</button>
-                    </form>
-                </div>
-            </div>
+      </div>
+      {% comment %} <div class="col-md-6">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Change Password</h5>
+            <form method="post">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="currentPassword">Current Password</label>
+                <input type="password" class="form-control" id="currentPassword" name="current_password" />
+              </div>
+              <div class="form-group">
+                <label for="newPassword">New Password</label>
+                <input type="password" class="form-control" id="newPassword" name="new_password" />
+              </div>
+              <div class="form-group">
+                <label for="confirmPassword">Confirm New Password</label>
+                <input type="password" class="form-control" id="confirmPassword" name="confirm_password" />
+              </div>
+              <button type="submit" class="btn btn-primary">Change Password</button>
+            </form>
+          </div>
         </div>
+      </div>
     </div> {% endcomment %}
-</div>
+  </div>
 
-<!-- Upload Picture Modal -->
-<div class="modal fade" id="uploadPictureModal" tabindex="-1" role="dialog" aria-labelledby="uploadPictureModalLabel" aria-hidden="true">
+  <!-- Upload Picture Modal -->
+  <div class="modal fade" id="uploadPictureModal" tabindex="-1" role="dialog" aria-labelledby="uploadPictureModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadPictureModalLabel">Upload Profile Picture</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- Profile picture preview -->
-                <div class="profile-picture mb-3">
-                    <img id="profilePreview" src="{% if user.photo %}{{ user.photo.url }}{% else %}{% static 'img/default_profile_picture.png' %}{% endif %}" alt="{{ user.username }}'s Profile Picture" class="profile-img">
-                </div>
-                <!-- Form for profile picture upload -->
-                <form id="uploadForm" action="{% url 'upload_picture' %}" method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="form-group mb-3">
-                        {{ profileForm}}
-                    </div>
-                    <button type="submit" class="btn btn-primary">Upload</button>
-                </form>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="uploadPictureModalLabel">Upload Profile Picture</h5>
+          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
+        <div class="modal-body">
+          <!-- Profile picture preview -->
+          <div class="profile-picture mb-3">
+            <img id="profilePreview"
+              src="{% if user.photo %}
+                {{ user.photo.url }}
+              {% else %}
+                {% static 'img/default_profile_picture.png' %}
+              {% endif %}"
+              alt="{{ user.username }}'s Profile Picture"
+              class="profile-img" />
+          </div>
+          <!-- Form for profile picture upload -->
+          <form id="uploadForm" action="{% url 'upload_picture' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group mb-3">{{ profileForm }}</div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+          </form>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<script>
-    let oldValue = {};
-    oldValue['username'] = document.getElementById('username').innerText.trim(); 
-    oldValue['first_name'] = document.getElementById('first_name').innerText.trim(); 
-    oldValue['last_name'] = document.getElementById('last_name').innerText.trim(); 
-    oldValue['email'] = document.getElementById('email').innerText.trim(); 
-
+  <script>
+    let oldValue = {}
+    oldValue['username'] = document.getElementById('username').innerText.trim()
+    oldValue['first_name'] = document.getElementById('first_name').innerText.trim()
+    oldValue['last_name'] = document.getElementById('last_name').innerText.trim()
+    oldValue['email'] = document.getElementById('email').innerText.trim()
+    
     const profileMessageSpan = document.getElementById('profile-message')
-
-    document.getElementById('id_photo').addEventListener('change', function(event) {
-        var preview = document.getElementById('profilePreview');
-        var file = this.files[0];
-        var reader = new FileReader();
     
-        reader.onload = function(e) {
-            preview.src = e.target.result;
-        }
+    document.getElementById('id_photo').addEventListener('change', function (event) {
+      var preview = document.getElementById('profilePreview')
+      var file = this.files[0]
+      var reader = new FileReader()
     
-        reader.readAsDataURL(file);
-    });
-
-    document.querySelectorAll('.edit-icon').forEach(icon => {
-        icon.addEventListener('click', function() {
-            const field = this.dataset.field;
-            const span = document.getElementById(field);
-            span.contentEditable = !span.isContentEditable;
-            span.focus();
-        });
-    });
+      reader.onload = function (e) {
+        preview.src = e.target.result
+      }
+    
+      reader.readAsDataURL(file)
+    })
+    
+    document.querySelectorAll('.edit-icon').forEach((icon) => {
+      icon.addEventListener('click', function () {
+        const field = this.dataset.field
+        const span = document.getElementById(field)
+        span.contentEditable = !span.isContentEditable
+        span.focus()
+      })
+    })
     
     // Add event listener for Enter key
-    document.querySelectorAll('.card-text span').forEach(span => {
-        span.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                this.blur(); // Lose focus on Enter key press
+    document.querySelectorAll('.card-text span').forEach((span) => {
+      span.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          this.blur() // Lose focus on Enter key press
+        }
+      })
+    
+      // Add event listener for blur event
+      span.addEventListener('blur', function (event) {
+        const field = this.id
+    
+        const newValue = this.innerText.trim() // Get the new value of the span
+        // Send the PUT request to update the field
+        fetch(`/profile/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ [field]: newValue })
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`Failed to update ${field}`)
             }
-        });
+          })
     
-        // Add event listener for blur event
-        span.addEventListener('blur', function(event) {
-            const field = this.id;
-            
-            const newValue = this.innerText.trim(); // Get the new value of the span
-            // Send the PUT request to update the field
-            fetch(`/profile/`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ [field]: newValue })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to update ${field}`);
-                }
-            })
-    
-            .catch(error => {
-                console.error('Error:', error);
-                // Handle error
-                this.innerText = oldValue[field]; // Rollback span value
-                profileMessageSpan.textContent = error; // Display error message
-            });
-        });
-    }); 
-    
-</script>
+          .catch((error) => {
+            console.error('Error:', error)
+            // Handle error
+            this.innerText = oldValue[field] // Rollback span value
+            profileMessageSpan.textContent = error // Display error message
+          })
+      })
+    })
+  </script>
 {% endblock %}
