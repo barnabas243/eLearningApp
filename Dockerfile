@@ -15,7 +15,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Set the working directory in the container
-WORKDIR /app/
+WORKDIR /eLearningApp/
 
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
@@ -44,7 +44,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 # USER appuser
 
 # Copy the source code into the container.
-COPY . .
+COPY . /eLearningApp/
 
 # Expose the port that the application listens on.
 EXPOSE 8000

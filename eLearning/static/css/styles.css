@@ -14,9 +14,9 @@ body {
 }
 
 .profile-picture-sm {
-    /* 24px / 16px = 1.5rem */
-    width: 1.5rem;
-    height: 1.5rem;
+    /* 80px / 16px = 5rem */
+    width: 5rem;
+    height: 5rem;
 }
 
 .profile-picture-md {
@@ -43,7 +43,7 @@ body {
     border-radius: 50%;
     /* Hide overflowing content (e.g., if image size exceeds container) */
     overflow: hidden;
-    border: 3px solid black;
+    border: 2px solid black;
     /*  Gradient bg colours colors */
     background-image: linear-gradient(to bottom right, #ff8080, #66b3ff);
 }

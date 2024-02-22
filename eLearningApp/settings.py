@@ -25,9 +25,16 @@ SECRET_KEY = 'django-insecure-kt@57@9xcrs*5=c^-%m99!h!_1cq!!9qx&3!a=1(o=i&$i#b98
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000','https://localhost','http://127.0.0.1:8000']
-ALLOWED_HOSTS = ['localhost','127.0.0.1']
-CORS_ORIGIN_WHITELIST = ['http://localhost:8000','https://localhost','http://127.0.0.1']
+# Consolidate similar values
+local_hosts = ['localhost', '127.0.0.1', '192.168.10.134']
+trusted_origins = ['http://localhost:8000', 'https://localhost', 'https://192.168.10.134']
+
+# Set CSRF_TRUSTED_ORIGINS and CORS_ORIGIN_WHITELIST
+CSRF_TRUSTED_ORIGINS = trusted_origins
+CORS_ORIGIN_WHITELIST = trusted_origins + ['http://' + host + ':8000' for host in local_hosts]
+
+# Set ALLOWED_HOSTS
+ALLOWED_HOSTS = local_hosts
 
 # Application definition
 
@@ -39,7 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'ckeditor',
     'ckeditor_uploader',
-    "channels",
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

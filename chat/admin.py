@@ -5,9 +5,9 @@ from .models import ChatRoom, Message
 # Register the ChatRoom model with the Django admin
 @admin.register(ChatRoom)
 class ChatRoomAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "course")
+    list_display = ("id", "chat_name", "course")
     list_filter = ("course",)
-    search_fields = ("name", "course__name")
+    search_fields = ("chat_name", "course__name")
     ordering = ("id",)
 
 
@@ -16,5 +16,5 @@ class ChatRoomAdmin(admin.ModelAdmin):
 class MessageAdmin(admin.ModelAdmin):
     list_display = ("id", "chat_room", "user", "timestamp")
     list_filter = ("chat_room__course",)
-    search_fields = ("content", "user__username", "chat_room__name")
+    search_fields = ("content", "user__username", "chat_room__chat_name")
     ordering = ("-timestamp",)

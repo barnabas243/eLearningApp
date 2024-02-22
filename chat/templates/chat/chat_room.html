@@ -23,16 +23,31 @@
     <!-- Include static files -->
     {% block scripts %}
       <!-- Favicon -->
-      <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" />
+      <link rel="icon" type="image/x-icon" href="{% static 'img/icons/favicon.ico' %}" />
+
 
       <!-- Site Manifest -->
       <link rel="manifest" href="{% static 'site.webmanifest' %}" />
 
-      <!-- Scripts -->
-      <script src="{% static 'scripts/chat.js' %}" defer type="text/javascript"></script>
-      <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer type="text/javascript"></script>
+      <!-- Local Scripts -->
+      <script type="text/javascript" src="{% static 'scripts/chat.js' %}" defer></script>
+      <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>
+      <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
+     
+      <!-- Fontawesome js -->
       <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
-    {% endblock %}
+
+      <!-- autosize.js cdn for textarea -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/autosize.js/3.0.20/autosize.min.js" integrity="sha512-EAEoidLzhKrfVg7qX8xZFEAebhmBMsXrIcI0h7VPx2CyAyFHuDvOAUs9CEATB2Ou2/kuWEDtluEVrQcjXBy9yw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      
+      <!-- dayjs cdn-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js" integrity="sha512-FwNWaxyfy2XlEINoSnZh1JQ5TRRtGow0D6XcmAWmYCRgvqOUTnzCxPc9uF35u5ZEpirk1uhlPVA19tflhvnW1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <!-- dayjs plugin extensions cdn-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/utc.min.js" integrity="sha512-z84O912dDT9nKqvpBnl1tri5IN0j/OEgMzLN1GlkpKLMscs5ZHVu+G2CYtA6dkS0YnOGi3cODt3BOPnYc8Agjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/timezone.min.js" integrity="sha512-jmsGNYDezdyZ+W3bVeZy83kZp/2n5BgWe/0solkveG0vSSrP9XIVTD1tNiM1OqImc4H3OxHfs1uSfVclOU3mWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/relativeTime.min.js" integrity="sha512-MVzDPmm7QZ8PhEiqJXKz/zw2HJuv61waxb8XXuZMMs9b+an3LoqOqhOEt5Nq3LY1e4Ipbbd/e+AWgERdHlVgaA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+      
+       {% endblock %}
 
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
@@ -46,20 +61,19 @@
     <main class="container">
       <div class="row mt-5">
         <!-- Left column for user profile -->
-        <section class="col-md-3">
-          <div class="chat-card">
-            <div class="card-header text-primary">{{ room_name }}</div>
+        <section class="col-md-3 p-0">
+          <div class="chat-card border-start border-bottom">
+            <div class="card-header bg-primary text-center text-light" data-bs-toggle="collapse" data-bs-target="#usersListDiv" aria-expanded="true" aria-controls="usersList">users</div>
             <!-- Users Container -->
             <div class="card-body mb-4">
-              <button class="btn btn-primary btn-block text-start" type="button" data-bs-toggle="collapse" data-bs-target="#usersListDiv" aria-expanded="true" aria-controls="usersList">Online</button>
-              <!-- Add list of online users here -->
+             <!-- Add list of online users here -->
               <div class="collapse show mt-3" id="usersListDiv">
                 <ul class="list-group" id="usersList">
                   {% for user in users %}
                     <div class="row align-items-center mb-3">
                       <!-- Image column -->
-                      <div class="col-12 col-md-6 order-1 order-md-0">
-                        <div class="profile-picture-md">
+                      <div class="col-12 col-md-5 order-1 order-md-0">
+                        <div class="profile-picture-sm">
                           <img 
                             {% if user.photo %}
                               src="{{ user.photo.url }}"
@@ -77,7 +91,7 @@
                       </div>
 
                       <!-- Username and online status column -->
-                      <div class="col-12 col-md-6 order-0 order-md-1">
+                      <div class="col-12 col-md-7 order-0 order-md-1">
                         <div class="d-flex flex-column justify-content-between align-items-start">
                           <!-- full_name -->
                           <a href="{% url 'user_home' user.username %}" class="text-decoration-none">{{ user.get_full_name }}</a>
@@ -98,22 +112,22 @@
         </section>
 
         <!-- Right column for message container -->
-        <section class="col-md-9">
-          <div class="chat-card">
+        <section class="col-md-9 p-0">
+          <div class="chat-card  border">
             <div class="card-header text-primary">{{ room_name }}</div>
             <div class="card-body">
               <div id="messageContainer" class="container">
                 {% for message in messages %}
                   <div class="row">
                     <div class="col">
-                      <div class="message text-break {% if message.user.username == current_user %}current-user-message{% else %}other-user-message{% endif %}">
+                      <div class="message text-break {% if message.user.username == current_user %}current-user-message{% else %}other-user-message{% endif %}" data-message-id="{{message.id}}" data-timestamp="{{ message.timestamp }}">
                         <div class="message-content">
                           {% if message.user.username != current_user %}
                             <div class="message-username">{{ message.user.get_full_name }}</div>
                           {% endif %}
-                          <div class="message-text">{{ message.content }}</div>
+                          <div class="message-text">{{ message.content|urlize }}</div>
                         </div>
-                        <span class="{% if message.user.username == current_user %}time-left{% else %}time-right{% endif %}">{{ message.timestamp }}</span>
+                        <span class="time-right text-{% if message.user.username == current_user %}primary{% else %}other-user-message{% endif %}"></span>
                       </div>
                     </div>
                   </div>
@@ -129,8 +143,9 @@
                   <div class="my-2 me-3 fs-5">
                     <label for="file-input" id="file-input-label"><i class="fa fa-paperclip" aria-hidden="true"></i></label>
                     <input type="file" id="file-input" name="file" class="visually-hidden" />
+                    <input type="hidden" id="fileModalTrigger" data-bs-toggle="modal" data-bs-target="#filePreviewModal">
                   </div>
-                  <div id="chat-message-input" class="form-control overflow-auto" contenteditable="true" style="max-height: 10em;"  placeholder="Type your message..." aria-label="Type your message..."></div>
+                  <textarea autosize id="chat-message-input" class="form-control" rows="1" maxlength="2048" placeholder="Type your message..." aria-label="Type your message..."></textarea>
                   <button class="btn btn-primary" type="submit">Send</button>
                 </div>
               </form>
@@ -157,8 +172,35 @@
       </div>
     </div>
 
+    <!-- Bootstrap modal for displaying file preview and caption -->
+    <div class="modal fade" id="filePreviewModal" tabindex="-1" aria-labelledby="filePreviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title" id="filePreviewModalLabel">File Preview</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <img id="file-preview" src="#" alt="File Preview" class="img-fluid">
+                  <div class="form-group mt-3">
+                      <label for="caption">Caption:</label>
+                      <input type="text" class="form-control" id="caption" placeholder="Enter caption">
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary" id="upload-file">Upload</button>
+              </div>
+          </div>
+      </div>
+    </div>
+
     {{ room_name|json_script:'room-name' }}
     <script>
+      dayjs.extend(window.dayjs_plugin_utc);
+      dayjs.extend(window.dayjs_plugin_timezone);
+      dayjs.extend(window.dayjs_plugin_relativeTime);
+
       const currentUserName = '{{ current_user}}'
     </script>
 

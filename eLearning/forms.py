@@ -4,11 +4,11 @@ from django.contrib.auth.forms import (
     PasswordChangeForm,
     UserCreationForm,
 )
-from .models import User, Course, CourseMaterial  # Import your User model
+from .models import Assignment, AssignmentSubmission, User, Course, CourseMaterial  # Import your User model
 from django.forms.widgets import DateInput
 from datetime import date
 from .tasks import process_image
-
+from ckeditor.widgets import CKEditorWidget
 
 class UserLoginForm(AuthenticationForm):
     """
@@ -124,25 +124,26 @@ class CreateCourseForm(forms.ModelForm):
 
         widgets = {
             "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Enter course name"}
+                attrs={"class": "form-control", "placeholder": "course name"}
             ),
             "summary": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "rows": 3,
-                    "placeholder": "Enter course summary",
+                    "placeholder": "course summary",
                 }
             ),
             "duration_weeks": forms.NumberInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Enter duration in weeks",
+                    "placeholder": "duration in weeks",
                 }
             ),
         }
 
 
 class CourseForm(forms.ModelForm):
+
     class Meta:
         model = Course
         fields = ["name", "summary", "start_date", "description"]
@@ -156,35 +157,62 @@ class CourseForm(forms.ModelForm):
 
         widgets = {
             "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Enter course name"}
+                attrs={"class": "form-control", "placeholder": "course name"}
             ),
             "summary": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "rows": 3,
-                    "placeholder": "Enter course summary",
+                    "placeholder": "course summary",
                 }
             ),
             "start_date": forms.DateInput(
                 attrs={"class": "form-control", "type": "date"}
-            ),
-            "description": forms.NumberInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Enter course description",
-                }
-            ),
+            )
         }
 
 
 class MaterialUploadForm(forms.ModelForm):
-    class Meta:
-        model = CourseMaterial
-        fields = [
-            "material",
-        ]
+    course_id = forms.IntegerField(widget=forms.HiddenInput)
+    week_number = forms.IntegerField(widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Add Bootstrap classes to form fields
         self.fields["material"].widget.attrs.update({"class": "form-control mb-3"})
+        # Allow multiple file selection
+        self.fields['material'].widget.attrs['multiple'] = True 
+
+    class Meta:
+        model = CourseMaterial
+        fields = ["material"]
+
+
+class AssignmentForm(forms.ModelForm):
+    course_id = forms.IntegerField(widget=forms.HiddenInput)
+    week_number = forms.IntegerField(widget=forms.HiddenInput)
+    
+    class Meta:
+        model = Assignment
+        fields = [ 'name',  'duration_days', 'instructions']
+        labels = {
+            'name': 'Name',
+            'instructions': 'Instructions',
+            'duration_days': 'Duration (days)',
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'assignment name'}),
+            'duration_days': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'duration in days'}),
+        }
+
+        
+class AssignmentSubmissionForm(forms.ModelForm):
+    class Meta:
+        model = AssignmentSubmission
+        fields = ['assignment_file']  
+        labels = {
+            'assignment_file': 'File submission',
+        }
+        widgets = {
+            'assignment_file': forms.FileInput(attrs={'class': 'form-control mb-3', 'accept': '.pdf', 'placeholder': 'Select PDF file to submit'}),
+        }

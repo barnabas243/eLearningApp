@@ -8,6 +8,8 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, View, ListView, FormView
 from django.contrib.auth.mixins import UserPassesTestMixin
+
+from chat.models import ChatRoom
 from .forms import *
 from .models import *
 from django.core.exceptions import ObjectDoesNotExist
@@ -24,6 +26,10 @@ from django.db.models import Q, Value
 from django.db.models.functions import Concat
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class LandingView(TemplateView):
@@ -119,7 +125,6 @@ class CoursesView(ListView):
 
 def course_details(request, course_id):
     if request.method == "GET":
-        # Retrieve the course object from the database
         course = get_object_or_404(Course, id=course_id)
 
         # Check if the current user is authenticated and if so, check if they are enrolled in the course
@@ -156,6 +161,48 @@ def enrolmentEmail(user, course):
     send_mail(subject, message, from_email, recipient_list)
 
 
+def materialsUpdateEmail(students, course, week, num_of_materials):
+    subject = f"Materials Update for {course.name}"
+
+    # for loop to send mass emails with personalization
+    for student in students:
+        greeting = f"Dear {student.get_full_name()},\n\n"
+
+        # Introduction
+        intro = (
+            "We hope this message finds you well. As part of our ongoing efforts to support your learning experience, "
+            "we are pleased to inform you about the latest updates in your course materials.\n\n"
+        )
+
+        # Instructions on accessing materials
+        instructions = (
+            f"{num_of_materials} new course materials {'have' if num_of_materials > 1 else 'has'} been added to week '{week}'.\n"
+            f"To access the materials, click on the link below:\n"
+            f"https://localhost/official/{course.id}?week={week}.\n\n"
+        )
+
+        # Call to action
+        call_to_action = (
+            "We encourage you to review the new materials at your earliest convenience to stay updated with the course "
+            "content.\n\n"
+        )
+
+        # Closing statement
+        closing = " Best regards,\nThe Course Management Team"
+
+        # Combine all parts of the message
+        message = greeting + intro + instructions + call_to_action + closing
+
+        # Sender email address (From address)
+        from_email = (
+            "awdtest04@gmail.com"  # Update with the desired sender email address
+        )
+
+        recipient_list = [student.email]
+
+        send_mail(subject, message, from_email, recipient_list)
+
+
 @custom_login_required
 def enroll(request, course_id):
     course = get_object_or_404(Course, id=course_id)
@@ -184,20 +231,27 @@ class DashboardView(View):
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         user = request.user
+        # Now you have the list of registered courses for the user
+        status_updates = StatusUpdate.objects.filter(user=user).order_by("-created_at")[
+            :5
+        ]
+
         if user.user_type == User.STUDENT:
             # Retrieve all enrollments for the student
-            enrollments = Enrollment.objects.filter(student=user)
+            enrollments = Enrollment.objects.filter(student=user,)
             # Extract the courses from enrollments
             registered_courses = [enrollment.course for enrollment in enrollments]
-
-            # Now you have the list of registered courses for the user
-            status_updates = StatusUpdate.objects.filter(user=user).order_by(
-                "-created_at"
-            )[:5]
+            # Query ChatRoom objects for registered courses
+            course_chats = ChatRoom.objects.filter(course__in=registered_courses)
+            # Query Assignment objects for registered courses
+            deadlines = Assignment.objects.filter(course__in=registered_courses)
+            
             context = {
                 "user": user,
                 "registered_courses": registered_courses,
                 "status_updates": status_updates,
+                "course_chats": course_chats,
+                "deadlines": deadlines
             }
             return render(request, "user/student_dashboard.html", context)
         elif user.user_type == User.TEACHER:
@@ -209,6 +263,7 @@ class DashboardView(View):
                 "user": teacher,
                 "draft_courses": draft_courses,
                 "official_courses": official_courses,
+                "status_updates": status_updates,
                 "createCourseForm": CreateCourseForm,  # Assuming CourseForm is your form for creating a new course
             }
 
@@ -219,9 +274,7 @@ class AutocompleteView(View):
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         search_query = request.GET.get("q", "")
-        print("Search query:", search_query)  # Debugging: Print the search query
-
-        User = get_user_model()
+        logger.info("Search query: %s", search_query)  # Debugging: Print the search query
 
         if request.user.user_type == "student":
             # Fetch only students if the current user is a student
@@ -603,32 +656,34 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 @custom_login_required
 @csrf_exempt
 def get_week_materials(request, course_id, week_number):
-    print("get_week_materials: ", request.method)
     if request.method == "GET":
         print("redirecting")
         try:
             # Query the database to retrieve materials for the specified week of the course
-            course = Course.objects.get(id=course_id)
-            course_materials = CourseMaterial.objects.filter(
-                course=course, week_number=week_number
-            )
+            course =  get_object_or_404(Course,id=course_id)
+            course_materials = CourseMaterial.objects.filter(course=course, week_number=week_number)
+            
+            course_assignments = Assignment.objects.filter(course=course, week_number=week_number)
 
-        except CourseMaterial.DoesNotExist:
-            # Handle the case where no materials are found for the specified week
-            return JsonResponse(
-                {"error": "No materials found for the specified week"}, status=404
-            )
-        except Course.DoesNotExist:
-            # Handle the case where the specified course does not exist
-            return JsonResponse({"error": "Course not found"}, status=404)
+            if course_assignments.exists() and request.user.user_type == "student":
+                user_assignments = AssignmentSubmission.objects.filter(assignment__in=course_assignments, student=request.user)
+            else:
+                user_assignments = None    
+                    
         except Exception as e:
             print(e)
             return JsonResponse({"error": "An error occurred"}, status=500)
-
-        print("redirect passed")
+        
+            # Filter assignment submissions for the specific assignment and student
+        
+        initial_data = {
+            'course_id': course_id, 
+            'week_number': week_number
+        }
         # Instantiate the MaterialUploadForm
-        material_upload_form = MaterialUploadForm()
-
+        material_upload_form = MaterialUploadForm(initial=initial_data)
+        assignment_upload_form = AssignmentForm(initial=initial_data)
+        student_assignment_submission_form = AssignmentSubmissionForm()
         # Render the materials template with the materials data and the upload form
         return render(
             request,
@@ -637,11 +692,90 @@ def get_week_materials(request, course_id, week_number):
                 "course_id": course_id,
                 "week_number": week_number,
                 "course_materials": course_materials,
+                "course_assignments": course_assignments,
+                "user_assignments": user_assignments,
                 "materialUploadForm": material_upload_form,
+                "assignmentForm": assignment_upload_form,
                 "teacher": course.teacher == request.user,
             },
         )
 
+@custom_login_required
+def upload_assignment_material(request, course_id, week_number):
+    """
+    View function to handle the upload of assignment materials for a specific course and week.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+        course_id (int): The ID of the course.
+        week_number (int): The week number.
+
+    Returns:
+        HttpResponseRedirect: Redirects to the 'get_week_materials' view.
+
+    """
+    try:
+        if request.method == "POST":
+            # Create a form instance with the POST data
+            logger.info("POST data received: %s", request.POST)
+            
+            course = get_object_or_404(Course, pk=course_id)
+            
+            # Create a form instance with the POST data and course instance
+            form = AssignmentForm(data=request.POST)
+            
+            form.course = course
+            if form.is_valid():
+                logger.info("cleaned form: %s", form.cleaned_data)
+                assignment = form.save(commit=False)  # Don't save to the database yet
+                assignment.week_number = week_number
+                assignment.course_id = course_id  # Set the course_id attribute
+                assignment.save() 
+                
+                messages.success(request, "Assignment material uploaded successfully.")
+                logger.info("Assignment material uploaded successfully for course %s, week %s.", assignment.course.name, assignment.week_number)
+            else:
+                messages.error(request, "Failed to upload assignment material. Please check the form.")
+                logger.error("Failed to upload assignment material for course %s, week %s.", course_id, week_number)
+                
+    except Exception as e:
+        # Log the exception
+        logger.exception("An error occurred while uploading assignment material: %s", str(e))
+        # Add error message for the user
+        messages.error(request, "An error occurred while processing your request. Please try again later.")
+
+    # Redirect to the 'get_week_materials' view for the specified course and week
+    return redirect("get_week_materials", course_id=course_id, week_number=week_number)
+
+@custom_login_required
+def upload_student_submission(request, assignment_id):
+    if request.method == "POST":
+        try:
+            assignment = Assignment.objects.get(id=assignment_id)
+            form = AssignmentSubmissionForm(data=request.POST, files=request.FILES)
+        
+            if form.is_valid():
+                submission = form.save(commit=False)  # Save the form data but don't commit to the database yet
+                submission.assignment = assignment  # Set the assignment
+                submission.student = request.user  # Set the student
+                if 'grade' in form.cleaned_data:
+                    submission.grade = form.cleaned_data['grade']
+                else:
+                    submission.grade = None
+                submission.save()  # Now save the submission to the database
+            else:
+                error_message = "Failed to submit Assignment. Please check the form."
+                error_message += "<br>" + str(form.errors)
+                messages.error(request, error_message)
+                logger.error(error_message)
+        except Assignment.DoesNotExist:
+            error_message = "Assignment does not exist."
+            messages.error(request, error_message)
+            logger.error(error_message)
+            
+        
+    return redirect("get_week_materials", course_id=assignment.course.id, week_number=assignment.week_number)
+    
 
 @custom_login_required
 def delete_course_material(request, course_material_id):
@@ -666,38 +800,114 @@ def delete_course_material(request, course_material_id):
         return HttpResponse(status=405)
 
 
+
 @custom_login_required
 def upload_material(request, course_id, week_number):
-    course = get_object_or_404(Course, id=course_id, teacher=request.user)
+    """
+    View function to handle the upload of materials for a specific course and week.
 
-    if request.method == "POST":
-        form = MaterialUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Save the file to CourseMaterial model
-            material = request.FILES["material"]
-            course_material = CourseMaterial.objects.create(
-                course=course, week_number=week_number, material=material
-            )
-            messages.success(request, "Material uploaded successfully.")
+    Args:
+        request: HTTP request object.
+        course_id: ID of the course for which materials are being uploaded.
+        week_number: Week number for which materials are being uploaded.
 
-            # send notification to all students in the course
+    Returns:
+        Redirects to the 'get_week_materials' view for the specified course and week.
+    """
+
+    try:
+        # Retrieve the course object or return a 404 error if not found
+        course = get_object_or_404(Course, id=course_id, teacher=request.user)
+
+        if request.method == "POST":
+            # Create a form instance with the POST data
+            form = MaterialUploadForm(request.POST, request.FILES)
+
+            # Check if the form is valid
+            if form.is_valid():
+                num_of_materials = 0  # Counter for successfully uploaded materials
+                failed_materials = []  # List to store failed uploads
+
+                # Iterate over each uploaded material
+                for material in request.FILES.getlist("material"):
+                    try:
+                        # Create a CourseMaterial object for the uploaded material
+                        course_material = CourseMaterial.objects.create(
+                            course=course,
+                            week_number=form.cleaned_data["week_number"],
+                            material=material,
+                        )
+                        num_of_materials += 1  # Increment the counter for successful uploads
+                    except Exception as e:
+                        # Log the error and add the failed material to the list
+                        failed_materials.append(
+                            {"material_name": material.name, "error_message": str(e)}
+                        )
+                        logger.error(
+                            f"Failed to upload material: {material.name}. Error: {e}"
+                        )
+
+                # Check if any materials failed to upload
+                if failed_materials:
+                    error_message = (
+                        f"{len(failed_materials)} materials failed to upload:\n"
+                    )
+                    for failed_material in failed_materials:
+                        error_message += f"- {failed_material['material_name']}: {failed_material['error_message']}\n"
+                    messages.error(request, error_message)
+
+                if num_of_materials > 0:
+                    # Send success message for successful uploads
+                    success_message = (
+                        f"{num_of_materials} materials uploaded successfully."
+                    )
+                    messages.success(request, success_message)
+
+                    # Retrieve all enrollments for the specified course
+                    enrollments = Enrollment.objects.filter(course=course)
+
+                    # Retrieve the associated students from the enrollments
+                    students_enrolled = [
+                        enrollment.student for enrollment in enrollments
+                    ]
+
+                    # Send notification to all students in the course
+                    # materialsUpdateEmail(
+                    #     students_enrolled, course, week_number, num_of_materials
+                    # )
+            else:
+                # Form validation failed, add form errors to Django messages
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
+            # Unsupported request method, log a warning
+            logger.warning(
+                "Upload Material view accessed with an unsupported request method."
+            )
+    except Exception as e:
+        # Log any unexpected errors
+        logger.error(f"An unexpected error occurred: {e}")
 
+    # Redirect to the 'get_week_materials' view for the specified course and week
     return redirect("get_week_materials", course_id=course_id, week_number=week_number)
-
 
 @custom_login_required
 def publish_course(request, course_id):
     # Get the course object
     if request.method == "POST":
         course = get_object_or_404(Course, id=course_id)
+        
+        if course.status == "official":
+            messages.error(request, "Course is already published.")
+        
+        else:
+            course.status = "official"
+            course.save()
 
-        # Implement the logic to publish the course (e.g., update the course status)
-        course.status = "official"
-        course.save()
-
-        messages.success(request, "Course published successfully")
+            messages.success(request, "Course published successfully.")
+            
+            # create the chat room for the course
+            ChatRoom.objects.create(course=course, chat_name=course.name)
+            
         return redirect("dashboard")

@@ -12,6 +12,13 @@
   A registration page for the eLearning Application
 {% endblock %}
 
+{% block scripts %}
+  {% load static %}
+  {{ block.super }}
+  <!-- Include custom script here -->
+  <script src="{% static 'scripts/register.js' %}" defer></script>
+{% endblock %}
+
 {% block content %}
   <div class="container">
     <h2>Register</h2>
@@ -22,11 +29,4 @@
       <button type="submit">Register</button>
     </form>
   </div>
-{% endblock %}
-
-{% block scripts %}
-  {% load static %}
-  {{ block.super }}
-  <!-- Include custom script here -->
-  <script src="{% static 'scripts/register.js' %}" defer></script>
 {% endblock %}

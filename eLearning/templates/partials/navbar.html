@@ -13,7 +13,7 @@
                     </li>
                     {% if user.is_authenticated %}
                         <!-- oninput works, eventlistener doesn't-->
-                        <input class="form-control me-2" type="search" oninput='onUserInput()' id="searchInput" name="q" placeholder="Search users" aria-label="Search" list="searchOptions" hx-get="{% url 'autocomplete' %}" hx-swap="innerHTML"hx-trigger="keyup changed delay:500ms" hx-target="#searchOptions">
+                        <input class="form-control me-2" type="search" id="searchInput" name="q" placeholder="Search users" aria-label="Search" list="searchOptions" hx-get="{% url 'autocomplete' %}" hx-swap="innerHTML"hx-trigger="keyup changed delay:500ms" hx-target="#searchOptions">
                         <datalist id="searchOptions"></datalist>
 
    
@@ -44,35 +44,3 @@
         </div>
     </div>
 </nav>
-<script>
-    const searchInput = document.getElementById('searchInput');
-
-    if(searchInput) {
-        // Add event listener for keydown on search input
-        searchInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
-                // Get the value from the search input
-                const searchValue = searchInput.value.trim();
-                if (searchValue !== '') {
-                    // Navigate to the search URL with the search query
-                    window.location.href = `/dashboard/search?q=${encodeURIComponent(searchValue)}`;
-                }
-            }
-        });
-    }
-
-    // go to user home page when clicked on the user in the datalist
-    function onUserInput() {
-        var val = document.getElementById("searchInput").value;
-        var opts = document.getElementById('searchOptions').children;
-        for (var i = 0; i < opts.length; i++) {
-          if (opts[i].value === val) {
-            // An item was selected from the list!
-            // yourCallbackHere()
-            window.location.href = `/dashboard/search/${encodeURIComponent(opts[i].value)}`;
-          //  alert(opts[i].value);
-            break;
-          }
-        }
-      }
-</script>

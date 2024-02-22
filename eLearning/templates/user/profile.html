@@ -13,6 +13,11 @@
   View and manage your profile information on the eLearning App.
 {% endblock %}
 
+{% block script %}
+    {{ block.super }}
+    <script src="{% static 'scripts/profile.js' %}" defer type="text/javascript"></script>
+{% endblock %}
+
 {% block content %}
   <div class="container">
     <h2 class="mt-4 mb-4">Profile</h2>
@@ -113,73 +118,4 @@
       </div>
     </div>
   </div>
-
-  <script>
-    let oldValue = {}
-    oldValue['username'] = document.getElementById('username').innerText.trim()
-    oldValue['first_name'] = document.getElementById('first_name').innerText.trim()
-    oldValue['last_name'] = document.getElementById('last_name').innerText.trim()
-    oldValue['email'] = document.getElementById('email').innerText.trim()
-    
-    const profileMessageSpan = document.getElementById('profile-message')
-    
-    document.getElementById('id_photo').addEventListener('change', function (event) {
-      var preview = document.getElementById('profilePreview')
-      var file = this.files[0]
-      var reader = new FileReader()
-    
-      reader.onload = function (e) {
-        preview.src = e.target.result
-      }
-    
-      reader.readAsDataURL(file)
-    })
-    
-    document.querySelectorAll('.edit-icon').forEach((icon) => {
-      icon.addEventListener('click', function () {
-        const field = this.dataset.field
-        const span = document.getElementById(field)
-        span.contentEditable = !span.isContentEditable
-        span.focus()
-      })
-    })
-    
-    // Add event listener for Enter key
-    document.querySelectorAll('.card-text span').forEach((span) => {
-      span.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter') {
-          event.preventDefault()
-          this.blur() // Lose focus on Enter key press
-        }
-      })
-    
-      // Add event listener for blur event
-      span.addEventListener('blur', function (event) {
-        const field = this.id
-    
-        const newValue = this.innerText.trim() // Get the new value of the span
-        // Send the PUT request to update the field
-        fetch(`/profile/`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}'
-          },
-          body: JSON.stringify({ [field]: newValue })
-        })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`Failed to update ${field}`)
-            }
-          })
-    
-          .catch((error) => {
-            console.error('Error:', error)
-            // Handle error
-            this.innerText = oldValue[field] // Rollback span value
-            profileMessageSpan.textContent = error // Display error message
-          })
-      })
-    })
-  </script>
 {% endblock %}

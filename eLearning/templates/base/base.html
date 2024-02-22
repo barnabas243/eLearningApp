@@ -7,7 +7,7 @@
 
     <title>
       {% block title %}
-        My eLearning App
+        Welcome | eLearning App
       {% endblock %}
     </title>
     <meta name="description"
@@ -15,24 +15,24 @@
       {% endblock %}" />
 
     <link rel="canonical"
-      href="https://localhost{% block canonical_path %}
-      {% endblock %}" />
+      href="https://localhost{% block canonical_path %}/{% endblock %}" />
     {% load static %}
     <!-- Include static files -->
     {% block scripts %}
       <!-- Favicon -->
-      <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}" />
+      <link rel="icon" type="image/x-icon" href="{% static 'img/icons/favicon.ico' %}" />
 
       <!-- Site Manifest -->
       <link rel="manifest" href="{% static 'site.webmanifest' %}" />
 
       <!-- Scripts -->
-      <script src="{% static 'scripts/htmx.min.js' %}" defer type="text/javascript"></script>
-      <script src="https://unpkg.com/htmx.org/dist/ext/response-targets.js" defer type="text/javascript"></script>
+      <script type="text/javascript" src="{% static 'scripts/htmx.min.js' %}" defer></script>
+      <script type="text/javascript" src="https://unpkg.com/htmx.org/dist/ext/response-targets.js" defer></script>
       <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
       <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
-      <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}"></script>
-      <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}"></script>
+      <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}" defer></script>
+      <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}" defer></script>
+      <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>
     {% endblock %}
 
     <!-- CSS -->

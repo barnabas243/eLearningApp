@@ -1,4 +1,8 @@
-const roomName = JSON.parse(document.getElementById('room-name').textContent);
+// ===============================================
+// WebSocket Connection 
+// ===============================================
+const roomName = JSON.parse(document.getElementById('room-name').textContent).toLowerCase().replace(/ /g, '-');
+
 const chatSocket = new WebSocket(
     'wss://'
     + window.location.host
@@ -7,96 +11,177 @@ const chatSocket = new WebSocket(
     + '/'
 );
 
+const chatRoomId = document.querySelector('#chat-room-id').value;
+
+const chatLog = document.querySelector('#messageContainer');
+
+let last_viewed_message;
+
+const scrollConfig = {
+    behavior: 'instant', // Optionally, use smooth scrolling
+    block: 'end',     // Scroll to the top of the element
+}
 // Event handler for when the connection is established
-chatSocket.onopen = function (event) {
+chatSocket.onopen = function (event) { 
     console.log('WebSocket connection established.');
     // Send a message to request user data
-    chatSocket.send(JSON.stringify({ 'action': "get_user_data" }));
+    chatSocket.send(JSON.stringify({ 'action': "get_user_data",'chat_room_id':chatRoomId }));
 };
 
 // Event handler for receiving messages from the server
 chatSocket.onmessage = function (event) {
     // Parse the received data (assuming it's JSON)
     const data = JSON.parse(event.data);
-    console.log("data: ", data)
-    // Check the type of message received
-    if (data.type === 'chat.user_data') {
-        if (data.action === "user_connected") {
-            // Process the user data
-            const users = data.users;
-            console.log(users);
+    console.log("data: ", data);
 
-            // Your code to remove the 'grey-out' class
-            users.forEach((user) => {
-                const userBadgeElement = document.getElementById(`${user}_status_badge`);
-                const userStatusElement = document.getElementById(`${user}_status_text`);
-                if (userBadgeElement && userStatusElement) {
-                    userBadgeElement.classList.remove("bg-secondary");
-                    userBadgeElement.classList.add("bg-success");
-                    userStatusElement.classList.remove("text-secondary");
-                    userStatusElement.classList.add("text-success");
-
-                    userStatusElement.textContent = "Online";
-
-                } else {
-                    console.error(`Element(s) with ID '${user}' not found.`);
-                }
-            });
-        } else if (data.action === "user_disconnected") {
-            // Process the user data
-            const user = data.users;
-            console.log(user);
-
-            const userBadgeElement = document.getElementById(`${user}_status_badge`);
-            const userStatusElement = document.getElementById(`${user}_status_text`);
-            if (userBadgeElement && userStatusElement) {
-                userBadgeElement.classList.remove("bg-success");
-                userBadgeElement.classList.add("bg-secondary");
-                userStatusElement.classList.remove("text-success");
-                userStatusElement.classList.add("text-secondary");
-
-                userStatusElement.textContent = "Offline";
-            }
-        }
-    } else if (data.type === 'chat.message') {
-        if (data.action === "send_message") {
-            // Handle other types of messages
-            appendMessage(data.message);
-        }
+    // Process the received message based on its type
+    switch (data.type) {
+        case 'chat.user_data':
+            handleUserDataMessage(data);
+            break;
+        case 'chat.message':
+            handleMessage(data);
+            break;
+        default:
+            console.error('Unknown message type:', data.type);
     }
 };
 
-// Function to append a new message to the chat log
-function appendMessage(message) {
-    const chatLog = document.querySelector('#messageContainer');
-    const messageElement = document.createElement('div');
-
-    // Check if the message is from the current user
-    const isCurrentUserMessage = message.username === currentUserName;
-
-    // Add appropriate CSS class based on whether it's the current user's message or not
-    const messageClass = isCurrentUserMessage ? 'current-user-message' : 'other-user-message';
-    const show_name = isCurrentUserMessage ? '' : message.full_name;
-
-    messageElement.innerHTML = `
-                <div class="row">
-                    <div class="col">
-                        <div class="message text-break ${messageClass}">
-                            <div class="message-content">
-                                <div class="message-username">${show_name}</div>
-                                <div class="message-text">${message.content}</div>
-                            </div>
-                            <span class="time-left">${message.timestamp}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-    chatLog.appendChild(messageElement);
-    // Scroll to the bottom of the chat log
-    chatLog.scrollTop = chatLog.scrollHeight;
+function scrollToLastViewedMessage(last_viewed_message) {
+    // Find the message element with the matching data-message-id attribute
+    if (!last_viewed_message) {
+        console.error("last_viewed message doesnt exist")
+        return
+    }
+    const messageDiv = document.querySelector(`div[data-message-id="${last_viewed_message}"]`);
+    console.log("messageDiv: ", messageDiv)
+    if (messageDiv) {
+        // Scroll to the top position of the message element
+        messageDiv.scrollIntoView(scrollConfig);
+    } else {
+        console.error(`Message with ID ${last_viewed_message} not found.`);
+    }
+}
+    
+// Function to handle user data messages
+function handleUserDataMessage(data) {
+    // Determine the action in the user data message
+    switch (data.action) {
+        case 'user_last_viewed_message':
+            console.log("reached here")
+            scrollToLastViewedMessage(data.last_viewed_message)
+            break;
+        case 'user_connected':
+            processConnectedUsers(data.users);
+            break;
+        case 'user_disconnected':
+            processDisconnectedUser(data.users);
+            break;
+        default:
+            console.error('Unknown action in user data message:', data.action);
+    }
 }
 
+// Function to process connected users
+function processConnectedUsers(users) {
+    console.log('users: ',users)
+    // Update UI to show users as online
+    users.forEach((user) => {
+        updateUserStatus(user, true);
+    });
+}
+
+// Function to process disconnected user
+function processDisconnectedUser(user) {
+    // Update UI to show user as offline
+    updateUserStatus(user, false);
+}
+
+// Function to update user status in the UI
+function updateUserStatus(user, isOnline) {
+    const userBadgeElement = document.getElementById(`${user}_status_badge`);
+    const userStatusElement = document.getElementById(`${user}_status_text`);
+    if (userBadgeElement && userStatusElement) {
+        if (isOnline) {
+            userBadgeElement.classList.remove("bg-secondary");
+            userBadgeElement.classList.add("bg-success");
+            userStatusElement.classList.remove("text-secondary");
+            userStatusElement.classList.add("text-success");
+            userStatusElement.textContent = "Online";
+        } else {
+            userBadgeElement.classList.remove("bg-success");
+            userBadgeElement.classList.add("bg-secondary");
+            userStatusElement.classList.remove("text-success");
+            userStatusElement.classList.add("text-secondary");
+            userStatusElement.textContent = "Offline";
+        }
+    } else {
+        console.error(`Element(s) with ID '${user}' not found.`);
+    }
+}
+
+// Function to handle message data messages
+function handleMessage(data) {
+    // Handle other types of messages
+    if (data.action === "send_message") {
+        appendMessage(data.message);
+        console.log("data.message.id: ", data.message.id)
+        last_viewed_message = data.message.id
+    } else {
+        console.error('Unknown action in message data:', data.action);
+    }
+}
+
+/**
+ * Append a new message to the chat log.
+ * @param {Object} message - The message object containing details of the message.
+ * @param {number} message.id - The unique identifier of the message.
+ * @param {string} message.content - The content of the message.
+ * @param {string} message.username - The username of the sender.
+ * @param {string} message.full_name - The full name of the sender.
+ * @param {string} message.timestamp - The timestamp of the message.
+ */
+function appendMessage(message) {
+    // Check if the chat log container exists
+    if (!chatLog) {
+        console.error("Chat log container not found.");
+        return;
+    }
+
+    // Create a new message element
+    const messageElement = document.createElement('div');
+
+    // Replace URLs in the message content with anchor tags
+    const urlized_content = replaceURLsWithAnchors(message.content);
+    // Determine if the message is from the current user
+    const isCurrentUserMessage = message.username === currentUserName;
+    // Define CSS class based on message sender
+    const messageClass = isCurrentUserMessage ? 'current-user-message' : 'other-user-message';
+    // Determine the display name of the message sender
+    const show_name = isCurrentUserMessage ? '' : message.full_name;
+    // Convert the message timestamp to local time
+    const localTime = formatISOtoLocalTime(message.timestamp);
+
+    // Construct the HTML structure for the message element
+    messageElement.innerHTML = `
+        <div class="row">
+            <div class="col">
+                <div class="message text-break ${messageClass}" data-message-id="${message.id}" data-timestamp="${message.timestamp}">
+                    <div class="message-content">
+                        <div class="message-username">${show_name}</div>
+                        <div class="message-text">${urlized_content}</div>
+                    </div>
+                    <span class="time-right text-primary">${localTime}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Append the message element to the chat log container
+    chatLog.appendChild(messageElement);
+
+    messageElement.scrollIntoView(scrollConfig);
+}
 
 // Event handler for errors
 chatSocket.onerror = function (error) {
@@ -107,131 +192,71 @@ chatSocket.onerror = function (error) {
 chatSocket.onclose = function (event) {
     console.log('WebSocket connection closed.');
     // Send the close event data to the server
-    chatSocket.send(JSON.stringify({ 'action': "close_connection", 'close_code': event.code }));
+    // chatSocket.send(JSON.stringify(
+    //     {
+    //         'action': "close_user_connection",
+    //         'close_code': event.code,
+    //         'chat_room_id': chatRoomId,
+    //         'last_viewed_message': last_viewed_message
+    //         // get last read message id from the dom
+    //     }));
 };
 
+window.addEventListener('beforeunload', function(event) {
+    // Code to execute before the page is unloaded
+    
+    // Example: Send data via WebSocket
+    chatSocket.send(JSON.stringify({
+        'action': "close_user_connection",
+        'chat_room_id': chatRoomId,
+        'last_viewed_message': last_viewed_message
+    }));
 
+    // Customize the confirmation message if needed
+    //event.returnValue = 'Are you sure you want to leave?';
+});
 
+// ===============================================
+// Messages
+// ===============================================
 const messageInput = document.getElementById('chat-message-input');
+autosize(messageInput); // initialize autosize for textarea
+messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+messageInput.focus();
 
+// format dates with dayjs
+document.querySelectorAll('div[data-timestamp]').forEach((timestamp) => {
+    const ISOtimestamp = timestamp.value;
+    const localTime = formatISOtoLocalTime(ISOtimestamp)
+
+    timestamp.querySelector('span').textContent = localTime;
+});
+
+function formatISOtoLocalTime(timestamp) {
+    const localTime = dayjs.utc(timestamp).tz(dayjs.tz.guess()).format('h:mm a');
+
+    return localTime;
+}
 /**
  * Replaces URLs in the given text with anchor tags.
  * @param {string} text - The text containing URLs.
  * @returns {string} - The text with URLs replaced by anchor tags.
  */
 function replaceURLsWithAnchors(text) {
-    const regex = /(https?:\/\/\S+)\s/g;
+    const regex = /(https?:\/\/\S+)(?:\s|$)/g
 
     return text.replace(regex, function (match) {
-        match.trimEnd()
-        return `<a href="${match}" target="_blank">${match}</a>`;
+        const trimmed = match.trimEnd()
+        return `<a href="${trimmed}" target="_blank">${trimmed}</a>`;
     });
 }
 
 
-/**
- * Get the current cursor position 
- * https://phuoc.ng/collection/html-dom/get-or-set-the-cursor-position-in-a-content-editable-element/
- */
-function getCurrentCursorPosition() {
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-    const clonedRange = range.cloneRange();
-    clonedRange.selectNodeContents(messageInput);
-    clonedRange.setEnd(range.endContainer, range.endOffset);
 
-    const cursorPosition = clonedRange.toString().length;
-
-    return cursorPosition
-}
-/**
- * Set the cursor position 
- */
-function setCursorPosition(targetPosition) {
-    let currentNode = messageInput.firstChild;
-    let charCount = 0;
-
-    // Traverse the DOM nodes to find the correct position
-    while (currentNode && charCount < targetPosition) {
-        if (currentNode.nodeType === Node.TEXT_NODE) {
-            const textLength = currentNode.textContent.length;
-            if (charCount + textLength >= targetPosition) {
-                const range = document.createRange();
-                range.setStart(currentNode, targetPosition - charCount);
-                range.collapse(true);
-
-                const selection = window.getSelection();
-                selection.removeAllRanges();
-                selection.addRange(range);
-                return;
-            }
-            charCount += textLength;
-        }
-
-        // Move to the next node
-        const nextNode = currentNode.nextSibling;
-        if (nextNode) {
-            currentNode = nextNode;
-        } else {
-            currentNode = currentNode.parentNode.nextSibling;
-        }
-    }
-}
-function getLastPos() {
-    // Get the text content of the div
-    const textContent = messageInput.textContent;
-
-    // Return the length of the text content
-    return textContent.length;
-}
-messageInput.addEventListener('input', function () {
-    const text = this.textContent;
-    const originalCursorPos = getCurrentCursorPosition();
-    console.log("Original Cursor Position: ", originalCursorPos);
-
-    // Replace URLs with anchor tags
-    const replacedText = replaceURLsWithAnchors(text);
-    this.innerHTML = replacedText;
-
-    // Calculate adjusted cursor position after replacing URLs
-    const adjustedCursorPos = originalCursorPos + replacedText.length - text.length;
-    console.log("Adjusted Cursor Position: ", adjustedCursorPos);
-    console.log("Original Cursor Position: ", originalCursorPos);
-    console.log("get last position: ",getLastPos())
-    // // Set the cursor position
-    // setCursorPosition(adjustedCursorPos);
-    setCursorPosition(originalCursorPos);
-    this.focus();
-
-});
-messageInput.addEventListener('click', function(){
-    console.log("current pos: ",getCurrentCursorPosition() )
-})
-messageInput.addEventListener('keydown', function (event) {
-    // Check if the Enter key is pressed
-    if (event.key === 'Enter') {
-        // Prevent the default behavior of the Enter key
-        event.preventDefault();
-        // Insert a line break at the current cursor position
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const br = document.createElement('br');
-        range.insertNode(br);
-        range.setStartAfter(br);
-        range.collapse(true);
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        messageInput.scrollTop = messageInput.scrollHeight;
-    }
-});
-
-messageInput.focus();
 document.querySelector('#chat-message-form').onsubmit = function (e) {
     e.preventDefault();
     const messageInputDom = document.querySelector('#chat-message-input');
-    const content = messageInputDom.innerHTML;
-    const chatRoomId = document.querySelector('#chat-room-id').value;
+    const content = messageInputDom.value;
 
     // Ensure all required fields are provided
     if (content && chatRoomId) {
@@ -243,20 +268,68 @@ document.querySelector('#chat-message-form').onsubmit = function (e) {
         chatSocket.send(JSON.stringify({
             'message': message
         }));
-        messageInputDom.innerHTML = '';
+        messageInputDom.value = '';
         messageInputDom.rows = 1;
+
     } else {
         console.error("Missing required fields for message creation.");
     }
 }
 
 
-const imageModal = document.querySelector('#imageModal')
+
+// ===============================================
+// Image Modal Logic
+// ===============================================
+
+// Get the image modal and enlarged image elements
+const imageModal = document.querySelector('#imageModal');
 const enlargedImage = document.querySelector("#enlargedImage");
 
+// Event listener for when the image modal is shown
 imageModal.addEventListener('show.bs.modal', function (e) {
+    // Get the link that triggered the modal
     const link = e.relatedTarget;
+    // Get the image source from the data attribute of the link
     const imgSrc = link.getAttribute("data-image-src");
-
+    // Set the source of the enlarged image in the modal
     enlargedImage.src = imgSrc;
-})
+});
+
+// ===============================================
+// File Input and File Preview Modal Logic
+// ===============================================
+
+// Get the file input, file preview modal, file modal trigger,
+// file preview image, and caption input elements
+const fileInput = document.querySelector('#file-input');
+const filePreviewModal = document.getElementById('filePreviewModal');
+const fileModalTrigger = document.querySelector('#fileModalTrigger');
+const filePreviewImage = document.getElementById('file-preview');
+const captionInput = document.getElementById('caption');
+
+// Event listener for file input change
+fileInput.addEventListener('change', function () {
+    // Get the selected file
+    const file = this.files[0];
+    if (file) {
+        // Read the file and set the file preview image source
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            filePreviewImage.src = event.target.result;
+            // Trigger the file preview modal to show
+            fileModalTrigger.click();
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Event listener for when the file preview modal is hidden
+filePreviewModal.addEventListener('hide.bs.modal', function () {
+    // Reset file input value
+    fileInput.value = '';
+    // Reset caption input
+    captionInput.value = '';
+    // Reset file preview image source
+    filePreviewImage.src = '#';
+});

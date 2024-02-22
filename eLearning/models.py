@@ -3,11 +3,11 @@ from django.contrib.auth.models import AbstractUser, Group
 from django.db import models
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-from datetime import date, timezone
+from django.utils import timezone
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 from django.db.models.signals import post_save
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
 
 
 def profile_picture_upload_path(instance, filename):
@@ -93,7 +93,7 @@ class User(AbstractUser):
         Returns:
             int: The age of the user.
         """
-        today = date.today()
+        today = timezone.now()
 
         try:
             birthday = self.date_of_birth.replace(year=today.year)
@@ -195,11 +195,13 @@ class Course(models.Model):
     def __str__(self):
         return self.name
 
-    def end_date(self):
-        # Calculate end date based on course duration
-        duration = self.duration_weeks
-        return self.start_date + timezone.timedelta(weeks=duration)
-
+    def datetime_from_start_date(self, week_number):
+        if self.start_date:
+            return self.start_date + timezone.timedelta(weeks=week_number)
+        else:
+            # Handle the case where start_date is None
+            return None
+    
     class Meta:
         verbose_name = _("Course")
         verbose_name_plural = _("Courses")
@@ -265,25 +267,58 @@ class Assignment(models.Model):
     Attributes:
         course (ForeignKey): The course to which the assignment belongs.
         name (str): The name of the assignment.
-        description (TextField): Description of the assignment.
+        instructions (RichTextField): Description of the assignment.
+        week_number (PositiveIntegerField): The week number associated with the assignment.
         duration_days (PositiveIntegerField): The duration of the assignment in days.
-        is_submitted (bool): Indicates if the assignment is submitted or not.
-
     """
 
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="assignments"
     )
     name = models.CharField(max_length=100)
-    description = models.TextField()
-    duration_days = models.PositiveIntegerField(_("Duration (days)"))
+    instructions = RichTextField()
+    week_number = models.PositiveIntegerField(_("Week Number"), validators=[MinValueValidator(1)])
+    duration_days = models.PositiveIntegerField(_("Duration (days)"), validators=[MinValueValidator(1)])
 
     def __str__(self):
         return self.name
 
+    def get_assignment_deadline(self):
+        """
+        Calculate the deadline for the assignment based on the course start date and assignment duration.
+        """
+        return self.course.datetime_from_start_date(self.week_number) + timezone.timedelta(days=self.duration_days)
+
+    @staticmethod
+    def get_materials(course, week_number):
+        """
+        Retrieve materials related to this assignment for the given course and week number.
+        """
+        return CourseMaterial.objects.filter(course=course, week_number=week_number)
+
     class Meta:
         verbose_name = _("Assignment")
         verbose_name_plural = _("Assignments")
+        
+def assignment_upload_path(instance, filename):
+    """
+    Function to determine the upload path for material files.
+
+    Args:
+        instance: The CourseMaterial instance being uploaded.
+        filename (str): The original filename of the file being uploaded.
+
+    Returns:
+        str: The upload path for the file.
+
+    """
+    # Construct the upload path based on the course name
+    course_id = instance.assignment.course.id
+    course_name = slugify(
+        instance.assignment.course.name
+    )  # Convert course name to a valid filename
+    week_number = instance.assignment.week_number
+    return os.path.join("assignments_submission", f"{course_id}-{course_name}",f"week {week_number}", filename)
 
 
 class AssignmentSubmission(models.Model):
@@ -294,6 +329,9 @@ class AssignmentSubmission(models.Model):
         assignment (ForeignKey): The assignment that was submitted.
         student (ForeignKey): The student who submitted the assignment.
         submitted_at (DateTimeField): The datetime when the assignment was submitted.
+        assignment_file (FileField): The file containing the assignment submission.
+        teacher_comments (TextField): Comments provided by the teacher for the submission.
+        grade (DecimalField): The grade received for the submission.
 
     """
 
@@ -304,6 +342,16 @@ class AssignmentSubmission(models.Model):
         User, on_delete=models.CASCADE, related_name="assignment_submissions"
     )
     submitted_at = models.DateTimeField(auto_now_add=True)
+    assignment_file = models.FileField(upload_to=assignment_upload_path, validators=[FileExtensionValidator(['pdf'])])
+    teacher_comments = models.TextField(null=True, blank=True)
+    grade = models.DecimalField(
+        _("Grade"), 
+        max_digits=5, 
+        decimal_places=2, 
+        validators=[MinValueValidator(0), MaxValueValidator(100),],
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"{self.student} - {self.assignment}"
@@ -311,8 +359,8 @@ class AssignmentSubmission(models.Model):
     class Meta:
         verbose_name = _("Assignment Submission")
         verbose_name_plural = _("Assignment Submissions")
-
-
+        
+        
 class Feedback(models.Model):
     """
     Model representing feedback for a course.

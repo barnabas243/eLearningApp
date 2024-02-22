@@ -1,13 +1,24 @@
+// ===============================================
+// Input Fields
+// ===============================================
+
+// Define input fields
 const emailInput = document.getElementById('id_email');
 const firstNameInput = document.getElementById('id_first_name');
 const lastNameInput = document.getElementById('id_last_name');
 const usernameInput = document.getElementById('id_username');
-const usernameHelpText = document.getElementById('id_username_helptext');
 const password1Input = document.getElementById('id_password1');
-const password1HelpText = document.getElementById('id_password1_helptext');
 const password2Input = document.getElementById('id_password2');
+
+// Define help text elements
+const usernameHelpText = document.getElementById('id_username_helptext');
+const password1HelpText = document.getElementById('id_password1_helptext');
 const password2HelpText = document.getElementById('id_password2_helptext');
 const password1Requirements = document.querySelectorAll('#id_password1_helptext li');
+
+// ===============================================
+// Validation Functions
+// ===============================================
 
 // Function to check if email is valid
 function validateEmail() {
@@ -72,7 +83,7 @@ function validatePasswordRequirements() {
     }
 }
 
-
+// Function to calculate Levenshtein distance between two strings
 function levenshteinDistance(str1, str2) {
     const len1 = str1.length;
     const len2 = str2.length;
@@ -101,6 +112,7 @@ function levenshteinDistance(str1, str2) {
     return dp[len1][len2];
 }
 
+// Function to calculate similarity ratio between two strings
 function calculateSimilarity(str1, str2) {
     const distance = levenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
     const maxLength = Math.max(str1.length, str2.length);
@@ -117,14 +129,17 @@ function validateConfirmPassword() {
     }
 }
 
-// Event listeners for input fields
-usernameInput.addEventListener('input', function () {
-    if (/^[\w.@+-]{8,50}/.test(usernameInput.value)) {
-        usernameHelpText.style.display = 'none';
-    } else {
-        usernameHelpText.style.display = 'block';
-    }
-});
+// Function to validate username input and hide/show help text
+function validateUsername() {
+    const isValid = /^[\w.@+-]{8,50}/.test(usernameInput.value);
+    usernameHelpText.style.display = isValid ? 'none' : 'block';
+}
 
+// ===============================================
+// Event Listeners
+// ===============================================
+
+// Event listeners for input fields
+usernameInput.addEventListener('input', validateUsername);
 password1Input.addEventListener('input', validatePasswordRequirements);
 password2Input.addEventListener('input', validateConfirmPassword);

@@ -1,12 +1,18 @@
 {% extends '../base/base.html' %}
 {% load static %}
 
+
 {% block title %}
 {{ course.name }} | eLearning App
 {% endblock %}
 
 {% block description %}
 This is the course page for students to view course materials and for teacher to edit 
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'scripts/course.js' %}" defer type="text/javascript"></script>
 {% endblock %}
 
 {% block content %}
@@ -120,95 +126,6 @@ This is the course page for students to view course materials and for teacher to
                 </div>
             </div>
         </div>
-        
-        <!-- Icons -->
-        <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
-            <!-- Red X icon -->
-            <symbol id="red-x-icon" viewBox="0 0 16 16">
-                <path fill="#ff0000" d="M8,6.586L5.414,4L4,5.414L6.586,8L4,10.586L5.414,12L8,9.414L10.586,12L12,10.586L9.414,8L12,5.414L10.586,4L8,6.586Z"></path>
-            </symbol>
-        </svg>
     </div>
 </div>
-
-<!-- Script to load materials for the first week by default -->
-<script>
-    // Reload the page to load materials for the first week by default
-    window.onload = function() {
-        document.querySelector('a[hx-get]').click();
-        
-    };
-
-    const saveBtn = document.getElementById('saveBtn')
-
-    if (saveBtn) {
-        document.getElementById('saveBtn').addEventListener('click', function() {
-            // Get the CKEditor instance
-            var editor = CKEDITOR.instances.id_description;
-                    
-            // Get the CKEditor content
-            var content = editor.getData();
-                    
-            // Set the content to a hidden input field
-            document.getElementById('id_description').value = content;
-        });
-    }
-
-
-    // Define the click event listener function
-    function weekLinkClickHandler() {
-        // Remove active class from all <a> elements
-        weekLinks.forEach(function(link) {
-            link.classList.remove('active');
-        });
-
-        // Add active class to the clicked <a> element
-        this.classList.add('active');
-    }
-
-    // Get all the <a> elements inside the week-list
-    let weekLinks = document.querySelectorAll('#week-list a');
-
-    // Function to attach or detach event listeners
-    function attachWeekEventListeners(option) {
-        // add/remove click event listener to each <a> element
-        weekLinks.forEach(function(weekLink) {
-            if (option === "add") {
-                // Add the click event listener
-                weekLink.addEventListener('click', weekLinkClickHandler);
-            } else if (option === "remove") {
-                // Remove the click event listener
-                weekLink.removeEventListener('click', weekLinkClickHandler);
-            }
-        });
-    }
-
-    // Initial attachment of event listeners
-    attachWeekEventListeners("add");
-
-    // Button click event to remove and re-add event listeners
-    const weekBtns = document.querySelectorAll('.wkBtn');
-
-    weekBtns.forEach(function(wkBtn) {
-        wkBtn.addEventListener('click', function() {
-            // Remove event listeners
-            attachWeekEventListeners("remove");
-    
-            // Reset active state
-            weekLinks.forEach(function(link) {
-                link.classList.remove('active');
-            });
-    
-            // Re-add event listeners after a short delay to allow time for htmx to update the DOM
-            setTimeout(function() {
-                // Refresh the weekLinks list
-                weekLinks = document.querySelectorAll('#week-list a');
-    
-                // Re-add event listeners
-                attachWeekEventListeners("add");
-            }, 100); // Adjust the delay as needed
-        });
-    });
-</script>
-
 {% endblock %}
