@@ -1,0 +1,41 @@
+{% load static %}
+
+<ul class="list-group" id="usersList">
+    {% for user in users %}
+        <div data-username="{{ user.username }}" class="row align-items-center mb-3">
+            <!-- Image column -->
+            <div class="col-12 col-md-5 col-lg-4 order-1 order-md-0">
+                <div class="profile-picture-sm">
+                    <img 
+                        {% if user.photo %}
+                            src="{{ user.photo.url }}"
+                            data-image-src="{{ user.photo.url }}"
+                        {% else %}
+                            src="{% static 'img/default_profile_picture.png' %}"
+                            data-image-src="{% static 'img/default_profile_picture.png' %}"
+                        {% endif %}
+                        alt="{{ user.username }}'s Profile Picture"
+                        class="profile-img" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#imageModal"
+                    />
+                </div>
+            </div>
+
+            <!-- Username and online status column -->
+            <div class="col-12 col-md-8 order-0 order-md-1">
+                <div class="d-flex flex-column justify-content-between align-items-start">
+                    <!-- full_name -->
+                    <a href="{% url 'user_home' user.username %}" class="text-decoration-none">{{ user.get_full_name }}</a>
+                    <span class="fw-bold fst-italic"> {{user.user_type}}</span>
+
+                    <!-- Online status -->
+                    <div class="d-flex align-items-center gap-2" data-last-online="{{user.last_online_timestamp|date:"c"  }}">
+                    <span id="{{ user.username }}_status_badge" class="p-1 bg-secondary border rounded-circle"></span>
+                    <span id="{{ user.username }}_status_text" class="text text-secondary">Offline</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</ul>

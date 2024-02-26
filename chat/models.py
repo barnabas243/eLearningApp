@@ -1,6 +1,6 @@
 from django.db import models
 from eLearning.models import Course, User
-
+from django.utils import timezone
 class ChatRoom(models.Model):
     """
     Model to represent a chat room associated with a course.
@@ -59,4 +59,4 @@ class ChatMembership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
     last_viewed_message = models.ForeignKey(Message,on_delete=models.CASCADE, null=True, blank=True)
-    last_online_timestamp = models.DateTimeField(auto_now_add=True, help_text='The timestamp when the user disconnects')
+    last_online_timestamp = models.DateTimeField(default=timezone.now, help_text='The timestamp when the user disconnects')

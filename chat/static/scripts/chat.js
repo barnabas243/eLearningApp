@@ -22,10 +22,10 @@ const scrollConfig = {
     block: 'end',     // Scroll to the top of the element
 }
 // Event handler for when the connection is established
-chatSocket.onopen = function (event) { 
+chatSocket.onopen = function (event) {
     console.log('WebSocket connection established.');
     // Send a message to request user data
-    chatSocket.send(JSON.stringify({ 'action': "get_user_data",'chat_room_id':chatRoomId }));
+    chatSocket.send(JSON.stringify({ 'action': "get_user_data", 'chat_room_id': chatRoomId }));
 };
 
 // Event handler for receiving messages from the server
@@ -47,22 +47,25 @@ chatSocket.onmessage = function (event) {
     }
 };
 
-function scrollToLastViewedMessage(last_viewed_message) {
+function scrollToLastViewedMessage(message_id) {
     // Find the message element with the matching data-message-id attribute
-    if (!last_viewed_message) {
+    if (!message_id) {
         console.error("last_viewed message doesnt exist")
         return
     }
-    const messageDiv = document.querySelector(`div[data-message-id="${last_viewed_message}"]`);
+    const messageDiv = document.querySelector(`div[data-message-id="${message_id}"]`);
     console.log("messageDiv: ", messageDiv)
+
     if (messageDiv) {
         // Scroll to the top position of the message element
         messageDiv.scrollIntoView(scrollConfig);
+
+        last_viewed_message = message_id
     } else {
-        console.error(`Message with ID ${last_viewed_message} not found.`);
+        console.error(`Message with ID ${message_id} not found.`);
     }
 }
-    
+
 // Function to handle user data messages
 function handleUserDataMessage(data) {
     // Determine the action in the user data message
@@ -81,10 +84,9 @@ function handleUserDataMessage(data) {
             console.error('Unknown action in user data message:', data.action);
     }
 }
-
 // Function to process connected users
 function processConnectedUsers(users) {
-    console.log('users: ',users)
+    console.log('Connected users:', users);
     // Update UI to show users as online
     users.forEach((user) => {
         updateUserStatus(user, true);
@@ -150,8 +152,28 @@ function appendMessage(message) {
         return;
     }
 
-    // Create a new message element
-    const messageElement = document.createElement('div');
+
+    // Convert the message timestamp to local time
+    const localTime = formatISOtoLocalTime(message.timestamp);
+
+    // Find the last message element with a data-timestamp attribute
+    const lastMessage = chatLog.querySelector('div[data-timestamp]:last-child');
+
+    // Check if the chat log is empty or if the new message has a different date from the last message
+    if (!lastMessage || new Date(formatISOtoLocalTime(lastMessage.dataset.timestamp)).toDateString() !== new Date(localTime).toDateString()) {
+        // Create a date header
+        const dateHeader = document.createElement('div');
+        dateHeader.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'my-3');
+        dateHeader.innerHTML = `
+            <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
+            <div class="message-date-header">
+                <span class="badge bg-light text-secondary">${localTime.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+            <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
+        `;
+        // Append the date header to the chat log
+        chatLog.appendChild(dateHeader);
+    }
 
     // Replace URLs in the message content with anchor tags
     const urlized_content = replaceURLsWithAnchors(message.content);
@@ -161,29 +183,31 @@ function appendMessage(message) {
     const messageClass = isCurrentUserMessage ? 'current-user-message' : 'other-user-message';
     // Determine the display name of the message sender
     const show_name = isCurrentUserMessage ? '' : message.full_name;
-    // Convert the message timestamp to local time
-    const localTime = formatISOtoLocalTime(message.timestamp);
 
     // Construct the HTML structure for the message element
+    
+    // Create a new message element
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('row');
     messageElement.innerHTML = `
-        <div class="row">
-            <div class="col">
-                <div class="message text-break ${messageClass}" data-message-id="${message.id}" data-timestamp="${message.timestamp}">
-                    <div class="message-content">
-                        <div class="message-username">${show_name}</div>
-                        <div class="message-text">${urlized_content}</div>
-                    </div>
-                    <span class="time-right text-primary">${localTime}</span>
+        <div class="col">
+            <div class="message text-break ${messageClass}" data-message-id="${message.id}" data-timestamp="${message.timestamp}">
+                <div class="message-content">
+                    <div class="message-username">${show_name}</div>
+                    <div class="message-text">${urlized_content}</div>
                 </div>
+                <span class="time-right text-primary">${localTime.toLocaleString()}</span>
             </div>
         </div>
     `;
 
-    // Append the message element to the chat log container
+    // Append the message element to the chat log
     chatLog.appendChild(messageElement);
 
+    // Scroll to the newly appended message
     messageElement.scrollIntoView(scrollConfig);
 }
+
 
 // Event handler for errors
 chatSocket.onerror = function (error) {
@@ -204,9 +228,9 @@ chatSocket.onclose = function (event) {
     //     }));
 };
 
-window.addEventListener('beforeunload', function(event) {
+window.addEventListener('beforeunload', function (event) {
     // Code to execute before the page is unloaded
-    
+    console.log()
     // Example: Send data via WebSocket
     chatSocket.send(JSON.stringify({
         'action': "close_user_connection",
@@ -219,7 +243,6 @@ window.addEventListener('beforeunload', function(event) {
 });
 
 
-
 // Function to update last online status
 function updateLastOnlineStatus() {
     const users_last_online = document.querySelectorAll('div[data-last-online]');
@@ -229,7 +252,7 @@ function updateLastOnlineStatus() {
             const last_online_span = user.querySelectorAll('span')[1];
 
             if (last_online_span && last_online_span.classList.contains('text-secondary')) {
-                const timestamp = user.getAttribute('data-last-online');
+                const timestamp = user.dataset.lastOnline;
                 console.log(timestamp)
                 if (timestamp) {
                     const time_since_timestamp = dayjs.utc(timestamp).from(dayjs())
@@ -247,7 +270,23 @@ updateLastOnlineStatus();
 // Polling function to update last online status every 1 minute
 setInterval(updateLastOnlineStatus, 60000); // 60000 milliseconds = 1 minute
 
+const chatUserSearchInput = document.getElementById('chatUserSearchInput');
+const usersList = document.getElementById('usersList');
 
+chatUserSearchInput.addEventListener('input', function () {
+    const searchTerm = this.value.toLowerCase();
+    const users = usersList.querySelectorAll('div[data-username]');
+
+    users.forEach(function (user) {
+        user.querySelector('a')
+        const full_name = user.querySelector('a').textContent.toLowerCase();
+        if (full_name.includes(searchTerm)) {
+            user.classList.remove('visually-hidden');
+        } else {
+            user.classList.add('visually-hidden');
+        }
+    });
+});
 // ===============================================
 // Messages
 // ===============================================
@@ -258,17 +297,20 @@ messageInput.focus();
 
 // format dates with dayjs
 document.querySelectorAll('div[data-timestamp]').forEach((timestamp) => {
-    const ISOtimestamp = timestamp.value;
+    const ISOtimestamp = timestamp.dataset.timestamp;
+    console.log("ISOtimestamp: ", ISOtimestamp)
     const localTime = formatISOtoLocalTime(ISOtimestamp)
+    console.log("localTime: ",localTime)
 
     timestamp.querySelector('span').textContent = localTime;
 });
 
 function formatISOtoLocalTime(timestamp) {
-    const localTime = dayjs.utc(timestamp).tz(dayjs.tz.guess()).format('h:mm a');
-
+    const localTime = dayjs(timestamp).tz(dayjs.tz.guess()).format('h:mm a');
+    
     return localTime;
 }
+
 /**
  * Replaces URLs in the given text with anchor tags.
  * @param {string} text - The text containing URLs.
@@ -323,7 +365,7 @@ imageModal.addEventListener('show.bs.modal', function (e) {
     // Get the link that triggered the modal
     const link = e.relatedTarget;
     // Get the image source from the data attribute of the link
-    const imgSrc = link.getAttribute("data-image-src");
+    const imgSrc = link.dataset.imageSrc;
     // Set the source of the enlarged image in the modal
     enlargedImage.src = imgSrc;
 });

@@ -1,0 +1,27 @@
+{% if message_blocks %}
+    {# Render message blocks with date headers #}
+    {% for block in message_blocks %}
+        <div class="d-flex justify-content-center align-items-center my-3">
+            <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
+            <div class="message-date-header">
+                <span class="badge bg-light text-secondary">{{ block.date|date:"F j, Y" }}</span>
+            </div>
+            <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
+        </div>
+        {% for message in block.messages %}
+            <div class="row">
+                <div class="col">
+                    <div class="message text-break {% if message.user.username == current_user %}current-user-message{% else %}other-user-message{% endif %}" data-message-id="{{ message.id }}" data-timestamp="{{ message.timestamp|date:"c" }}">
+                        <div class="message-content">
+                            {% if message.user.username != current_user %}
+                                <div class="message-username">{{ message.user.get_full_name }}</div>
+                            {% endif %}
+                            <div class="message-text">{{ message.content|urlize }}</div>
+                        </div>
+                        <span class="time-right text-{% if message.user.username == current_user %}primary{% else %}other-user-message{% endif %}">{{ message.timestamp|date:"h:mm A" }}</span>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endif %}

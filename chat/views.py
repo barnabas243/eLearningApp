@@ -5,7 +5,11 @@ from eLearning.decorators import custom_login_required
 from django.contrib import messages
 from django.db.models import OuterRef, F, Subquery, Value
 from django.db.models.functions import Coalesce
+from django.db.models.functions import Concat
+from django.utils import timezone
+import logging
 
+logger = logging.getLogger(__name__)
 
 def get_chat_rooms_for_user(user):
     # Retrieve courses where the user is either enrolled or teaching
@@ -83,6 +87,28 @@ def room(request, room_name):
             last_online_timestamp=Coalesce(Subquery(last_online_subquery), F('last_login'), Value(None))
         )
 
+                # Initialize a dictionary to store message blocks
+
+        message_blocks = {}
+
+        for message in chat_room.messages.all():
+            # Localize the timestamp to the current timezone
+            localized_timestamp = timezone.localtime(message.timestamp)
+            
+            # Extract the date component without the time
+            message_date = localized_timestamp.date()
+            
+            # Check if a message block already exists for the current date
+            if message_date in message_blocks:
+                message_blocks[message_date]['messages'].append(message)
+            else:
+                # Create a new message block for the current date
+                message_blocks[message_date] = {'date': message_date, 'messages': [message]}
+                
+        # Convert the dictionary to a list of message blocks
+        message_blocks = list(message_blocks.values())
+
+        logger.info("message_blocks: %s",message_blocks)
         return render(
             request,
             "chat/partials/chat_room.html",
@@ -92,10 +118,28 @@ def room(request, room_name):
                 "course": course,
                 "current_user": request.user.username,
                 "users": users_with_last_online,
-                "messages": chat_room.messages.all(),
+                "messages": message_blocks,
             },
         )
     else:
         # Redirect the user to the index page with an error message
         messages.error(request, "You are not authorized to enter the chatroom.")
         return redirect("/")
+
+def search_users(request, chat_room_id):
+    search_query = request.GET.get('chatUserSearchInput', '')
+    
+    chat_room = ChatRoom.objects.filter(id=chat_room_id).first()  # Use first() to get the first object in the queryset
+
+    if chat_room:
+        users = User.objects.filter(
+            enrolment__course=chat_room.course
+        ) | User.objects.filter(pk=chat_room.course.teacher_id)
+        
+        # Filter users based on the search query
+        filtered_users = users.annotate(
+            full_name=Concat("first_name", Value(" "), "last_name")
+        ).filter(full_name__icontains=search_query)
+        
+    # Render a partial template with the filtered user data
+    return render(request, 'chat/partials/user.html', {'users': filtered_users})

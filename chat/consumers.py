@@ -1,8 +1,9 @@
-from datetime import timezone
+from django.utils import timezone
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from chat.serializers import MessageSerializer
+from chat.serializers import ChatMembershipSerializer, MessageSerializer
+from django.core.serializers import serialize
 from .models import ChatMembership, ChatRoom
 from eLearning.models import Enrolment
 from django.contrib.auth.models import AnonymousUser
@@ -211,7 +212,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         :raises WebSocketClose: If any error occurs while sending the disconnection message.
         """
         
-        user_data = ChatMembership.objects.filter(user_id=self.scope["user"].id).values('user__username', 'last_online_timestamp')
+        user_data = await database_sync_to_async(ChatMembership.objects.filter)(
+                                user_id=self.scope["user"].id,
+                                chat_room__chat_name=self.room_name
+                                )
+        
+        serialized_data = await database_sync_to_async(serialize)('json', user_data)
 
         try:
             await self.channel_layer.group_send(
@@ -219,7 +225,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "chat.user_data",
                     "action": "user_disconnected",
-                    "users": user_data,
+                    "users": serialized_data,
                 },
             )
             logger.debug("User disconnected message sent successfully to room group")
@@ -557,6 +563,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         self.scope["user"].username, self.room_group_name)
 
             # Update the last viewed message ID
+            logger.info("message_data: %s", message_data)
+            logger.info("last_viewed_message: %s", message_data['last_viewed_message'])
+            logger.info("chat_room_id: %s", message_data['chat_room_id'])
             await self.update_last_viewed_message_id(message_data['chat_room_id'], message_data['last_viewed_message'])
             
             logger.info("Completed request before closing %s connection to %s",
@@ -587,9 +596,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 user_id=self.scope['user'].id, chat_room_id=chat_room_id
             )
 
-            # Update the last_viewed_message field with the message_id
+            logger.info("Retrieved ChatMembership instance: %s", chat_membership)
+        
+            # Update the last_viewed_message field with the message_id  
             chat_membership.last_viewed_message_id = message_id
             chat_membership.last_online_timestamp = timezone.now()
+            
+            logger.info("ChatMembership instance before saving: %s", chat_membership)
+            
             chat_membership.save()
             logger.info("Saved data to the database for %s", self.scope['user'].username)
 
