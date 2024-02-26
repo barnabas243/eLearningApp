@@ -15,16 +15,18 @@
       {% endblock %}" />
 
     <link rel="canonical"
-      href="https://localhost{% block canonical_path %}/{% endblock %}" />
+      {% block canonical_path %}/{% endblock %} />
+
+    
     {% load static %}
+    <!-- Site Manifest -->
+    <link rel="manifest" href="{% static 'site.webmanifest' %}" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'img/icons/favicon.ico' %}" />
+
     <!-- Include static files -->
     {% block scripts %}
-      <!-- Favicon -->
-      <link rel="icon" type="image/x-icon" href="{% static 'img/icons/favicon.ico' %}" />
-
-      <!-- Site Manifest -->
-      <link rel="manifest" href="{% static 'site.webmanifest' %}" />
-
       <!-- Scripts -->
       <script type="text/javascript" src="{% static 'scripts/htmx.min.js' %}" defer></script>
       <script type="text/javascript" src="https://unpkg.com/htmx.org/dist/ext/response-targets.js" defer></script>

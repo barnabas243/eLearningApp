@@ -1,6 +1,8 @@
 import os
 from django.contrib.auth.models import AbstractUser, Group
-from django.db import models
+from django.db import IntegrityError, models
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -78,7 +80,8 @@ class User(AbstractUser):
     # Set max_length
     first_name = models.CharField(_("First name"), max_length=30)
     last_name = models.CharField(_("Last name"), max_length=150)
-    email = models.EmailField(_("Email address"), max_length=254)
+    email = models.EmailField(_("Email address"), max_length=254, unique=True)  # Make email field unique
+    username = models.CharField(_("Username"), max_length=150, unique=True) 
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email", "first_name", "last_name", "date_of_birth", "user_type"]
@@ -116,11 +119,8 @@ class User(AbstractUser):
 
         verbose_name = _("User")
         verbose_name_plural = _("Users")
-        permissions = [
-            # ("can_view_student_records", "Can view student records"),
-            # Add more permissions as needed
-        ]
-        unique_together = (("username", "email"),)
+
+        unique_together = ["username", "email"]
 
 
 @receiver(post_save, sender=User)
@@ -152,7 +152,6 @@ class StatusUpdate(models.Model):
     class Meta:
         verbose_name = _("Status Update")
         verbose_name_plural = _("Status Updates")
-
 
 class Course(models.Model):
     """
@@ -205,7 +204,7 @@ class Course(models.Model):
     class Meta:
         verbose_name = _("Course")
         verbose_name_plural = _("Courses")
-        unique_together = ("name", "teacher")
+        unique_together = ["name", "teacher"]
 
 
 def material_upload_path(instance, filename):
@@ -226,7 +225,6 @@ def material_upload_path(instance, filename):
         instance.course.name
     )  # Convert course name to a valid filename
     return os.path.join("materials", f"{course_id}-{course_name}", filename)
-
 
 class CourseMaterial(models.Model):
     """
@@ -299,6 +297,7 @@ class Assignment(models.Model):
     class Meta:
         verbose_name = _("Assignment")
         verbose_name_plural = _("Assignments")
+        
         
 def assignment_upload_path(instance, filename):
     """
@@ -392,19 +391,20 @@ class Feedback(models.Model):
 
     class Meta:
         verbose_name = _("Feedback")
-        verbose_name_plural = _("Feedback")
+        verbose_name_plural = _("Feedbacks")
 
     def __str__(self):
         return f"Feedback for {self.course} by {self.user}"
 
-
-class Enrollment(models.Model):
+class Enrolment(models.Model):
     """
-    Model representing a student's enrollment in a course.
+    Model representing a student's Enrolment in a course.
 
     Attributes:
         student (ForeignKey): The student who is enrolled in the course.
         course (ForeignKey): The course in which the student is enrolled.
+        is_banned (BooleanField): Indicates if the enrolment is banned.
+        is_completed (BooleanField): Indicates if the enrolment is completed.
 
     """
 
@@ -415,14 +415,87 @@ class Enrollment(models.Model):
 
     @staticmethod
     def is_student_enrolled(student, course):
-        # Check if there exists an enrollment record for the student and course
-        return Enrollment.objects.filter(
-            student__username=student.username, course=course
+        # Check if there exists an Enrolment record for the student and course
+        return Enrolment.objects.filter(
+            student=student, course=course, is_banned=False
         ).exists()
 
     def __str__(self):
         return f"{self.student.username} enrolled in {self.course.name}"
 
     class Meta:
-        verbose_name = _("Enrollment")
-        verbose_name_plural = _("Enrollments")
+        verbose_name = _("Enrolment")
+        verbose_name_plural = _("Enrolments")
+
+        
+    
+# Define fixed permissions for students and teachers
+student_permissions = [
+    ("view_user_profile", "Can view user profile"),
+    ("edit_user_profile", "Can edit user profile"),
+    ("change_user_password", "Can edit user password"),
+    ("view_enrolment", "Can view enrolment"),
+    ("view_assignment", "Can view assignment"),
+    ("view_statusupdate", "Can view status updates"),
+    ("add_statusupdate", "Can add status updates"),
+    ("view_course", "Can view course"),
+    ("add_feedback", "Can add feedback"),
+    ("view_assignment_submission", "Can view assignment submission"),
+    ("add_assignment_submission", "Can add assignment submission"),
+]
+
+teacher_permissions = [
+    ("view_user_profile", "Can view user profile"),
+    ("edit_user_profile", "Can edit user profile"),
+    ("change_user_password", "Can edit user password"),
+    ("view_enrolment", "Can view enrolment"),
+    ("change_enrolment", "Can edit enrolment"),
+    ("delete_enrolment", "Can delete enrolment"),
+    ("view_feedback", "Can view feedback"),
+    ("view_assignment_submission", "Can view assignment submission"),
+    ("view_assignment", "Can view assignment"),
+    ("add_assignment", "Can add assignment"),
+    ("delete_assignment", "Can delete assignment"),
+    ("view_statusupdate", "Can view status updates"),
+    ("add_statusupdate", "Can add status updates"),
+    ("view_course", "Can view course"),
+    ("add_course", "Can add course"),
+    ("edit_course", "Can edit course"),
+    ("delete_course", "Can delete course"),
+]
+
+
+# Example usage: Assign users to groups based on user_type
+@receiver(post_save, sender=User)
+def assign_user_to_group(sender, instance, created, **kwargs):
+    if created:
+        # Get content type for the User model
+        content_type = ContentType.objects.get_for_model(User)
+
+        # Bulk create permissions for student group if they don't exist
+        student_group, student_group_created = Group.objects.get_or_create(name="student")
+
+        if student_group_created:
+            for codename, name in student_permissions:
+                try:
+                    permission, created = Permission.objects.get_or_create(codename=codename, name=name, content_type=content_type)
+                    student_group.permissions.add(permission)
+                except IntegrityError as e:
+                    print(f"An error occurred while adding permission to student group: {e}")
+
+        # Bulk create permissions for teacher group if they don't exist
+        teacher_group, teacher_group_created = Group.objects.get_or_create(name="teacher")
+
+        if teacher_group_created:
+            for codename, name in teacher_permissions:
+                try:
+                    permission, created = Permission.objects.get_or_create(codename=codename, name=name, content_type=content_type)
+                    teacher_group.permissions.add(permission)
+                except IntegrityError as e:
+                    print(f"An error occurred while adding permission to teacher group: {e}")
+
+        # Assign users to groups based on user_type
+        if instance.user_type == User.STUDENT:
+            instance.groups.add(student_group)
+        elif instance.user_type == User.TEACHER:
+            instance.groups.add(teacher_group)

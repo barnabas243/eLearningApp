@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block canonical_path %}
-  /profile/
+{% url 'profile' %}
 {% endblock %}
 
 {% block title %}
@@ -13,10 +13,12 @@
   View and manage your profile information on the eLearning App.
 {% endblock %}
 
-{% block script %}
+{% block scripts %}
     {{ block.super }}
     <script src="{% static 'scripts/profile.js' %}" defer type="text/javascript"></script>
 {% endblock %}
+
+{% csrf_token %}
 
 {% block content %}
   <div class="container">
@@ -35,6 +37,7 @@
 
             <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#uploadPictureModal">Upload Picture</button>
           </div>
+          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
           <div class="card-body">
             <h5 class="card-title">Personal Information - {{ user.user_type }}</h5>
             <p class="card-text">

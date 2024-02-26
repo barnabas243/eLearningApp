@@ -1,0 +1,11 @@
+{% if enrolment.is_banned %}
+    <button class="btn btn-success btn-sm">
+        Unban
+        <span class="htmx-indicator spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></span>
+    </button>
+{% else %}
+    <button class="btn btn-danger btn-sm">
+        Ban 
+        <span class="htmx-indicator spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></span>
+    </button>
+{% endif %}

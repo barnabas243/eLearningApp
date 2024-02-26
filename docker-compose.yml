@@ -45,16 +45,3 @@ services:
       - ./certs/localhost.key:/etc/nginx/certs/privkey.pem
     restart: always
 
-  # daphne:
-  #   build: 
-  #     context: .
-  #     dockerfile: Dockerfile  # You might have a separate Dockerfile for Daphne
-  #   command: daphne -b localhost -p 8001 eLearningApp.asgi:application  # Adjust as needed
-  #   depends_on:
-  #     - django
-  #   ports:
-  #     - "8001:8001"  # Expose Daphne port
-  #   restart: always
-  #   networks:
-  #     - mynetwork
-

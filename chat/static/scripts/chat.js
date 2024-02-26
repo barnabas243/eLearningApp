@@ -115,6 +115,8 @@ function updateUserStatus(user, isOnline) {
             userStatusElement.classList.add("text-secondary");
             userStatusElement.textContent = "Offline";
         }
+
+        updateLastOnlineStatus()
     } else {
         console.error(`Element(s) with ID '${user}' not found.`);
     }
@@ -215,6 +217,36 @@ window.addEventListener('beforeunload', function(event) {
     // Customize the confirmation message if needed
     //event.returnValue = 'Are you sure you want to leave?';
 });
+
+
+
+// Function to update last online status
+function updateLastOnlineStatus() {
+    const users_last_online = document.querySelectorAll('div[data-last-online]');
+
+    if (users_last_online) {
+        users_last_online.forEach((user) => {
+            const last_online_span = user.querySelectorAll('span')[1];
+
+            if (last_online_span && last_online_span.classList.contains('text-secondary')) {
+                const timestamp = user.getAttribute('data-last-online');
+                console.log(timestamp)
+                if (timestamp) {
+                    const time_since_timestamp = dayjs.utc(timestamp).from(dayjs())
+                    // online a month ago
+                    last_online_span.textContent = `online ${time_since_timestamp}`;
+                }
+            }
+        });
+    }
+}
+
+// Initial call to update last online status
+updateLastOnlineStatus();
+
+// Polling function to update last online status every 1 minute
+setInterval(updateLastOnlineStatus, 60000); // 60000 milliseconds = 1 minute
+
 
 // ===============================================
 // Messages

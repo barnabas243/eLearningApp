@@ -21,7 +21,11 @@ window.onload = function () {
             const tabButton = document.getElementById(activeTabId);
             if (tabButton) {
                 tabButton.click();
+            } else {
+                courseTabs.querySelector('button').click();
             }
+        } else {
+            courseTabs.querySelector('button').click();
         }
     }
 
@@ -58,12 +62,27 @@ window.onload = function () {
             document.querySelector('a[data-week="1"]').click();
         }
     }
+
+
+    // Get all star rating inputs
+    const teacher_rating = document.querySelector('#teacher_rating_stars');
+    const course_rating = document.querySelector('#course_rating_stars')
+
+    if (teacher_rating && course_rating) {
+        const teacher_star_inputs = teacher_rating.querySelectorAll('.star-rating input[type="checkbox"]');
+        const course_star_inputs = course_rating.querySelectorAll('.star-rating input[type="checkbox"]');
+
+        starInputListener(teacher_star_inputs)
+        starInputListener(course_star_inputs)
+    }
+
 };
 
 
 // ===============================================
 // Save Button Functionality
 // ===============================================
+
 // Check if save button exists
 const saveBtn = document.getElementById('saveBtn');
 let weekLinks = document.querySelectorAll('a[data-week]');
@@ -85,6 +104,7 @@ if (saveBtn) {
 // ===============================================
 // Week Links Handling
 // ===============================================
+
 // Define the click event listener function for week links
 function weekLinkClickHandler() {
     // Remove active class from all <a> elements
@@ -118,6 +138,7 @@ attachWeekEventListeners("add");
 // ===============================================
 // Week Buttons Functionality
 // ===============================================
+
 // Add click event listener to week buttons for refreshing event listeners
 const weekBtns = document.querySelectorAll('.wkBtn');
 if (weekBtns) {
@@ -142,4 +163,24 @@ if (weekBtns) {
         });
     });
 
+}
+
+// ===============================================
+// Feedback form stars
+// ===============================================
+
+
+// Add click event listener to each star input
+function starInputListener(starInputs) {
+    starInputs.forEach(input => {
+        input.addEventListener('click', function() {
+            // Get the index of the clicked input
+            const selectedIndex = Array.from(starInputs).indexOf(input);
+
+            // Loop through all inputs and change their checked state based on the index of the clicked input
+            starInputs.forEach((starInput, index) => {
+                starInput.checked = index <= selectedIndex; 
+            });
+        });
+    });
 }

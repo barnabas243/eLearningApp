@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+
+    <title>{% block title %}Chat lobby for eLearning Web Application{% endblock %}</title>
+    <meta name="description" content="{% block description %}This is the lobby for users to view the chat rooms for their enrolled courses{% endblock %}" />
+    <link rel="canonical" href="{% block canonical_path %}{% url 'chat' %}{% endblock %}" />
+
+    {% load static %}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'img/icons/favicon.ico' %}" />
+
+    <!-- Site Manifest -->
+    <link rel="manifest" href="{% static 'site.webmanifest' %}" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/chat.css' %}" />
+    <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}" />
+        <!-- Scripts -->
+    {% block scripts %}
+        <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
+        <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
+        <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>
+    {% endblock %}
+
+  </head>
+  <body>
+    <!-- Navigation bar -->
+    {% include 'partials/navbar.html' %}
+
+    <!-- Content -->
+    <main class="container">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% include 'partials/footer.html' %}
+  </body>
+</html>

@@ -30,11 +30,13 @@ body {
     width: 16rem;
     height: 16rem;
 }
+
 .profile-picture-xl {
     /* 512px / 16px = 32rem */
     width: 32rem;
     height: 32rem;
 }
+
 .profile-picture-sm,
 .profile-picture-md,
 .profile-picture,
@@ -59,4 +61,19 @@ body {
     /* Make the image round */
     border: 5px solid transparent;
     /* Transparent border to reserve space for the gradient border */
+}
+
+/* Hide the default radio inputs */
+.star-rating input[type="checkbox"] {
+    display: none;
+}
+
+/* Style the font-awesome stars */
+.star-rating .form-check-label i:before {
+    cursor: pointer;
+}
+
+/* Change the color of the selected star */
+.star-rating input[type="checkbox"]:checked + .form-check-label i:before {
+    color: orange;
 }

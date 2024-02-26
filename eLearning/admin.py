@@ -6,7 +6,7 @@ from .models import (
     Course,
     CourseMaterial,
     Assignment,
-    Enrollment,
+    Enrolment,
 )
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -81,4 +81,4 @@ admin.site.register(Feedback)
 admin.site.register(Course)
 admin.site.register(CourseMaterial)
 admin.site.register(Assignment)
-admin.site.register(Enrollment)
+admin.site.register(Enrolment)

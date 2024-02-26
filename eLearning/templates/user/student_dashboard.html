@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block canonical_path %}
-  /dashboard/
+  {% url 'dashboard' %}
 {% endblock %}
 
 {% block title %}
@@ -16,7 +16,7 @@
 {% block content %}
   <div class="container text-center">
     {% include 'partials/messages.html' %}
-    <h1>Welcome, {{ user.username }}</h1>
+    {% comment %} <h1>Welcome, {{ user.username }}</h1> {% endcomment %}
 
     <!-- Profile Section -->
     <div class="row mb-5 d-flex align-items-center justify-content-center">
@@ -76,7 +76,6 @@
                     {% for update in status_updates %}
                       <div class="update">
                         <p>{{ update.content }}</p>
-                        <p>Posted by: {{ update.user }}</p>
                         <p>Posted at: {{ update.timestamp|date:'D, d M Y H:i:s' }}</p>
                       </div>
                       {% empty %}

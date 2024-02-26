@@ -4,11 +4,10 @@ from django.contrib.auth.forms import (
     PasswordChangeForm,
     UserCreationForm,
 )
-from .models import Assignment, AssignmentSubmission, User, Course, CourseMaterial  # Import your User model
+from eLearning.models import Assignment, AssignmentSubmission, User, Course, CourseMaterial, Feedback  # Import your User model
 from django.forms.widgets import DateInput
 from datetime import date
 from .tasks import process_image
-from ckeditor.widgets import CKEditorWidget
 
 class UserLoginForm(AuthenticationForm):
     """
@@ -215,4 +214,20 @@ class AssignmentSubmissionForm(forms.ModelForm):
         }
         widgets = {
             'assignment_file': forms.FileInput(attrs={'class': 'form-control mb-3', 'accept': '.pdf', 'placeholder': 'Select PDF file to submit'}),
+        }
+        
+        
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = Feedback
+        fields = ['course_rating', 'teacher_rating', 'comments']
+        labels = {
+            'course_rating': 'Course Rating',
+            'teacher_rating': 'Teacher Rating',
+            'comments': 'Comments'
+        }
+        widgets = {
+            'comments': forms.Textarea(attrs={'rows': 4}),  # Adjust the number of rows as needed
+            'course_rating': forms.CheckboxSelectMultiple(choices=[(i, i) for i in range(1, 6)]),
+            'teacher_rating': forms.CheckboxSelectMultiple(choices=[(i, '') for i in range(1, 6)])
         }

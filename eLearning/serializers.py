@@ -50,5 +50,5 @@ class FeedbackSerializer(serializers.ModelSerializer):
 class EnrollmentSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
     class Meta:
-        model = Enrollment
+        model = Enrolment
         fields = '__all__'

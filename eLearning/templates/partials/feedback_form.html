@@ -1,0 +1,31 @@
+<!-- Your HTML form -->
+<form id="feedback-form" method="POST" action="{% url 'submit_feedback' course_id user.id %}">
+  {% csrf_token %}
+  
+  <div id="course_rating_stars" class="star-rating mb-3">
+    <label for="id_course_rating" class="form-label">Course Rating:</label>
+    {% for checkbox in feedback_form.course_rating %}
+      <div class="form-check form-check-inline">
+        <input class="form-check-input visually-hidden" type="checkbox" name="course_rating" id="{{ checkbox.id_for_label }}" value="1">
+        <label class="form-check-label" for="{{ checkbox.id_for_label }}"><i class="fas fa-star"></i></label>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div id="teacher_rating_stars" class="star-rating mb-3">
+    <label for="id_teacher_rating" class="form-label">Teacher Rating:</label>
+    {% for checkbox in feedback_form.teacher_rating %}
+      <div class="form-check form-check-inline">
+        <input class="form-check-input visually-hidden" type="checkbox" name="teacher_rating" id="{{ checkbox.id_for_label }}" value="1">
+        <label class="form-check-label" for="{{ checkbox.id_for_label }}"><i class="fas fa-star"></i></label>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="mb-3">
+    <label for="id_comments" class="form-label">Comments:</label>
+    {{ feedback_form.comments }}
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit Feedback</button>
+</form>

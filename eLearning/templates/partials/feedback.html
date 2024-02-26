@@ -1,0 +1,37 @@
+<div class="mb-4">
+    <p>Course Rating:
+        {% for star in stars %}
+            {% if star <= feedback.course_rating %}
+                {% if feedback.course_rating <= 2 %}
+                    <i class="fas fa-star text-danger"></i> <!-- Red color for 1-2 stars -->
+                {% elif feedback.course_rating == 3 %}
+                    <i class="fas fa-star text-success"></i> <!-- Green color for 3 stars -->
+                {% else %}
+                    <i class="fas fa-star text-warning"></i> <!-- Yellow color for 4-5 stars -->
+                {% endif %}
+            {% else %}
+                <i class="fas fa-star text-secondary"></i>
+            {% endif %}
+        {% endfor %}
+    </p>
+    <p>Teacher Rating:
+        {% for star in stars %}
+            {% if star <= feedback.teacher_rating %}
+                {% if feedback.teacher_rating <= 2 %}
+                    <i class="fas fa-star text-danger"></i> <!-- Red color for 1-2 stars -->
+                {% elif feedback.teacher_rating == 3 %}
+                    <i class="fas fa-star text-success"></i> <!-- Green color for 3 stars -->
+                {% else %}
+                    <i class="fas fa-star text-warning"></i> <!-- Yellow color for 4-5 stars -->
+                {% endif %}
+            {% else %}
+                <i class="fas fa-star text-secondary"></i>
+            {% endif %}
+        {% endfor %}
+    </p>
+    
+    </p>
+    <p>Comments: {{ feedback.comments }}</p>
+    <p>Submitted By: {{ feedback.user }}</p>
+    <p>Submitted At: {{ feedback.created_at }}</p>
+</div>

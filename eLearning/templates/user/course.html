@@ -1,6 +1,13 @@
 {% extends '../base/base.html' %}
 {% load static %}
 
+{% block canonical_path %}
+    {% if request.resolver_match.url_name == 'official' %}
+        {% url 'official' course_id=course.id %}
+    {% elif request.resolver_match.url_name == 'draft' %}
+        {% url 'draft' course_id=course.id %}
+    {% endif %}
+{% endblock %}
 
 {% block title %}
 {{ course.name }} | eLearning App
@@ -31,23 +38,35 @@ This is the course page for students to view course materials and for teacher to
     </div>
     {% endif %}
     <!-- Tabs -->
-    {% if user == course.teacher %}
+  
     <ul class="nav nav-tabs mt-3" id="courseTabs" role="tablist">
+
+        {% if teacher %}
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="editCourseDetails-tab" data-bs-toggle="tab" data-bs-target="#editCourseDetails" type="button" role="tab" aria-controls="editCourseDetails" aria-selected="true">Edit Course Details</button>
+            <button class="nav-link" id="editCourseDetails-tab" data-bs-toggle="tab" data-bs-target="#editCourseDetails" type="button" role="tab" aria-controls="editCourseDetails" aria-selected="true">Edit Course Details</button>
         </li>
+        {% endif %}
+
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="courseMaterials-tab" data-bs-toggle="tab" data-bs-target="#courseMaterials" type="button" role="tab" aria-controls="courseMaterials" aria-selected="false">Course Materials</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="studentInfo-tab" data-bs-toggle="tab" data-bs-target="#studentInfo" type="button" role="tab" aria-controls="studentInfo" aria-selected="false">Student Information</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="courseFeedback-tab" data-bs-toggle="tab" data-bs-target="#courseFeedback" type="button" role="tab" aria-controls="courseFeedback" aria-selected="false">Course Feedback</button>
+        </li>
     </ul>
-    
-    <!-- Tab content -->
+    {% include 'partials/messages.html' %}
+        <!-- Tab content -->
     <div class="tab-content" id="courseTabsContent">
         <!-- Edit Course Details Tab -->
-        <div class="tab-pane fade show active" id="editCourseDetails" role="tabpanel" aria-labelledby="editCourseDetails-tab">
+
+        {% if teacher %}
+        <div class="tab-pane fade" id="editCourseDetails" role="tabpanel" aria-labelledby="editCourseDetails-tab">
             <div class="row mt-3">
                 <div class="col-md-8">
-                    {% include 'partials/messages.html' %}
+                    
                     <form id="editCourseForm" method="POST">
                         {% csrf_token %}
                         <div class="mb-3">
@@ -81,10 +100,10 @@ This is the course page for students to view course materials and for teacher to
                 </div>
             </div>
         </div>
-        
+        {%endif %}
+
         <!-- Course Materials Tab -->
         <div class="tab-pane fade" id="courseMaterials" role="tabpanel" aria-labelledby="courseMaterials-tab">
-        {% endif %}
             <div class="row mt-3 mb-3">
                 <div class="col-md-3"  hx-ext="response-targets">              
                     <ul class="list-group" id="week-list">
@@ -93,11 +112,11 @@ This is the course page for students to view course materials and for teacher to
                         {% endfor %}
                     </ul>
                     <!-- Buttons wrapper -->
-                    {% if user == course.teacher %}
+                    {% if teacher %}
                         <div class="d-flex my-3 justify-content-center">
                             <!-- Add new week button -->
                             <button class="btn btn-primary btn-sm me-2 wkBtn"
-                                    hx-post="{% url 'week' course.id %}"
+                                    hx-patch="{% url 'week' course.id %}"
                                     hx-target="#week-list"
                                     hx-swap="beforeend"
                                     hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'>
@@ -124,6 +143,110 @@ This is the course page for students to view course materials and for teacher to
                 <div class="col-md-9" id="materials-container">
                     <!-- Content will be dynamically loaded here -->
                 </div>
+            </div>
+        </div>
+
+        <!-- Student Information Tab -->
+        <div class="tab-pane fade" id="studentInfo" role="tabpanel" aria-labelledby="studentInfo-tab">
+            <!-- Display student information here -->
+            {% for enrolment in course.enrolment_set.all %}
+                {% if enrolment.is_banned and teacher %}
+                <div class="col-md-12 mb-3">
+                    <div class="card border-0">
+                        <div class="card-body">
+                            <div class="row align-items-center justify-content-center">
+                                <div class="col-md-2 d-flex justify-content-end align-items-center m-3">
+                                    <div class=" profile-picture-md">
+                                        <img src="{{ enrolment.student.photo.url }}" alt="{{ enrolment.student.username }}'s Profile Picture" class="profile-img"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <!-- Student details -->
+                                    <h5 class="card-title"><a href="{% url 'user_home' enrolment.student.username %}">{{ enrolment.student.get_full_name }} {% if user.id == enrolment.student.id%} (You){% endif %}</a></h5>
+                                    <p class="card-text m-0">Username: {{ enrolment.student.username}}</p>
+                                    <p class="card-text">Email: {{ enrolment.student.email }}</p>
+                                    <!-- Include additional public information here -->
+                                </div>
+                                <div class="col-md-2">
+                                    <form hx-patch="{% url 'update-ban-status' course.id enrolment.student.id %}"
+                                          hx-target="this"
+                                          hx-swap="innerHTML"
+                                          hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'>
+
+                                        <button class="btn btn-success btn-sm">
+                                            Unban
+                                            <span class="htmx-indicator spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% elif not enrolment.is_banned %}
+                <div class="col-md-12 mb-3">
+                    <div class="card border-0">
+                        <div class="card-body p-0">
+                            <div class="row align-items-center justify-content-center">
+                                <div class="col-md-2 d-flex justify-content-end align-items-center m-3">
+                                    <div class=" profile-picture-md">
+                                        <img src="{{ enrolment.student.photo.url }}" alt="{{ enrolment.student.username }}'s Profile Picture" class="profile-img"/>
+                                    </div>
+                                </div>
+                                <div class="col-md-5">
+                                    <!-- Student details -->
+                                    <h5 class="card-title">
+                                        {% if user.id == enrolment.student.id%}
+                                            {{ enrolment.student.get_full_name }} (You)
+                                        {% else %}
+                                        <a href="{% url 'user_home' enrolment.student.username %}">{{ enrolment.student.get_full_name }}</a>
+                                        {% endif %}
+                                    </h5>
+                                    <p class="card-text m-0">Username: {{ enrolment.student.username }}</p>
+                                    <p class="card-text">Email: {{ enrolment.student.email }}</p>
+                                    <!-- Include additional public information here -->
+                                </div >
+                                {% if teacher %}
+                                <div class="col-md-2">
+                                    <form hx-patch="{% url 'update-ban-status' course.id enrolment.student.id %}"
+                                          hx-target="this"
+                                          hx-swap="innerHTML"
+                                          hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }'>
+                                        <button class="btn btn-danger btn-sm">
+                                            Ban
+                                            <span class="htmx-indicator spinner-border spinner-border-sm text-light" role="status" aria-hidden="true"></span>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}        
+            {% empty %}
+                <p class="fst-italics"> There are no students enrolled into the course yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Course Feedback Tab-->
+        <div class="tab-pane fade" id="courseFeedback" role="tabpanel" aria-labelledby="courseFeedback-tab">
+            <div class="container">
+            {% if not teacher %}
+                <div id="feedback_form_container" class="mt-3">
+                    <h2 class="mb-3"> Feedback Form</h2>
+                    {% include 'partials/feedback_form.html' with feedback_form=feedback_form %}
+                </div>
+            {% endif %}
+            
+            {% if teacher or feedback_form.instance.pk %}
+            <!-- Display other students' feedback -->
+                {% for feedback in course_feedbacks %}
+                    {% include 'partials/feedback.html' with feedback=feedback%}
+                {% empty %}
+                    <p>No feedback available.</p>
+                {% endfor %}
+            {% endif %}
             </div>
         </div>
     </div>

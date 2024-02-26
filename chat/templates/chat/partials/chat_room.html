@@ -1,64 +1,32 @@
-<!-- chat/templates/chat/room.html -->
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#ffffff" />
+<!-- chat/templates/chat/partials/room.html -->
+{% extends './../base.html' %}
 
-    <title>
-      {% block title %}
-        My eLearning App
-      {% endblock %}
-    </title>
-    <meta name="description"
-      content="{% block description %}
-      {% endblock %}" />
+{% block title %} {{course.name}} | eLearning Application{% endblock %}
 
-    <link rel="canonical"
-      href="https://localhost{% block canonical_path %}
-        {{ room_name }}
-      {% endblock %}" />
-    {% load static %}
-    <!-- Include static files -->
-    {% block scripts %}
-      <!-- Favicon -->
-      <link rel="icon" type="image/x-icon" href="{% static 'img/icons/favicon.ico' %}" />
+{% block description %} This is the chat room for students of {{course.name}} {% endblock %}
 
+{% block canonical_path %}
+    {% url 'room' room_name %}
+{% endblock %}
 
-      <!-- Site Manifest -->
-      <link rel="manifest" href="{% static 'site.webmanifest' %}" />
+{% load static %}
 
-      <!-- Local Scripts -->
+<!-- Include static files -->
+{% block scripts %}
+  {{ block.super }}
+       <!-- Local Scripts -->
+
       <script type="text/javascript" src="{% static 'scripts/chat.js' %}" defer></script>
-      <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>
-      <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
      
-      <!-- Fontawesome js -->
-      <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
-
-      <!-- autosize.js cdn for textarea -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/autosize.js/3.0.20/autosize.min.js" integrity="sha512-EAEoidLzhKrfVg7qX8xZFEAebhmBMsXrIcI0h7VPx2CyAyFHuDvOAUs9CEATB2Ou2/kuWEDtluEVrQcjXBy9yw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      
-      <!-- dayjs cdn-->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js" integrity="sha512-FwNWaxyfy2XlEINoSnZh1JQ5TRRtGow0D6XcmAWmYCRgvqOUTnzCxPc9uF35u5ZEpirk1uhlPVA19tflhvnW1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      <!-- dayjs plugin extensions cdn-->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/utc.min.js" integrity="sha512-z84O912dDT9nKqvpBnl1tri5IN0j/OEgMzLN1GlkpKLMscs5ZHVu+G2CYtA6dkS0YnOGi3cODt3BOPnYc8Agjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/timezone.min.js" integrity="sha512-jmsGNYDezdyZ+W3bVeZy83kZp/2n5BgWe/0solkveG0vSSrP9XIVTD1tNiM1OqImc4H3OxHfs1uSfVclOU3mWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/relativeTime.min.js" integrity="sha512-MVzDPmm7QZ8PhEiqJXKz/zw2HJuv61waxb8XXuZMMs9b+an3LoqOqhOEt5Nq3LY1e4Ipbbd/e+AWgERdHlVgaA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      
-       {% endblock %}
+        
+{% endblock %}
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-    <link rel="stylesheet" href="{% static 'css/chat.css' %}" />
-    <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}" />
-  </head>
-  <body>
-    <!-- - Navigation bar -->
-    {% include 'partials/navbar.html' %}
-
-    <main class="container">
+{% block content%}
       <div class="row mt-5">
         <!-- Left column for user profile -->
         <section class="col-md-3 p-0">
@@ -72,7 +40,7 @@
                   {% for user in users %}
                     <div class="row align-items-center mb-3">
                       <!-- Image column -->
-                      <div class="col-12 col-md-5 order-1 order-md-0">
+                      <div class="col-12 col-md-5 col-lg-4 order-1 order-md-0">
                         <div class="profile-picture-sm">
                           <img 
                             {% if user.photo %}
@@ -91,13 +59,13 @@
                       </div>
 
                       <!-- Username and online status column -->
-                      <div class="col-12 col-md-7 order-0 order-md-1">
+                      <div class="col-12 col-md-8 order-0 order-md-1">
                         <div class="d-flex flex-column justify-content-between align-items-start">
                           <!-- full_name -->
                           <a href="{% url 'user_home' user.username %}" class="text-decoration-none">{{ user.get_full_name }}</a>
 
                           <!-- Online status -->
-                          <div class="d-flex align-items-center gap-2">
+                          <div class="d-flex align-items-center gap-2" data-last-online="{{user.last_online_timestamp|date:"c"  }}">
                             <span id="{{ user.username }}_status_badge" class="p-1 bg-secondary border rounded-circle"></span>
                             <span id="{{ user.username }}_status_text" class="text text-secondary">Offline</span>
                           </div>
@@ -153,7 +121,6 @@
           </div>
         </section>
       </div>
-    </main>
 
     <!-- Enlarged (transparent) Image Modal -->
     <div class="modal fade" id="imageModal" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
@@ -194,16 +161,14 @@
           </div>
       </div>
     </div>
+   
+{{ room_name|json_script:'room-name' }}
+<script>
+  dayjs.extend(window.dayjs_plugin_utc);
+  dayjs.extend(window.dayjs_plugin_timezone);
+  dayjs.extend(window.dayjs_plugin_relativeTime);
 
-    {{ room_name|json_script:'room-name' }}
-    <script>
-      dayjs.extend(window.dayjs_plugin_utc);
-      dayjs.extend(window.dayjs_plugin_timezone);
-      dayjs.extend(window.dayjs_plugin_relativeTime);
+  const currentUserName = '{{ current_user }}'
+</script>
 
-      const currentUserName = '{{ current_user}}'
-    </script>
-
-    {% include 'partials/footer.html' %}
-  </body>
-</html>
+{% endblock %}
