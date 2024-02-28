@@ -6,6 +6,7 @@ attrs==23.2.0
 autobahn==23.6.2
 Automat==22.10.0
 Babel==2.14.0
+beautifulsoup4==4.12.3
 billiard==4.2.0
 celery==5.3.6
 certifi==2024.2.2
@@ -26,9 +27,12 @@ django-channels==0.7.0
 django-ckeditor==6.7.0
 django-htmx==1.17.2
 django-js-asset==2.2.0
+django-model-utils==4.4.0
+django-notifications-hq==1.8.3
 djangorestframework==3.14.0
 docutils==0.20.1
 drf-yasg==1.21.7
+furo==2024.1.29
 gunicorn==21.2.0
 hyperlink==21.0.0
 idna==3.6
@@ -36,6 +40,7 @@ imagesize==1.4.1
 incremental==22.10.0
 inflection==0.5.1
 Jinja2==3.1.3
+jsonfield==3.1.0
 kombu==5.3.5
 MarkupSafe==2.1.5
 msgpack==1.0.7
@@ -57,7 +62,10 @@ requests-oauthlib==1.3.1
 service-identity==24.1.0
 six==1.16.0
 snowballstemmer==2.2.0
+soupsieve==2.5
 Sphinx==7.2.6
+sphinx-basic-ng==1.0.0b2
+sphinx-copybutton==0.5.2
 sphinxcontrib-applehelp==1.0.8
 sphinxcontrib-devhelp==1.0.6
 sphinxcontrib-htmlhelp==2.0.5
@@ -65,6 +73,7 @@ sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.7
 sphinxcontrib-serializinghtml==1.1.10
 sqlparse==0.4.4
+swapper==1.3.0
 Twisted==23.10.0
 txaio==23.1.1
 typing_extensions==4.9.0

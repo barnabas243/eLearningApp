@@ -1,7 +1,9 @@
-from django.urls import path
+from django.urls import include, path, re_path
+from eLearning.apis import *
 from eLearning.views.auth import *
 from eLearning.views.courses import *
 from eLearning.views.users import *
+
 
 urlpatterns = [
     path('', LandingView.as_view(), name='landing'),
@@ -37,4 +39,7 @@ urlpatterns = [
     path('publish-course/<int:course_id>/', publish_course, name='publish_course'),
     
     path('enroll/<int:course_id>/', enroll, name='enroll'),
+    path('inbox/notifications/mark-as-read/<int:notification_id>/',NotificationViewSet.as_view({'patch': 'mark_as_read'}), name="mark_as_read"),
+    
+    re_path(r'^inbox/notifications/', include('notifications.urls', namespace='notifications')),
 ]

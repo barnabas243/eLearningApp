@@ -15,15 +15,7 @@
 {% block scripts %}
   {{ block.super }}
        <!-- Local Scripts -->
-
       <script type="text/javascript" src="{% static 'scripts/chat.js' %}" defer></script>
-     
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/autosize.js/3.0.20/autosize.min.js" integrity="sha512-EAEoidLzhKrfVg7qX8xZFEAebhmBMsXrIcI0h7VPx2CyAyFHuDvOAUs9CEATB2Ou2/kuWEDtluEVrQcjXBy9yw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js" integrity="sha512-FwNWaxyfy2XlEINoSnZh1JQ5TRRtGow0D6XcmAWmYCRgvqOUTnzCxPc9uF35u5ZEpirk1uhlPVA19tflhvnW1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/utc.min.js" integrity="sha512-z84O912dDT9nKqvpBnl1tri5IN0j/OEgMzLN1GlkpKLMscs5ZHVu+G2CYtA6dkS0YnOGi3cODt3BOPnYc8Agjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/timezone.min.js" integrity="sha512-jmsGNYDezdyZ+W3bVeZy83kZp/2n5BgWe/0solkveG0vSSrP9XIVTD1tNiM1OqImc4H3OxHfs1uSfVclOU3mWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/relativeTime.min.js" integrity="sha512-MVzDPmm7QZ8PhEiqJXKz/zw2HJuv61waxb8XXuZMMs9b+an3LoqOqhOEt5Nq3LY1e4Ipbbd/e+AWgERdHlVgaA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-        
 {% endblock %}
 
 {% block content%}
@@ -55,7 +47,6 @@
             <div class="card-body">
               <div id="messageContainer" class="container">
                 {% include 'chat/partials/message_block.html' with message_blocks=messages current_user=current_user %}
-
               </div>
             </div>
             <div class="card-footer">

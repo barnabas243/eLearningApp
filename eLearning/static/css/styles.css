@@ -77,3 +77,31 @@ body {
 .star-rating input[type="checkbox"]:checked + .form-check-label i:before {
     color: orange;
 }
+.dropdown-menu {
+    width: max-content;
+}
+
+.dropdown-menu li {
+    /* Your custom styles for the list items */
+    padding: 10px 15px; /* Example padding */
+    font-size: 14px; /* Example font size */
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.4); /* Red shadow with 50% opacity */
+    border-radius: 8px; /* Rounded corners */
+}
+
+.live-notification-li {
+    transition: opacity 0.5s ease, transform 0.5s ease; /* Add transition for smooth sliding and opacity */
+}
+
+.live-notification-li.removing {
+    opacity: 0; /* Reduce opacity to 0 */
+    transform: translateX(-100%); /* Slide to the left */
+
+}
+
+.clickable {
+    cursor: pointer;
+}
+.disabled-link {
+    pointer-events: none;
+  }

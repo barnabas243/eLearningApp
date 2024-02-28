@@ -35,7 +35,7 @@ WORKDIR /eLearningApp/
 # into this layer.
 RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
-    python -m pip install -r requirements.txt
+    python -m pip install -r requirements.txt 
 
 # Change ownership of the application directory to appuser
 # RUN chown -R appuser:appuser .
@@ -45,6 +45,11 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Copy the source code into the container.
 COPY . /eLearningApp/
+
+# RUN python manage.py collectstatic --no-input
+
+COPY docs /eLearningApp/static/docs/
+
 
 # Expose the port that the application listens on.
 EXPOSE 8000

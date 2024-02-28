@@ -9,8 +9,8 @@
             <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
         </div>
         {% for message in block.messages %}
-            <div class="row">
-                <div class="col">
+            <div class="row mb-3">
+                <div class="col ">
                     <div class="message text-break {% if message.user.username == current_user %}current-user-message{% else %}other-user-message{% endif %}" data-message-id="{{ message.id }}" data-timestamp="{{ message.timestamp|date:"c" }}">
                         <div class="message-content">
                             {% if message.user.username != current_user %}

@@ -6,6 +6,8 @@ from django.views.generic import TemplateView, View, ListView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.views.decorators.http import require_http_methods
 
+from notifications.signals import notify
+
 from chat.models import ChatRoom
 from eLearning.forms import *
 from eLearning.models import *
@@ -393,6 +395,10 @@ def submit_feedback(request, course_id, student_id):
             feedback.user_id = student_id
             feedback.save()
             messages.success(request, 'Feedback submitted successfully.')
+            
+            # send notification to teacher
+            notify.send(sender=request.user, recipient=feedback.course.teacher, verb=f"A new feedback for {feedback.course.name}")
+            
         else:
             # Get the form errors and include them in the error message
             error_message = 'Invalid form data. Please check your inputs.'
@@ -691,6 +697,22 @@ def upload_material(request, course_id, week_number):
                     materialsUpdateEmail(
                         students_enrolled, course, week_number, num_of_materials
                     )
+                    
+                    course_link = f'<a href="{course.get_absolute_url()}?week={week_number}">{course.name}</a>'
+                    verb = f"<span class='fw-bold'>{num_of_materials} materials</span> added to {course_link}"
+
+                    
+                    try:
+                        # Send notification to all students in the course
+                        notify.send(
+                            sender=request.user,
+                            recipient=students_enrolled,
+                            verb=verb
+                        )
+                    except Exception as e:
+                        # Log the exception
+                        logger.error(f"Error occurred while sending notification: {e}")
+                    
             else:
                 # Form validation failed, add form errors to Django messages
                 for field, errors in form.errors.items():
@@ -867,10 +889,39 @@ def enroll(request, course_id):
 
     # Send enrollment email to the user
     enrolmentEmail(request.user, course)
-
+    course_link = f'<a href="{course.get_absolute_url()}" class="disabled-link">{course.name}</a>'
+    notify.send(course.teacher, recipient=request.user, verb=f'You have enrolled into {course_link}.')
     # Construct the HTML with the generated URL
     url = reverse('official', args=[course_id])
     html = f'<a href="{url}" class="btn btn-primary">View Course Materials</a>'
 
     # Return the HTML in an HttpResponse
     return HttpResponse(html, status=201)
+
+
+# def create_notification(actor, recipient_ids, verb, target):
+#     """
+#     Create and save a notification for multiple recipients.
+
+#     :param actor: The user performing the action that triggers the notification.
+#     :type actor: django.contrib.auth.models.User
+#     :param recipient_ids: The IDs of the users who will receive the notification.
+#     :type recipient_ids: list[int]
+#     :param verb: The action verb (e.g., 'uploaded', 'commented on', etc.).
+#     :type verb: str
+#     :param target: The object being acted upon (e.g., a material, a comment, etc.).
+#     :type target: Any
+#     """
+#     # Get the recipient users
+#     recipients = User.objects.filter(id__in=recipient_ids)
+
+#     # Create and save the notification for each recipient
+#     for recipient in recipients:
+#         notification = Notification.objects.create(
+#             recipient=recipient,
+#             actor=actor,
+#             verb=verb,
+#             target=target
+#         )
+#         notification.save()
+        

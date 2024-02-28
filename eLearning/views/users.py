@@ -1,3 +1,4 @@
+from itertools import groupby
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.decorators import method_decorator
@@ -108,14 +109,19 @@ class DashboardView(View):
             # Query ChatRoom objects for registered courses
             course_chats = ChatRoom.objects.filter(course__in=registered_courses)
             # Query Assignment objects for registered courses
-            deadlines = Assignment.objects.filter(course__in=registered_courses)
+            deadlines = Assignment.objects.filter(course__in=registered_courses).order_by('course')
+
+            # Group assignments by course
+            grouped_deadlines = {}
+            for course, assignments in groupby(deadlines, key=lambda x: x.course):
+                grouped_deadlines[course] = list(assignments)
 
             context = {
                 "user": user,
                 "registered_courses": registered_courses,
                 "status_updates": status_updates,
                 "course_chats": course_chats,
-                "deadlines": deadlines,
+                "grouped_deadlines": grouped_deadlines,
             }
             return render(request, self.template_student, context)
         elif user.user_type == User.TEACHER:

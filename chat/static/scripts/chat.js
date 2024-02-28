@@ -13,13 +13,12 @@ const chatSocket = new WebSocket(
 
 const chatRoomId = document.querySelector('#chat-room-id').value;
 
-const chatLog = document.querySelector('#messageContainer');
+const messageContainer = document.querySelector('#messageContainer');
 
 let last_viewed_message;
 
 const scrollConfig = {
-    behavior: 'instant', // Optionally, use smooth scrolling
-    block: 'end',     // Scroll to the top of the element
+    behavior: 'instant', // smoothscrolling is too slow
 }
 // Event handler for when the connection is established
 chatSocket.onopen = function (event) {
@@ -54,11 +53,16 @@ function scrollToLastViewedMessage(message_id) {
         return
     }
     const messageDiv = document.querySelector(`div[data-message-id="${message_id}"]`);
-    console.log("messageDiv: ", messageDiv)
 
     if (messageDiv) {
         // Scroll to the top position of the message element
         messageDiv.scrollIntoView(scrollConfig);
+        messageDiv.parentNode.classList.add('flash');
+
+        setTimeout(() => {
+            messageDiv.parentNode.classList.remove('flash');
+        }, 800);
+        
 
         last_viewed_message = message_id
     } else {
@@ -71,7 +75,6 @@ function handleUserDataMessage(data) {
     // Determine the action in the user data message
     switch (data.action) {
         case 'user_last_viewed_message':
-            console.log("reached here")
             scrollToLastViewedMessage(data.last_viewed_message)
             break;
         case 'user_connected':
@@ -147,7 +150,7 @@ function handleMessage(data) {
  */
 function appendMessage(message) {
     // Check if the chat log container exists
-    if (!chatLog) {
+    if (!messageContainer) {
         console.error("Chat log container not found.");
         return;
     }
@@ -157,7 +160,7 @@ function appendMessage(message) {
     const localTime = formatISOtoLocalTime(message.timestamp);
 
     // Find the last message element with a data-timestamp attribute
-    const lastMessage = chatLog.querySelector('div[data-timestamp]:last-child');
+    const lastMessage = messageContainer.querySelector('div[data-timestamp]:last-child');
 
     // Check if the chat log is empty or if the new message has a different date from the last message
     if (!lastMessage || new Date(formatISOtoLocalTime(lastMessage.dataset.timestamp)).toDateString() !== new Date(localTime).toDateString()) {
@@ -172,7 +175,7 @@ function appendMessage(message) {
             <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
         `;
         // Append the date header to the chat log
-        chatLog.appendChild(dateHeader);
+        messageContainer.appendChild(dateHeader);
     }
 
     // Replace URLs in the message content with anchor tags
@@ -202,7 +205,7 @@ function appendMessage(message) {
     `;
 
     // Append the message element to the chat log
-    chatLog.appendChild(messageElement);
+    messageContainer.appendChild(messageElement);
 
     // Scroll to the newly appended message
     messageElement.scrollIntoView(scrollConfig);
@@ -230,7 +233,6 @@ chatSocket.onclose = function (event) {
 
 window.addEventListener('beforeunload', function (event) {
     // Code to execute before the page is unloaded
-    console.log()
     // Example: Send data via WebSocket
     chatSocket.send(JSON.stringify({
         'action': "close_user_connection",
@@ -253,7 +255,7 @@ function updateLastOnlineStatus() {
 
             if (last_online_span && last_online_span.classList.contains('text-secondary')) {
                 const timestamp = user.dataset.lastOnline;
-                console.log(timestamp)
+                // console.log(timestamp)
                 if (timestamp) {
                     const time_since_timestamp = dayjs.utc(timestamp).from(dayjs())
                     // online a month ago
@@ -298,9 +300,7 @@ messageInput.focus();
 // format dates with dayjs
 document.querySelectorAll('div[data-timestamp]').forEach((timestamp) => {
     const ISOtimestamp = timestamp.dataset.timestamp;
-    console.log("ISOtimestamp: ", ISOtimestamp)
     const localTime = formatISOtoLocalTime(ISOtimestamp)
-    console.log("localTime: ",localTime)
 
     timestamp.querySelector('span').textContent = localTime;
 });
@@ -351,6 +351,44 @@ document.querySelector('#chat-message-form').onsubmit = function (e) {
 }
 
 
+// Attach a scroll event listener to the messageContainer
+messageContainer.parentNode.addEventListener('scroll', function() {
+    console.log("scrolling")
+    // Get all message blocks inside the messageContainer
+    const messageBlocks = messageContainer.querySelectorAll('div[data-message-id]');
+
+    // Calculate the distance between each message block and the bottom of the container
+    // Get the scrolling parent node of messageContainer
+    const scrollingParent = messageContainer.parentNode;
+
+    // Calculate the height of the scrolling parent node from the top of the body
+    const containerHeight = scrollingParent.offsetHeight + scrollingParent.offsetTop;
+
+    // Get the scroll position of the scrolling parent
+    const scrollPosition = scrollingParent.scrollTop;
+    
+    const closestBlock = Array.from(messageBlocks).reduce((closest, block) => {
+        const blockTop = block.offsetTop - scrollPosition;
+        const blockBottom = blockTop + block.offsetHeight; // Calculate the bottom of the block
+        const distanceToBottom = containerHeight - blockBottom;
+        if (distanceToBottom > 0 && distanceToBottom < closest.distance) {
+            return { block, distance: distanceToBottom };
+        } else {
+            return closest;
+        }
+    }, { block: null, distance: Infinity }).block;
+    
+    
+
+    // Perform the desired action with the closest message block
+    if (closestBlock) {
+        // console.log("closestBlock: ",closestBlock)
+        // console.log("closestBlock.dataset.messageId: ",closestBlock.dataset.messageId)
+        last_viewed_message = closestBlock.dataset.messageId
+        // Example: Add a class to highlight the closest block
+        // closestBlock.classList.add('highlight');
+    }
+});
 
 // ===============================================
 // Image Modal Logic

@@ -3,11 +3,10 @@
     max-width: 600px;
     margin: 20px auto;
     padding: 10px;
-    overflow: auto; 
+    overflow: auto;
 }
 
 .message {
-    margin-bottom: 10px;
     padding: 10px;
     border-radius: 10px;
     max-width: 80%;
@@ -63,8 +62,27 @@
     /* Prevent the footer from growing */
 }
 
-[contenteditable=true]:empty:before{
+[contenteditable=true]:empty:before {
     content: attr(placeholder);
     pointer-events: none;
-    display: block; /* For Firefox */
-  }
+    display: block;
+    /* For Firefox */
+}
+
+@keyframes flash {
+
+    0%,
+    100% {
+        background-color: rgba(78, 78, 78, 0.2);
+    }
+
+    50% {
+        background-color: rgba(78, 78, 78, 0.4);
+    }
+}
+
+.flash {
+    border-radius: 15px;
+    animation: flash 0.4s ease infinite;
+    /* Apply animation */
+}

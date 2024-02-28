@@ -115,7 +115,7 @@ document.getElementById('id_photo').addEventListener('change', handleFileInputCh
 // Add event listeners for edit icons
 
 document.querySelectorAll('.edit-icon').forEach(icon => {
-    console.log("reached here")
+    
     icon.addEventListener('click', toggleContentEditable);
 });
 

@@ -1,0 +1,760 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Users Views" href="users.html" /><link rel="prev" title="Authentication Views" href="auth.html" />
+
+    <!-- Generated with Sphinx 7.2.6 and Furo 2024.01.29 -->
+        <title>Courses Views - eLearningApp 0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">eLearningApp 0.1 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">eLearningApp 0.1 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="elearning.html">eLearning Web Application</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of eLearning Web Application</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="auth.html">Authentication Views</a></li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">Courses Views</a></li>
+<li class="toctree-l2"><a class="reference internal" href="users.html">Users Views</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="chat.html">Chat Web Application</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Chat Web Application</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="consumers.html">WebSocket Consumer</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="courses-views">
+<span id="elearning-courses"></span><h1>Courses Views<a class="headerlink" href="#courses-views" title="Link to this heading">#</a></h1>
+<p>This section provides documentation for views related to courses within the eLearning app.</p>
+<dl class="py class" id="module-eLearning.views.courses">
+<dt class="sig sig-object py" id="eLearning.views.courses.CoursesView">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">CoursesView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.CoursesView" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ListView</span></code></p>
+<p>View for displaying a list of courses.</p>
+<p>This view retrieves and displays a list of courses with the status “official”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>Type</em><em>[</em><em>django.db.models.Model</em><em>]</em>) – The model used for retrieving the list of courses.</p></li>
+<li><p><strong>template_name</strong> (<em>str</em>) – The name of the template used for rendering the list of courses.</p></li>
+<li><p><strong>context_object_name</strong> (<em>str</em>) – The name of the context variable containing the list of courses
+in the template.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="eLearning.views.courses.CoursesView.context_object_name">
+<span class="sig-name descname"><span class="pre">context_object_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'courses'</span></em><a class="headerlink" href="#eLearning.views.courses.CoursesView.context_object_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.CoursesView.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.CoursesView.get_queryset" title="Link to this definition">#</a></dt>
+<dd><p>Retrieves the queryset of courses with the status “official”.</p>
+<p>This method filters the queryset of courses to include only those with the status
+“official”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>self</strong> (<a class="reference internal" href="#eLearning.views.courses.CoursesView" title="eLearning.views.courses.CoursesView"><em>CoursesView</em></a>) – The view instance.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The queryset of courses with the status “official”.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QuerySet[Course]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="eLearning.views.courses.CoursesView.model">
+<span class="sig-name descname"><span class="pre">model</span></span><a class="headerlink" href="#eLearning.views.courses.CoursesView.model" title="Link to this definition">#</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">Course</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="eLearning.views.courses.CoursesView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'public/view_courses.html'</span></em><a class="headerlink" href="#eLearning.views.courses.CoursesView.template_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="eLearning.views.courses.OfficialCourseView">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">OfficialCourseView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.OfficialCourseView" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">UserPassesTestMixin</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">TemplateView</span></code></p>
+<p>A view to display the course materials for students and teacher.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.OfficialCourseView.dispatch">
+<span class="sig-name descname"><span class="pre">dispatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.OfficialCourseView.dispatch" title="Link to this definition">#</a></dt>
+<dd><p>Dispatch method with custom login decorator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>django.http.HttpRequest</em>) – HttpRequest object representing the request.</p></li>
+<li><p><strong>args</strong> (<em>tuple</em>) – Additional positional arguments.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponse object representing the response.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>django.http.HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.OfficialCourseView.get_context_data">
+<span class="sig-name descname"><span class="pre">get_context_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.OfficialCourseView.get_context_data" title="Link to this definition">#</a></dt>
+<dd><p>Method to get context data for rendering the template.</p>
+<p>Fetches course information, materials, and form for editing the course.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kwargs</strong> (<em>dict</em>) – Additional keyword arguments.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing context data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.OfficialCourseView.post">
+<span class="sig-name descname"><span class="pre">post</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.OfficialCourseView.post" title="Link to this definition">#</a></dt>
+<dd><p>Method to handle POST requests for updating course details.</p>
+<p>Validates the form and updates the course details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>django.http.HttpRequest</em>) – HttpRequest object representing the request.</p></li>
+<li><p><strong>args</strong> (<em>tuple</em>) – Additional positional arguments.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponseRedirect object for redirection.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>django.http.HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="eLearning.views.courses.OfficialCourseView.template_name">
+<span class="sig-name descname"><span class="pre">template_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'user/course.html'</span></em><a class="headerlink" href="#eLearning.views.courses.OfficialCourseView.template_name" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.OfficialCourseView.test_func">
+<span class="sig-name descname"><span class="pre">test_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.OfficialCourseView.test_func" title="Link to this definition">#</a></dt>
+<dd><p>Method to check if the user is authorized to access the course.</p>
+<p>The user must be either the teacher of the course or enrolled in it.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="eLearning.views.courses.WeekView">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">WeekView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.WeekView" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">View</span></code></p>
+<p>View for managing course weeks.</p>
+<p>This view handles the creation and deletion of weeks for a course.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.WeekView.delete">
+<span class="sig-name descname"><span class="pre">delete</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.WeekView.delete" title="Link to this definition">#</a></dt>
+<dd><p>Handles DELETE requests to delete a week from a course.</p>
+<p>This method deletes the last week of the specified course by decrementing the duration_weeks
+attribute of the course.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>args</strong> (<em>tuple</em>) – Additional positional arguments.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP response indicating the success or failure of the deletion.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="eLearning.views.courses.WeekView.patch">
+<span class="sig-name descname"><span class="pre">patch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.WeekView.patch" title="Link to this definition">#</a></dt>
+<dd><p>Handles PATCH requests to create a new week for a course.</p>
+<p>This method creates a new week for the specified course by incrementing the duration_weeks
+attribute of the course. It then renders the HTML markup for the new week.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>args</strong> (<em>tuple</em>) – Additional positional arguments.</p></li>
+<li><p><strong>kwargs</strong> (<em>dict</em>) – Additional keyword arguments.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP response containing the HTML markup for the new week.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.course_details">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">course_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.course_details" title="Link to this definition">#</a></dt>
+<dd><p>View for displaying details of a specific course.</p>
+<p>This view retrieves details of a specific course identified by the provided course ID.
+It checks if the current user is authenticated and if they are enrolled in the course.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>django.http.HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course for which details are to be displayed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The rendered course details page.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>django.http.HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.create_course">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">create_course</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.create_course" title="Link to this definition">#</a></dt>
+<dd><p>Handles the creation of a new course.</p>
+<p>If the request method is POST, attempts to create a new course
+using the data submitted in the form. If successful, redirects to
+the draft page for the newly created course. If a course with the 
+same name already exists for the current user, displays an error 
+message and redirects to the dashboard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponseRedirect object for redirection.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>django.http.HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.delete_course_material">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">delete_course_material</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_material_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.delete_course_material" title="Link to this definition">#</a></dt>
+<dd><p>Deletes a course material.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_material_id</strong> (<em>int</em>) – The ID of the course material to be deleted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP response indicating successful deletion.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.enroll">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">enroll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.enroll" title="Link to this definition">#</a></dt>
+<dd><p>Enroll a user in a course.</p>
+<p>This view handles the enrollment process for a user in a course. It checks if the user is already enrolled,
+and if not, creates a new enrollment for the user in the specified course. It also sends an enrollment email
+to the user upon successful enrollment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course to enroll in.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP response with html button or error message.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>JsonResponse or HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.enrolmentEmail">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">enrolmentEmail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.enrolmentEmail" title="Link to this definition">#</a></dt>
+<dd><p>Sends an enrollment confirmation email to the user.</p>
+<p>This function sends an email to the provided user to confirm their successful enrollment
+in the specified course. The email contains details about the course such as its name,
+start date, end date, duration, teacher’s name and email.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>user</strong> (<em>django.contrib.auth.models.User</em>) – The user who has been enrolled in the course.</p></li>
+<li><p><strong>course</strong> (<em>YourCourseModel</em>) – The course in which the user has been enrolled.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.get_week_materials">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">get_week_materials</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">week_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.get_week_materials" title="Link to this definition">#</a></dt>
+<dd><p>Retrieves materials for a specific week of a course.</p>
+<p>If the request method is GET, retrieves materials and assignments 
+for the specified week of the course. Renders the materials template 
+with the retrieved data and upload forms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course.</p></li>
+<li><p><strong>week_number</strong> (<em>int</em>) – The week number for which materials are requested.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP response with the rendered materials template and data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.materialsUpdateEmail">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">materialsUpdateEmail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">students</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">week</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_of_materials</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.materialsUpdateEmail" title="Link to this definition">#</a></dt>
+<dd><p>Sends an email update about new course materials to the specified students.</p>
+<p>This function sends personalized email updates to each student in the provided list,
+informing them about the addition of new course materials for a specific week in the course.
+Each email contains information about the course, the week, the number of new materials added,
+and instructions on accessing the materials.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>students</strong> (<em>list</em><em> of </em><em>django.contrib.auth.models.User</em>) – The list of students to whom the email updates will be sent.</p></li>
+<li><p><strong>course</strong> (<em>YourCourseModel</em>) – The course for which the materials update is being sent.</p></li>
+<li><p><strong>week</strong> (<em>int</em>) – The week number for which the materials update is being sent.</p></li>
+<li><p><strong>num_of_materials</strong> (<em>int</em>) – The number of new materials added for the specified week.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.publish_course">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">publish_course</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.publish_course" title="Link to this definition">#</a></dt>
+<dd><p>Publishes a course.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course to be published.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP redirect response to the dashboard.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.student_ban_status_update">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">student_ban_status_update</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">student_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.student_ban_status_update" title="Link to this definition">#</a></dt>
+<dd><p>Updates the ban status of a student enrolled in a course.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course.</p></li>
+<li><p><strong>student_id</strong> (<em>int</em>) – The ID of the student.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP response containing HTML content.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponse</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.submit_feedback">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">submit_feedback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">student_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.submit_feedback" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.upload_assignment_material">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">upload_assignment_material</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">week_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.upload_assignment_material" title="Link to this definition">#</a></dt>
+<dd><p>View function to handle the upload of assignment materials for a specific course and week.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – HttpRequest object representing the request.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course.</p></li>
+<li><p><strong>week_number</strong> (<em>int</em>) – The week number.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>HttpResponseRedirect object redirecting to the ‘get_week_materials’ view.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.upload_material">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">upload_material</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">course_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">week_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.upload_material" title="Link to this definition">#</a></dt>
+<dd><p>Handles the upload of materials for a specific course and week.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>course_id</strong> (<em>int</em>) – The ID of the course for which materials are being uploaded.</p></li>
+<li><p><strong>week_number</strong> (<em>int</em>) – The week number for which materials are being uploaded.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP redirect response to the ‘get_week_materials’ view for the specified course and week.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="eLearning.views.courses.upload_student_submission">
+<span class="sig-prename descclassname"><span class="pre">eLearning.views.courses.</span></span><span class="sig-name descname"><span class="pre">upload_student_submission</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">assignment_id</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#eLearning.views.courses.upload_student_submission" title="Link to this definition">#</a></dt>
+<dd><p>Handles the submission of an assignment by a student.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>HttpRequest</em>) – The HTTP request object.</p></li>
+<li><p><strong>assignment_id</strong> (<em>int</em>) – The ID of the assignment.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An HTTP redirect response.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>HttpResponseRedirect</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="users.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Users Views</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="auth.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Authentication Views</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Tan Tian Fong Barnabas
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Courses Views</a><ul>
+<li><a class="reference internal" href="#eLearning.views.courses.CoursesView"><code class="docutils literal notranslate"><span class="pre">CoursesView</span></code></a><ul>
+<li><a class="reference internal" href="#eLearning.views.courses.CoursesView.context_object_name"><code class="docutils literal notranslate"><span class="pre">CoursesView.context_object_name</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.CoursesView.get_queryset"><code class="docutils literal notranslate"><span class="pre">CoursesView.get_queryset()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.CoursesView.model"><code class="docutils literal notranslate"><span class="pre">CoursesView.model</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.CoursesView.template_name"><code class="docutils literal notranslate"><span class="pre">CoursesView.template_name</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eLearning.views.courses.OfficialCourseView"><code class="docutils literal notranslate"><span class="pre">OfficialCourseView</span></code></a><ul>
+<li><a class="reference internal" href="#eLearning.views.courses.OfficialCourseView.dispatch"><code class="docutils literal notranslate"><span class="pre">OfficialCourseView.dispatch()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.OfficialCourseView.get_context_data"><code class="docutils literal notranslate"><span class="pre">OfficialCourseView.get_context_data()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.OfficialCourseView.post"><code class="docutils literal notranslate"><span class="pre">OfficialCourseView.post()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.OfficialCourseView.template_name"><code class="docutils literal notranslate"><span class="pre">OfficialCourseView.template_name</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.OfficialCourseView.test_func"><code class="docutils literal notranslate"><span class="pre">OfficialCourseView.test_func()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eLearning.views.courses.WeekView"><code class="docutils literal notranslate"><span class="pre">WeekView</span></code></a><ul>
+<li><a class="reference internal" href="#eLearning.views.courses.WeekView.delete"><code class="docutils literal notranslate"><span class="pre">WeekView.delete()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.WeekView.patch"><code class="docutils literal notranslate"><span class="pre">WeekView.patch()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eLearning.views.courses.course_details"><code class="docutils literal notranslate"><span class="pre">course_details()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.create_course"><code class="docutils literal notranslate"><span class="pre">create_course()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.delete_course_material"><code class="docutils literal notranslate"><span class="pre">delete_course_material()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.enroll"><code class="docutils literal notranslate"><span class="pre">enroll()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.enrolmentEmail"><code class="docutils literal notranslate"><span class="pre">enrolmentEmail()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.get_week_materials"><code class="docutils literal notranslate"><span class="pre">get_week_materials()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.materialsUpdateEmail"><code class="docutils literal notranslate"><span class="pre">materialsUpdateEmail()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.publish_course"><code class="docutils literal notranslate"><span class="pre">publish_course()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.student_ban_status_update"><code class="docutils literal notranslate"><span class="pre">student_ban_status_update()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.submit_feedback"><code class="docutils literal notranslate"><span class="pre">submit_feedback()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.upload_assignment_material"><code class="docutils literal notranslate"><span class="pre">upload_assignment_material()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.upload_material"><code class="docutils literal notranslate"><span class="pre">upload_material()</span></code></a></li>
+<li><a class="reference internal" href="#eLearning.views.courses.upload_student_submission"><code class="docutils literal notranslate"><span class="pre">upload_student_submission()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=2709fde1"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    </body>
+</html>

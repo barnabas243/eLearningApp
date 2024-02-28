@@ -4,6 +4,7 @@ from django.db import IntegrityError, models
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.dispatch import receiver
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.utils.text import slugify
@@ -112,7 +113,7 @@ class User(AbstractUser):
             return today.year - self.date_of_birth.year
 
     def __str__(self):
-        return "{}".format(self.username)
+        return self.get_full_name()
 
     class Meta:
         """Meta class containing permissions for the User model."""
@@ -205,6 +206,9 @@ class Course(models.Model):
         verbose_name = _("Course")
         verbose_name_plural = _("Courses")
         unique_together = ["name", "teacher"]
+        
+    def get_absolute_url(self):
+        return reverse('official', kwargs={'course_id': self.pk})
 
 
 def material_upload_path(instance, filename):

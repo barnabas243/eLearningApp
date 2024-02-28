@@ -19,7 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from ckeditor_uploader.views import upload
-from chat import routing
+from django.views.generic import RedirectView
 from eLearning.decorators import custom_login_required 
 
 urlpatterns = [
@@ -28,4 +28,9 @@ urlpatterns = [
     path("chat/", include("chat.urls")),  # Include the chat app's URLs under the 'chat/' path
     path('ckeditor/upload/', custom_login_required(upload), name='ckeditor_upload'),
     path('ckeditor/', include('ckeditor_uploader.urls')),
+    
+    path('docs/', RedirectView.as_view(url='/docs/index.html', permanent=False)),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+urlpatterns += static('/docs/', document_root=settings.BASE_DIR / 'static/docs/build')

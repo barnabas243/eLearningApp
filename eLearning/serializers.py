@@ -1,6 +1,7 @@
 from rest_framework import serializers, validators
 from django.utils.translation import gettext_lazy as _
 from .models import *
+from notifications.models import Notification
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -51,4 +52,10 @@ class EnrollmentSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
     class Meta:
         model = Enrolment
+        fields = '__all__'
+        
+        
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
         fields = '__all__'
