@@ -18,8 +18,10 @@ const messageContainer = document.querySelector('#messageContainer');
 let last_viewed_message;
 
 const scrollConfig = {
-    behavior: 'instant', // smoothscrolling is too slow
+    behavior: 'instant', 
+    block: 'end' // smoothscrolling is too slow
 }
+
 // Event handler for when the connection is established
 chatSocket.onopen = function (event) {
     console.log('WebSocket connection established.');
