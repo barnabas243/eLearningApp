@@ -2,6 +2,7 @@ from itertools import groupby
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.decorators import method_decorator
+from django.views.decorators.http import require_http_methods
 
 from django.views.generic import TemplateView, View, ListView, FormView
 from django.contrib.auth.mixins import UserPassesTestMixin
@@ -40,20 +41,6 @@ class LandingView(TemplateView):
     template_name = "public/landing.html"
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Dispatches the request, redirecting authenticated users to the dashboard.
-
-        :param request: The HTTP request object.
-        :type request: HttpRequest
-        :param args: Variable length argument list.
-        :type args: tuple
-        :param kwargs: Arbitrary keyword arguments.
-        :type kwargs: dict
-
-        :return: Redirects authenticated users to the dashboard,
-                 otherwise renders the landing page template.
-        :rtype: HttpResponseRedirect
-        """
         if request.user.is_authenticated:
             return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
@@ -76,17 +63,6 @@ class DashboardView(View):
 
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
-        """
-        Dispatch method to handle request dispatching.
-
-        :param request: The HTTP request object.
-        :type request: HttpRequest
-        :param args: Additional positional arguments.
-        :param kwargs: Additional keyword arguments.
-
-        :return: The HTTP response object.
-        :rtype: HttpResponse
-        """
         return super().dispatch(request, *args, **kwargs)
 
     @csrf_exempt
@@ -164,6 +140,8 @@ class DashboardView(View):
             return redirect("dashboard")
 
 
+@custom_login_required
+@require_http_methods(["GET"])
 def userSearchFilter(user_id, user_type, query):
     """
     Function to filter users based on the search query and user type.
@@ -280,21 +258,6 @@ class UserHomePage(View):
 
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
-        """
-        Dispatch method for handling the request.
-
-        This method dispatches the request to the appropriate handler based on the user's authentication status.
-
-        :param request: The HTTP request object.
-        :type request: HttpRequest
-        :param args: Additional positional arguments.
-        :type args: tuple
-        :param kwargs: Additional keyword arguments.
-        :type kwargs: dict
-
-        :return: An HTTP response returned by the dispatched handler.
-        :rtype: HttpResponse
-        """
         return super().dispatch(request, *args, **kwargs)
 
     @csrf_exempt
@@ -377,6 +340,10 @@ class SearchUsersView(UserPassesTestMixin, ListView):
     context_object_name = "users"
     paginate_by = 10
 
+    @method_decorator(custom_login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def test_func(self):
         """
         Checks if the current user is authorized to access the view.
@@ -446,6 +413,9 @@ class ProfileView(View):
     """
 
     @method_decorator(custom_login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, *args, **kwargs):
         """
         Handles GET requests to retrieve user profile information.
@@ -470,7 +440,6 @@ class ProfileView(View):
             {"user": user, "profileForm": ProfilePictureForm},
         )
 
-    @method_decorator(custom_login_required)
     def put(self, request, *args, **kwargs):
         """
         Handles PUT requests to update user profile information.
@@ -531,6 +500,10 @@ class UploadPictureView(FormView):
     """
 
     form_class = ProfilePictureForm
+
+    @method_decorator(custom_login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         """

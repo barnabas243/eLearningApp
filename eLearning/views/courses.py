@@ -34,7 +34,11 @@ from django.http import (
 )
 from django.template.loader import render_to_string
 from django.urls import reverse
-from eLearning.decorators import custom_login_required
+from eLearning.decorators import (
+    custom_login_required,
+    student_required,
+    teacher_required,
+)
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 
@@ -111,6 +115,8 @@ def course_details(request, course_id):
 
 
 @custom_login_required
+@student_required
+@require_http_methods(["POST"])
 def enroll(request, course_id):
     """
     Enroll a user in a course.
@@ -140,6 +146,7 @@ def enroll(request, course_id):
 
     # Send enrollment email to the user
     enrolmentEmail(request.user, course)
+
     course_link = (
         f'<a href="{course.get_absolute_url()}" class="disabled-link">{course.name}</a>'
     )
@@ -148,6 +155,7 @@ def enroll(request, course_id):
         recipient=request.user,
         verb=f"You have enrolled into {course_link}.",
     )
+
     # Construct the HTML with the generated URL
     url = reverse("official", args=[course_id])
     html = f'<a href="{url}" class="btn btn-primary">View Course Materials</a>'
@@ -157,6 +165,8 @@ def enroll(request, course_id):
 
 
 @custom_login_required
+@teacher_required
+@require_http_methods(["POST"])
 def create_course(request):
     """
     Handles the creation of a new course.
@@ -173,26 +183,24 @@ def create_course(request):
     :return: HttpResponseRedirect object for redirection.
     :rtype: django.http.HttpResponseRedirect
     """
-    if request.method == "POST":
-        form = CreateCourseForm(request.POST)
-        if form.is_valid():
-            course = form.save(commit=False)
-            course.teacher = request.user
+    form = CreateCourseForm(request.POST)
+    if form.is_valid():
+        course = form.save(commit=False)
+        course.teacher = request.user
 
-            # Check if a course with the same name already exists for the current user
-            try:
-                existing_course = Course.objects.get(
-                    name=course.name, teacher=request.user
-                )
-                messages.error(request, "Course with the same name already exists.")
-                return redirect("dashboard")
-            except ObjectDoesNotExist:
-                course.save()
-                messages.success(request, "Course created successfully.")
-                return redirect(reverse("draft", args=[course.id]))
-        else:
-            print(form.errors)
-            messages.error(request, "Failed to create course. Please check the form.")
+        # Check if a course with the same name already exists for the current user
+        try:
+            existing_course = Course.objects.get(name=course.name, teacher=request.user)
+            messages.error(request, "Course with the same name already exists.")
+            return redirect("dashboard")
+        except ObjectDoesNotExist:
+            course.save()
+            messages.success(request, "Course created successfully.")
+            return redirect(reverse("draft", args=[course.id]))
+    else:
+        logger.error("Error while validating form: %s", form.errors)
+        messages.error(request, "Failed to create course. Please check the form.")
+
     return redirect("dashboard")
 
 
@@ -203,6 +211,24 @@ class WeekView(View):
     This view handles the creation and deletion of weeks for a course.
 
     """
+
+    @method_decorator(custom_login_required)
+    @teacher_required
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Dispatch method with custom login decorator.
+
+        :param request: HttpRequest object representing the request.
+        :type request: django.http.HttpRequest
+        :param args: Additional positional arguments.
+        :type args: tuple
+        :param kwargs: Additional keyword arguments.
+        :type kwargs: dict
+
+        :return: HttpResponse object representing the response.
+        :rtype: django.http.HttpResponse
+        """
+        return super().dispatch(request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
         """
@@ -367,6 +393,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 
         return context
 
+    @teacher_required
     def post(self, request, *args, **kwargs):
         """
         Method to handle POST requests for updating course details.
@@ -409,6 +436,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 
 
 @custom_login_required
+@student_required
 @require_http_methods(["POST"])
 def submit_feedback(request, course_id, student_id):
     try:
@@ -498,6 +526,7 @@ def submit_feedback(request, course_id, student_id):
 
 @custom_login_required
 @csrf_exempt
+@require_http_methods(["GET"])
 def get_week_materials(request, course_id, week_number):
     """
     Retrieves materials for a specific week of a course.
@@ -516,52 +545,51 @@ def get_week_materials(request, course_id, week_number):
     :return: An HTTP response with the rendered materials template and data.
     :rtype: HttpResponse
     """
-    if request.method == "GET":
-        print("redirecting")
-        try:
-            # Query the database to retrieve materials for the specified week of the course
-            course = get_object_or_404(Course, id=course_id)
-            course_materials = CourseMaterial.objects.filter(
-                course=course, week_number=week_number
-            )
-
-            course_assignments = Assignment.objects.filter(
-                course=course, week_number=week_number
-            )
-
-            if course_assignments.exists() and request.user.user_type == "student":
-                user_assignments = AssignmentSubmission.objects.filter(
-                    assignment__in=course_assignments, student=request.user
-                )
-            else:
-                user_assignments = None
-
-        except Exception as e:
-            print(e)
-            return JsonResponse({"error": "An error occurred"}, status=500)
-
-        initial_data = {"course_id": course_id, "week_number": week_number}
-        # Instantiate the MaterialUploadForm
-        material_upload_form = MaterialUploadForm(initial=initial_data)
-        assignment_upload_form = AssignmentForm(initial=initial_data)
-        # Render the materials template with the materials data and the upload form
-        return render(
-            request,
-            "partials/materials.html",
-            {
-                "course_id": course_id,
-                "week_number": week_number,
-                "course_materials": course_materials,
-                "course_assignments": course_assignments,
-                "user_assignments": user_assignments,
-                "materialUploadForm": material_upload_form,
-                "assignmentForm": assignment_upload_form,
-                "teacher": course.teacher == request.user,
-            },
+    try:
+        course = get_object_or_404(Course, id=course_id)
+        course_materials = CourseMaterial.objects.filter(
+            course=course, week_number=week_number
         )
+
+        course_assignments = Assignment.objects.filter(
+            course=course, week_number=week_number
+        )
+
+        if course_assignments.exists() and request.user.user_type == "student":
+            user_assignments = AssignmentSubmission.objects.filter(
+                assignment__in=course_assignments, student=request.user
+            )
+        else:
+            user_assignments = None
+
+    except Exception as e:
+        logger.error("Unexpected Error occured while getting week materials: %s", e)
+        return JsonResponse({"error": "An error occurred"}, status=500)
+
+    initial_data = {"course_id": course_id, "week_number": week_number}
+    # Instantiate the MaterialUploadForm
+    material_upload_form = MaterialUploadForm(initial=initial_data)
+    assignment_upload_form = AssignmentForm(initial=initial_data)
+    # Render the materials template with the materials data and the upload form
+    return render(
+        request,
+        "partials/materials.html",
+        {
+            "course_id": course_id,
+            "week_number": week_number,
+            "course_materials": course_materials,
+            "course_assignments": course_assignments,
+            "user_assignments": user_assignments,
+            "materialUploadForm": material_upload_form,
+            "assignmentForm": assignment_upload_form,
+            "teacher": course.teacher == request.user,
+        },
+    )
 
 
 @custom_login_required
+@teacher_required
+@require_http_methods(["POST"])
 def upload_assignment_material(request, course_id, week_number):
     """
     View function to handle the upload of assignment materials for a specific course and week.
@@ -577,39 +605,38 @@ def upload_assignment_material(request, course_id, week_number):
     :rtype: HttpResponseRedirect
     """
     try:
-        if request.method == "POST":
-            # Create a form instance with the POST data
-            logger.info("POST data received: %s", request.POST)
+        # Create a form instance with the POST data
+        logger.info("POST data received: %s", request.POST)
 
-            course = get_object_or_404(Course, pk=course_id)
+        course = get_object_or_404(Course, pk=course_id)
 
-            # Create a form instance with the POST data and course instance
-            form = AssignmentForm(data=request.POST)
+        # Create a form instance with the POST data and course instance
+        form = AssignmentForm(data=request.POST)
 
-            form.course = course
-            if form.is_valid():
-                logger.info("cleaned form: %s", form.cleaned_data)
-                assignment = form.save(commit=False)  # Don't save to the database yet
-                assignment.week_number = week_number
-                assignment.course_id = course_id  # Set the course_id attribute
-                assignment.save()
+        form.course = course
+        if form.is_valid():
+            logger.info("cleaned form: %s", form.cleaned_data)
+            assignment = form.save(commit=False)  # Don't save to the database yet
+            assignment.week_number = week_number
+            assignment.course_id = course_id  # Set the course_id attribute
+            assignment.save()
 
-                messages.success(request, "Assignment material uploaded successfully.")
-                logger.info(
-                    "Assignment material uploaded successfully for course %s, week %s.",
-                    assignment.course.name,
-                    assignment.week_number,
-                )
-            else:
-                messages.error(
-                    request,
-                    "Failed to upload assignment material. Please check the form.",
-                )
-                logger.error(
-                    "Failed to upload assignment material for course %s, week %s.",
-                    course_id,
-                    week_number,
-                )
+            messages.success(request, "Assignment material uploaded successfully.")
+            logger.info(
+                "Assignment material uploaded successfully for course %s, week %s.",
+                assignment.course.name,
+                assignment.week_number,
+            )
+        else:
+            messages.error(
+                request,
+                "Failed to upload assignment material. Please check the form.",
+            )
+            logger.error(
+                "Failed to upload assignment material for course %s, week %s.",
+                course_id,
+                week_number,
+            )
 
     except Exception as e:
         # Log the exception
@@ -627,6 +654,7 @@ def upload_assignment_material(request, course_id, week_number):
 
 
 @custom_login_required
+@student_required
 def upload_student_submission(request, assignment_id):
     """
     Handles the submission of an assignment by a student.
@@ -670,6 +698,7 @@ def upload_student_submission(request, assignment_id):
 
 
 @custom_login_required
+@teacher_required
 @require_http_methods(["DELETE"])
 def delete_course_material(request, course_material_id):
     """
@@ -701,6 +730,7 @@ def delete_course_material(request, course_material_id):
 
 
 @custom_login_required
+@teacher_required
 @require_http_methods(["PATCH"])
 def student_ban_status_update(request, course_id, student_id):
     """
@@ -740,6 +770,7 @@ def student_ban_status_update(request, course_id, student_id):
 
 
 @custom_login_required
+@teacher_required
 def upload_material(request, course_id, week_number):
     """
     Handles the upload of materials for a specific course and week.
@@ -847,6 +878,8 @@ def upload_material(request, course_id, week_number):
     return redirect("get_week_materials", course_id=course_id, week_number=week_number)
 
 
+@custom_login_required
+@teacher_required
 def publish_course(request, course_id):
     """
     Publishes a course.
@@ -890,6 +923,10 @@ def publish_course(request, course_id):
 # ===============================================
 # Email Functions
 # ===============================================
+
+
+@custom_login_required
+@teacher_required
 def enrolmentEmail(user, course):
     """
     Sends an enrollment confirmation email to the user.
@@ -923,6 +960,8 @@ def enrolmentEmail(user, course):
     send_mail(subject, message, from_email, recipient_list)
 
 
+@custom_login_required
+@teacher_required
 def materialsUpdateEmail(students, course, week, num_of_materials):
     """
     Sends an email update about new course materials to the specified students.
@@ -982,6 +1021,8 @@ def materialsUpdateEmail(students, course, week, num_of_materials):
         send_mail(subject, message, from_email, recipient_list)
 
 
+@custom_login_required
+@teacher_required
 def banStudentEmail(student, course):
     """
     Sends anban confirmation email to the student

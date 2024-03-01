@@ -39,9 +39,9 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ChatMembershipSerializer(serializers.ModelSerializer):
-    user = UserSerializer()  # Assuming you have a UserSerializer
-    chatroom = ChatRoomSerializer()  # Assuming you have a ChatRoomSerializer
-    last_viewed_message = MessageSerializer()  # Assuming you have a MessageSerializer
+    user = UserSerializer()
+    chatroom = ChatRoomSerializer()
+    last_viewed_message = MessageSerializer()
 
     class Meta:
         model = ChatMembership

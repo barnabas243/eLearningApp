@@ -10,7 +10,11 @@ from django.utils import timezone
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
 from django.db.models.signals import post_save
-from django.core.validators import MinValueValidator, MaxValueValidator, FileExtensionValidator
+from django.core.validators import (
+    MinValueValidator,
+    MaxValueValidator,
+    FileExtensionValidator,
+)
 
 
 def profile_picture_upload_path(instance, filename):
@@ -81,8 +85,10 @@ class User(AbstractUser):
     # Set max_length
     first_name = models.CharField(_("First name"), max_length=30)
     last_name = models.CharField(_("Last name"), max_length=150)
-    email = models.EmailField(_("Email address"), max_length=254, unique=True)  # Make email field unique
-    username = models.CharField(_("Username"), max_length=150, unique=True) 
+    email = models.EmailField(
+        _("Email address"), max_length=254, unique=True
+    )  # Make email field unique
+    username = models.CharField(_("Username"), max_length=150, unique=True)
 
     USERNAME_FIELD = "username"
     REQUIRED_FIELDS = ["email", "first_name", "last_name", "date_of_birth", "user_type"]
@@ -154,6 +160,7 @@ class StatusUpdate(models.Model):
         verbose_name = _("Status Update")
         verbose_name_plural = _("Status Updates")
 
+
 class Course(models.Model):
     """
     Model representing a course.
@@ -201,14 +208,14 @@ class Course(models.Model):
         else:
             # Handle the case where start_date is None
             return None
-    
+
     class Meta:
         verbose_name = _("Course")
         verbose_name_plural = _("Courses")
         unique_together = ["name", "teacher"]
-        
+
     def get_absolute_url(self):
-        return reverse('official', kwargs={'course_id': self.pk})
+        return reverse("official", kwargs={"course_id": self.pk})
 
 
 def material_upload_path(instance, filename):
@@ -229,6 +236,7 @@ def material_upload_path(instance, filename):
         instance.course.name
     )  # Convert course name to a valid filename
     return os.path.join("materials", f"{course_id}-{course_name}", filename)
+
 
 class CourseMaterial(models.Model):
     """
@@ -279,8 +287,12 @@ class Assignment(models.Model):
     )
     name = models.CharField(max_length=100)
     instructions = RichTextField()
-    week_number = models.PositiveIntegerField(_("Week Number"), validators=[MinValueValidator(1)])
-    duration_days = models.PositiveIntegerField(_("Duration (days)"), validators=[MinValueValidator(1)])
+    week_number = models.PositiveIntegerField(
+        _("Week Number"), validators=[MinValueValidator(1)]
+    )
+    duration_days = models.PositiveIntegerField(
+        _("Duration (days)"), validators=[MinValueValidator(1)]
+    )
 
     def __str__(self):
         return self.name
@@ -289,7 +301,9 @@ class Assignment(models.Model):
         """
         Calculate the deadline for the assignment based on the course start date and assignment duration.
         """
-        return self.course.datetime_from_start_date(self.week_number) + timezone.timedelta(days=self.duration_days)
+        return self.course.datetime_from_start_date(
+            self.week_number
+        ) + timezone.timedelta(days=self.duration_days)
 
     @staticmethod
     def get_materials(course, week_number):
@@ -301,8 +315,8 @@ class Assignment(models.Model):
     class Meta:
         verbose_name = _("Assignment")
         verbose_name_plural = _("Assignments")
-        
-        
+
+
 def assignment_upload_path(instance, filename):
     """
     Function to determine the upload path for material files.
@@ -321,7 +335,12 @@ def assignment_upload_path(instance, filename):
         instance.assignment.course.name
     )  # Convert course name to a valid filename
     week_number = instance.assignment.week_number
-    return os.path.join("assignments_submission", f"{course_id}-{course_name}",f"week {week_number}", filename)
+    return os.path.join(
+        "assignments_submission",
+        f"{course_id}-{course_name}",
+        f"week {week_number}",
+        filename,
+    )
 
 
 class AssignmentSubmission(models.Model):
@@ -345,13 +364,18 @@ class AssignmentSubmission(models.Model):
         User, on_delete=models.CASCADE, related_name="assignment_submissions"
     )
     submitted_at = models.DateTimeField(auto_now_add=True)
-    assignment_file = models.FileField(upload_to=assignment_upload_path, validators=[FileExtensionValidator(['pdf'])])
+    assignment_file = models.FileField(
+        upload_to=assignment_upload_path, validators=[FileExtensionValidator(["pdf"])]
+    )
     teacher_comments = models.TextField(null=True, blank=True)
     grade = models.DecimalField(
-        _("Grade"), 
-        max_digits=5, 
-        decimal_places=2, 
-        validators=[MinValueValidator(0), MaxValueValidator(100),],
+        _("Grade"),
+        max_digits=5,
+        decimal_places=2,
+        validators=[
+            MinValueValidator(0),
+            MaxValueValidator(100),
+        ],
         null=True,
         blank=True,
     )
@@ -362,8 +386,8 @@ class AssignmentSubmission(models.Model):
     class Meta:
         verbose_name = _("Assignment Submission")
         verbose_name_plural = _("Assignment Submissions")
-        
-        
+
+
 class Feedback(models.Model):
     """
     Model representing feedback for a course.
@@ -400,6 +424,7 @@ class Feedback(models.Model):
     def __str__(self):
         return f"Feedback for {self.course} by {self.user}"
 
+
 class Enrolment(models.Model):
     """
     Model representing a student's Enrolment in a course.
@@ -431,8 +456,7 @@ class Enrolment(models.Model):
         verbose_name = _("Enrolment")
         verbose_name_plural = _("Enrolments")
 
-        
-    
+
 # Define fixed permissions for students and teachers
 student_permissions = [
     ("view_user_profile", "Can view user profile"),
@@ -477,26 +501,38 @@ def assign_user_to_group(sender, instance, created, **kwargs):
         content_type = ContentType.objects.get_for_model(User)
 
         # Bulk create permissions for student group if they don't exist
-        student_group, student_group_created = Group.objects.get_or_create(name="student")
+        student_group, student_group_created = Group.objects.get_or_create(
+            name="student"
+        )
 
         if student_group_created:
             for codename, name in student_permissions:
                 try:
-                    permission, created = Permission.objects.get_or_create(codename=codename, name=name, content_type=content_type)
+                    permission, created = Permission.objects.get_or_create(
+                        codename=codename, name=name, content_type=content_type
+                    )
                     student_group.permissions.add(permission)
                 except IntegrityError as e:
-                    print(f"An error occurred while adding permission to student group: {e}")
+                    print(
+                        f"An error occurred while adding permission to student group: {e}"
+                    )
 
         # Bulk create permissions for teacher group if they don't exist
-        teacher_group, teacher_group_created = Group.objects.get_or_create(name="teacher")
+        teacher_group, teacher_group_created = Group.objects.get_or_create(
+            name="teacher"
+        )
 
         if teacher_group_created:
             for codename, name in teacher_permissions:
                 try:
-                    permission, created = Permission.objects.get_or_create(codename=codename, name=name, content_type=content_type)
+                    permission, created = Permission.objects.get_or_create(
+                        codename=codename, name=name, content_type=content_type
+                    )
                     teacher_group.permissions.add(permission)
                 except IntegrityError as e:
-                    print(f"An error occurred while adding permission to teacher group: {e}")
+                    print(
+                        f"An error occurred while adding permission to teacher group: {e}"
+                    )
 
         # Assign users to groups based on user_type
         if instance.user_type == User.STUDENT:
