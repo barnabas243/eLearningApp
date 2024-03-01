@@ -11,11 +11,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def get_chat_rooms_for_user(user):
     # Retrieve courses where the user is either enrolled or teaching
-    
-    enrolled_course_ids = Enrolment.objects.filter(student=user).values_list('course_id', flat=True)
-    teaching_course_ids = user.courses_taught.values_list('id', flat=True)
+
+    enrolled_course_ids = Enrolment.objects.filter(student=user).values_list(
+        "course_id", flat=True
+    )
+    teaching_course_ids = user.courses_taught.values_list("id", flat=True)
 
     # Retrieve chat rooms associated with the retrieved courses
     enrolled_chat_rooms = ChatRoom.objects.filter(course_id__in=enrolled_course_ids)
@@ -37,23 +40,22 @@ def index(request):
     chat_rooms = get_chat_rooms_for_user(user)
 
     # Pass the chat rooms to the template
-    context = {
-        'chat_rooms': chat_rooms
-    }
+    context = {"chat_rooms": chat_rooms}
 
     # Render the template with the context
     return render(request, "chat/partials/index.html", context)
+
 
 @custom_login_required
 def room(request, room_name):
     """
     Render the chat room page.
-    
+
     :param request: HttpRequest object.
     :type request: HttpRequest
     :param room_name: The name of the chat room.
     :type room_name: str
-    
+
     :return: HttpResponse object representing the rendered chat room page or a redirection to the index page.
     :rtype: HttpResponse
     """
@@ -75,40 +77,49 @@ def room(request, room_name):
         ) | User.objects.filter(pk=chat_room.course.teacher_id)
 
         # Filter ChatMembership queryset based on chat_room_id
-        chat_membership_queryset = ChatMembership.objects.filter(chat_room_id=chat_room.id)
+        chat_membership_queryset = ChatMembership.objects.filter(
+            chat_room_id=chat_room.id
+        )
 
         # Subquery to get the last_online_timestamp for each user
         last_online_subquery = chat_membership_queryset.filter(
-            user_id=OuterRef('pk')
-        ).values('last_online_timestamp')[:1]  # Limit to 1 since each user has only one timestamp per chat room
+            user_id=OuterRef("pk")
+        ).values("last_online_timestamp")[
+            :1
+        ]  # Limit to 1 since each user has only one timestamp per chat room
 
         # Annotate each user with the last_online_timestamp from ChatMembership
         users_with_last_online = users.annotate(
-            last_online_timestamp=Coalesce(Subquery(last_online_subquery), F('last_login'), Value(None))
+            last_online_timestamp=Coalesce(
+                Subquery(last_online_subquery), F("last_login"), Value(None)
+            )
         )
 
-                # Initialize a dictionary to store message blocks
+        # Initialize a dictionary to store message blocks
 
         message_blocks = {}
 
         for message in chat_room.messages.all():
             # Localize the timestamp to the current timezone
             localized_timestamp = timezone.localtime(message.timestamp)
-            
+
             # Extract the date component without the time
             message_date = localized_timestamp.date()
-            
+
             # Check if a message block already exists for the current date
             if message_date in message_blocks:
-                message_blocks[message_date]['messages'].append(message)
+                message_blocks[message_date]["messages"].append(message)
             else:
                 # Create a new message block for the current date
-                message_blocks[message_date] = {'date': message_date, 'messages': [message]}
-                
+                message_blocks[message_date] = {
+                    "date": message_date,
+                    "messages": [message],
+                }
+
         # Convert the dictionary to a list of message blocks
         message_blocks = list(message_blocks.values())
 
-        logger.info("message_blocks: %s",message_blocks)
+        logger.info("message_blocks: %s", message_blocks)
         return render(
             request,
             "chat/partials/chat_room.html",
@@ -126,20 +137,23 @@ def room(request, room_name):
         messages.error(request, "You are not authorized to enter the chatroom.")
         return redirect("/")
 
+
 def search_users(request, chat_room_id):
-    search_query = request.GET.get('chatUserSearchInput', '')
-    
-    chat_room = ChatRoom.objects.filter(id=chat_room_id).first()  # Use first() to get the first object in the queryset
+    search_query = request.GET.get("chatUserSearchInput", "")
+
+    chat_room = ChatRoom.objects.filter(
+        id=chat_room_id
+    ).first()  # Use first() to get the first object in the queryset
 
     if chat_room:
         users = User.objects.filter(
             enrolment__course=chat_room.course
         ) | User.objects.filter(pk=chat_room.course.teacher_id)
-        
+
         # Filter users based on the search query
         filtered_users = users.annotate(
             full_name=Concat("first_name", Value(" "), "last_name")
         ).filter(full_name__icontains=search_query)
-        
+
     # Render a partial template with the filtered user data
-    return render(request, 'chat/partials/user.html', {'users': filtered_users})
+    return render(request, "chat/partials/user.html", {"users": filtered_users})

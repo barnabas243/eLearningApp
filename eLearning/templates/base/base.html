@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-title" content="My eLearning App">
 
     <title>
       {% block title %}
@@ -11,13 +12,13 @@
       {% endblock %}
     </title>
     <meta name="description"
-      content="{% block description %}
-      {% endblock %}" />
+          content="{% block description %}
+                   {% endblock %}" />
 
     <link rel="canonical"
-      {% block canonical_path %}/{% endblock %} />
+          {% block canonical_path %}/{% endblock %} />
 
-    
+
     {% load static %}
     <!-- Site Manifest -->
     <link rel="manifest" href="{% static 'site.webmanifest' %}" />
@@ -35,7 +36,7 @@
       <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>
-      
+
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js" integrity="sha512-FwNWaxyfy2XlEINoSnZh1JQ5TRRtGow0D6XcmAWmYCRgvqOUTnzCxPc9uF35u5ZEpirk1uhlPVA19tflhvnW1g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/utc.min.js" integrity="sha512-z84O912dDT9nKqvpBnl1tri5IN0j/OEgMzLN1GlkpKLMscs5ZHVu+G2CYtA6dkS0YnOGi3cODt3BOPnYc8Agjg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/plugin/timezone.min.js" integrity="sha512-jmsGNYDezdyZ+W3bVeZy83kZp/2n5BgWe/0solkveG0vSSrP9XIVTD1tNiM1OqImc4H3OxHfs1uSfVclOU3mWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -45,12 +46,12 @@
         dayjs.extend(window.dayjs_plugin_timezone);
         dayjs.extend(window.dayjs_plugin_relativeTime);
       </script>
-      
+
       {% load notifications_tags %}
       <script type="text/javascript" src="{% static 'notifications/notify.js' %}"></script>
       <script type="text/javascript" src="{% static 'scripts/notification.js' %}"></script>
       {% register_notify_callbacks callbacks='fill_notification_badge,custom_notification_callback' %}
-      
+
     {% endblock %}
 
     <!-- CSS -->

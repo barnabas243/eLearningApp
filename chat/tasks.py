@@ -1,7 +1,7 @@
 # tasks.py
 from celery import shared_task
 from eLearning.models import User
-from chat.models import  Message
+from chat.models import Message
 
 # @shared_task
 # def save_message_to_db(message_data):

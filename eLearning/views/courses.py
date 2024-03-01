@@ -9,8 +9,23 @@ from django.views.decorators.http import require_http_methods
 from notifications.signals import notify
 
 from chat.models import ChatRoom
-from eLearning.forms import *
-from eLearning.models import *
+from eLearning.forms import (
+    AssignmentForm,
+    AssignmentSubmissionForm,
+    CourseForm,
+    CreateCourseForm,
+    FeedbackForm,
+    MaterialUploadForm,
+)
+from eLearning.models import (
+    Assignment,
+    AssignmentSubmission,
+    Course,
+    CourseMaterial,
+    Enrolment,
+    Feedback,
+    slugify,
+)
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponse,
@@ -26,6 +41,7 @@ from django.core.mail import send_mail
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class CoursesView(ListView):
     """
@@ -56,12 +72,14 @@ class CoursesView(ListView):
 
         :param self: The view instance.
         :type self: CoursesView
-        
+
         :return: The queryset of courses with the status "official".
         :rtype: QuerySet[Course]
         """
         return Course.objects.filter(status="official")
 
+
+@require_http_methods(["GET"])
 def course_details(request, course_id):
     """
     View for displaying details of a specific course.
@@ -73,24 +91,70 @@ def course_details(request, course_id):
     :type request: django.http.HttpRequest
     :param course_id: The ID of the course for which details are to be displayed.
     :type course_id: int
-    
+
     :return: The rendered course details page.
     :rtype: django.http.HttpResponse
     """
-    if request.method == "GET":
-        course = get_object_or_404(Course, id=course_id)
+    course = get_object_or_404(Course, id=course_id)
 
-        # Check if the current user is authenticated and if so, check if they are enrolled in the course
-        is_enrolled = False
-        if request.user.is_authenticated:
-            is_enrolled = Enrolment.is_student_enrolled(request.user, course)
+    # Check if the current user is authenticated and if so, check if they are enrolled in the course
+    is_enrolled = False
+    if request.user.is_authenticated:
+        is_enrolled = Enrolment.is_student_enrolled(request.user, course)
 
-        # Render the course details template with the course object and enrollment status
-        return render(
-            request,
-            "public/course_details.html",
-            {"course": course, "is_enrolled": is_enrolled},
+    # Render the course details template with the course object and enrollment status
+    return render(
+        request,
+        "public/course_details.html",
+        {"course": course, "is_enrolled": is_enrolled},
+    )
+
+
+@custom_login_required
+def enroll(request, course_id):
+    """
+    Enroll a user in a course.
+
+    This view handles the enrollment process for a user in a course. It checks if the user is already enrolled,
+    and if not, creates a new enrollment for the user in the specified course. It also sends an enrollment email
+    to the user upon successful enrollment.
+
+    :param request: The HTTP request object.
+    :type request: HttpRequest
+    :param course_id: The ID of the course to enroll in.
+    :type course_id: int
+
+    :return: An HTTP response with html button or error message.
+    :rtype: JsonResponse or HttpResponse
+    """
+    course = get_object_or_404(Course, id=course_id)
+
+    # Check if the user is already enrolled in the course
+    if Enrolment.objects.filter(student=request.user, course=course).exists():
+        return JsonResponse(
+            {"message": "You are already enrolled in this course."}, status=400
         )
+
+    # Create a new enrollment for the user and course
+    Enrolment.objects.create(student=request.user, course=course)
+
+    # Send enrollment email to the user
+    enrolmentEmail(request.user, course)
+    course_link = (
+        f'<a href="{course.get_absolute_url()}" class="disabled-link">{course.name}</a>'
+    )
+    notify.send(
+        course.teacher,
+        recipient=request.user,
+        verb=f"You have enrolled into {course_link}.",
+    )
+    # Construct the HTML with the generated URL
+    url = reverse("official", args=[course_id])
+    html = f'<a href="{url}" class="btn btn-primary">View Course Materials</a>'
+
+    # Return the HTML in an HttpResponse
+    return HttpResponse(html, status=201)
+
 
 @custom_login_required
 def create_course(request):
@@ -99,8 +163,8 @@ def create_course(request):
 
     If the request method is POST, attempts to create a new course
     using the data submitted in the form. If successful, redirects to
-    the draft page for the newly created course. If a course with the 
-    same name already exists for the current user, displays an error 
+    the draft page for the newly created course. If a course with the
+    same name already exists for the current user, displays an error
     message and redirects to the dashboard.
 
     :param request: The HTTP request object.
@@ -131,6 +195,7 @@ def create_course(request):
             messages.error(request, "Failed to create course. Please check the form.")
     return redirect("dashboard")
 
+
 class WeekView(View):
     """
     View for managing course weeks.
@@ -152,7 +217,7 @@ class WeekView(View):
         :type args: tuple
         :param kwargs: Additional keyword arguments.
         :type kwargs: dict
-        
+
         :return: An HTTP response containing the HTML markup for the new week.
         :rtype: HttpResponse
         """
@@ -220,6 +285,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
     A view to display the course materials for students and teacher.
 
     """
+
     template_name = "user/course.html"
 
     @method_decorator(custom_login_required)
@@ -233,7 +299,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
         :type args: tuple
         :param kwargs: Additional keyword arguments.
         :type kwargs: dict
-        
+
         :return: HttpResponse object representing the response.
         :rtype: django.http.HttpResponse
         """
@@ -267,7 +333,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 
         :param kwargs: Additional keyword arguments.
         :type kwargs: dict
-        
+
         :return: A dictionary containing context data.
         :rtype: dict
         """
@@ -277,27 +343,28 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
         # Fetch the draft course for the current teacher
         course = get_object_or_404(Course, id=course_id)
         context["course"] = course
-        
+
         is_teacher = self.request.user == course.teacher
-        context["teacher"] = is_teacher 
+        context["teacher"] = is_teacher
         # Generate a range of numbers from 1 to course.duration_weeks
         context["weeks"] = range(1, course.duration_weeks + 1)
         # Fetch materials for the selected week (default to week 1)
         course_materials = CourseMaterial.objects.filter(course=course, week_number=1)
         context["course_materials"] = course_materials
-        
+
         context["form"] = CourseForm(instance=course)
-        
+
         if is_teacher is False:
-            feedback_instance = Feedback.objects.filter(course_id=course_id, user_id=self.request.user).first()
-    
+            feedback_instance = Feedback.objects.filter(
+                course_id=course_id, user_id=self.request.user
+            ).first()
+
             feedback_form = FeedbackForm(instance=feedback_instance)
             context["feedback_form"] = feedback_form
 
-        context['course_feedbacks'] = Feedback.objects.filter(course_id=course_id)
-        context['stars'] = [1, 2, 3, 4, 5]
-        
-        
+        context["course_feedbacks"] = Feedback.objects.filter(course_id=course_id)
+        context["stars"] = [1, 2, 3, 4, 5]
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -312,7 +379,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
         :type args: tuple
         :param kwargs: Additional keyword arguments.
         :type kwargs: dict
-        
+
         :return: HttpResponseRedirect object for redirection.
         :rtype: django.http.HttpResponseRedirect
         """
@@ -342,51 +409,61 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 
 
 @custom_login_required
-@require_http_methods(['POST'])
+@require_http_methods(["POST"])
 def submit_feedback(request, course_id, student_id):
     try:
         if request.user.id != student_id:
             messages.error("Invalid user.")
-            return redirect('official', course_id=course_id)  # Redirect to the dashboard or any other desired page
-        
+            return redirect(
+                "official", course_id=course_id
+            )  # Redirect to the dashboard or any other desired page
+
         if not Course.objects.filter(id=course_id).exists():
             messages.error("Course doesn't exist.")
-            return redirect('dashboard')  # Redirect to the dashboard or any other desired page
-        
+            return redirect(
+                "dashboard"
+            )  # Redirect to the dashboard or any other desired page
+
         logger.info(f"POST data received: {request.POST}")
 
         mutable_post = request.POST.copy()
 
-        course_ratings = mutable_post.getlist('course_rating')
-        teacher_ratings = mutable_post .getlist('teacher_rating')
+        course_ratings = mutable_post.getlist("course_rating")
+        teacher_ratings = mutable_post.getlist("teacher_rating")
 
         if isinstance(course_ratings, list):
             if len(course_ratings) == 1:
-                course_rating_sum = int(course_ratings[0])  # Assign the single element as the sum
+                course_rating_sum = int(
+                    course_ratings[0]
+                )  # Assign the single element as the sum
             else:
                 course_rating_sum = sum(int(rating) for rating in course_ratings)
         else:
-            course_rating_sum = int(course_ratings)    
+            course_rating_sum = int(course_ratings)
 
         # Calculate the sum of ratings for teacher_rating
         if isinstance(teacher_ratings, list):
             if len(teacher_ratings) == 1:
-                teacher_rating_sum = int(teacher_ratings[0])  # Assign the single element as the sum
+                teacher_rating_sum = int(
+                    teacher_ratings[0]
+                )  # Assign the single element as the sum
             else:
                 teacher_rating_sum = sum(int(rating) for rating in teacher_ratings)
         else:
-            teacher_rating_sum = int(teacher_ratings)  # Handle the case when teacher_ratings is not a list
-        
+            teacher_rating_sum = int(
+                teacher_ratings
+            )  # Handle the case when teacher_ratings is not a list
+
         logger.info(f"teacher_rating_sum: {teacher_rating_sum}")
         logger.info(f"course_rating_sum: {course_rating_sum}")
 
         # Update the request.POST data with the sums
         feedback_object = {
-            'teacher_rating': teacher_rating_sum,
-            'course_rating': course_rating_sum,
-            "comments": mutable_post['comments']
+            "teacher_rating": teacher_rating_sum,
+            "course_rating": course_rating_sum,
+            "comments": mutable_post["comments"],
         }
-        
+
         logger.info(f"feedback_object: {feedback_object}")
         form = FeedbackForm(feedback_object)
         if form.is_valid():
@@ -394,25 +471,30 @@ def submit_feedback(request, course_id, student_id):
             feedback.course_id = course_id
             feedback.user_id = student_id
             feedback.save()
-            messages.success(request, 'Feedback submitted successfully.')
-            
+            messages.success(request, "Feedback submitted successfully.")
+
             # send notification to teacher
-            notify.send(sender=request.user, recipient=feedback.course.teacher, verb=f"A new feedback for {feedback.course.name}")
-            
+            notify.send(
+                sender=request.user,
+                recipient=feedback.course.teacher,
+                verb=f"A new feedback for {feedback.course.name}",
+            )
+
         else:
             # Get the form errors and include them in the error message
-            error_message = 'Invalid form data. Please check your inputs.'
+            error_message = "Invalid form data. Please check your inputs."
             for field, errors in form.errors.items():
                 error_message += f' {field}: {", ".join(errors)}'
             messages.error(request, error_message)
     except ValueError as e:
         logger.error(f"Error processing feedback: {e}")
-        messages.error(request, 'Invalid data format. Please provide integer ratings.')
+        messages.error(request, "Invalid data format. Please provide integer ratings.")
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
-        messages.error(request, 'An unexpected error occurred. Please try again later.')
+        messages.error(request, "An unexpected error occurred. Please try again later.")
 
-    return redirect('official', course_id=course_id)
+    return redirect("official", course_id=course_id)
+
 
 @custom_login_required
 @csrf_exempt
@@ -420,8 +502,8 @@ def get_week_materials(request, course_id, week_number):
     """
     Retrieves materials for a specific week of a course.
 
-    If the request method is GET, retrieves materials and assignments 
-    for the specified week of the course. Renders the materials template 
+    If the request method is GET, retrieves materials and assignments
+    for the specified week of the course. Renders the materials template
     with the retrieved data and upload forms.
 
     :param request: The HTTP request object.
@@ -438,24 +520,27 @@ def get_week_materials(request, course_id, week_number):
         print("redirecting")
         try:
             # Query the database to retrieve materials for the specified week of the course
-            course =  get_object_or_404(Course, id=course_id)
-            course_materials = CourseMaterial.objects.filter(course=course, week_number=week_number)
-            
-            course_assignments = Assignment.objects.filter(course=course, week_number=week_number)
+            course = get_object_or_404(Course, id=course_id)
+            course_materials = CourseMaterial.objects.filter(
+                course=course, week_number=week_number
+            )
+
+            course_assignments = Assignment.objects.filter(
+                course=course, week_number=week_number
+            )
 
             if course_assignments.exists() and request.user.user_type == "student":
-                user_assignments = AssignmentSubmission.objects.filter(assignment__in=course_assignments, student=request.user)
+                user_assignments = AssignmentSubmission.objects.filter(
+                    assignment__in=course_assignments, student=request.user
+                )
             else:
-                user_assignments = None    
-                    
+                user_assignments = None
+
         except Exception as e:
             print(e)
             return JsonResponse({"error": "An error occurred"}, status=500)
-        
-        initial_data = {
-            'course_id': course_id, 
-            'week_number': week_number
-        }
+
+        initial_data = {"course_id": course_id, "week_number": week_number}
         # Instantiate the MaterialUploadForm
         material_upload_form = MaterialUploadForm(initial=initial_data)
         assignment_upload_form = AssignmentForm(initial=initial_data)
@@ -495,31 +580,47 @@ def upload_assignment_material(request, course_id, week_number):
         if request.method == "POST":
             # Create a form instance with the POST data
             logger.info("POST data received: %s", request.POST)
-            
+
             course = get_object_or_404(Course, pk=course_id)
-            
+
             # Create a form instance with the POST data and course instance
             form = AssignmentForm(data=request.POST)
-            
+
             form.course = course
             if form.is_valid():
                 logger.info("cleaned form: %s", form.cleaned_data)
                 assignment = form.save(commit=False)  # Don't save to the database yet
                 assignment.week_number = week_number
                 assignment.course_id = course_id  # Set the course_id attribute
-                assignment.save() 
-                
+                assignment.save()
+
                 messages.success(request, "Assignment material uploaded successfully.")
-                logger.info("Assignment material uploaded successfully for course %s, week %s.", assignment.course.name, assignment.week_number)
+                logger.info(
+                    "Assignment material uploaded successfully for course %s, week %s.",
+                    assignment.course.name,
+                    assignment.week_number,
+                )
             else:
-                messages.error(request, "Failed to upload assignment material. Please check the form.")
-                logger.error("Failed to upload assignment material for course %s, week %s.", course_id, week_number)
-                
+                messages.error(
+                    request,
+                    "Failed to upload assignment material. Please check the form.",
+                )
+                logger.error(
+                    "Failed to upload assignment material for course %s, week %s.",
+                    course_id,
+                    week_number,
+                )
+
     except Exception as e:
         # Log the exception
-        logger.exception("An error occurred while uploading assignment material: %s", str(e))
+        logger.exception(
+            "An error occurred while uploading assignment material: %s", str(e)
+        )
         # Add error message for the user
-        messages.error(request, "An error occurred while processing your request. Please try again later.")
+        messages.error(
+            request,
+            "An error occurred while processing your request. Please try again later.",
+        )
 
     # Redirect to the 'get_week_materials' view for the specified course and week
     return redirect("get_week_materials", course_id=course_id, week_number=week_number)
@@ -542,12 +643,14 @@ def upload_student_submission(request, assignment_id):
         try:
             assignment = Assignment.objects.get(id=assignment_id)
             form = AssignmentSubmissionForm(data=request.POST, files=request.FILES)
-        
+
             if form.is_valid():
-                submission = form.save(commit=False)  # Save the form data but don't commit to the database yet
+                submission = form.save(
+                    commit=False
+                )  # Save the form data but don't commit to the database yet
                 submission.assignment = assignment  # Set the assignment
                 submission.student = request.user  # Set the student
-                submission.grade = form.cleaned_data.get('grade', None)
+                submission.grade = form.cleaned_data.get("grade", None)
                 submission.save()  # Now save the submission to the database
             else:
                 error_message = "Failed to submit Assignment. Please check the form."
@@ -558,9 +661,12 @@ def upload_student_submission(request, assignment_id):
             error_message = "Assignment does not exist."
             messages.error(request, error_message)
             logger.error(error_message)
-            
-        
-    return redirect("get_week_materials", course_id=assignment.course.id, week_number=assignment.week_number)
+
+    return redirect(
+        "get_week_materials",
+        course_id=assignment.course.id,
+        week_number=assignment.week_number,
+    )
 
 
 @custom_login_required
@@ -593,6 +699,7 @@ def delete_course_material(request, course_material_id):
     # Return a redirect response with status code 303
     return HttpResponse(status=303, headers={"Location": redirect_url})
 
+
 @custom_login_required
 @require_http_methods(["PATCH"])
 def student_ban_status_update(request, course_id, student_id):
@@ -610,15 +717,25 @@ def student_ban_status_update(request, course_id, student_id):
     :rtype: HttpResponse
     """
     enrolment = get_object_or_404(Enrolment, course_id=course_id, student_id=student_id)
-    
+
     # Toggle the is_banned status
     enrolment.is_banned = not enrolment.is_banned
     enrolment.save()
 
-    logger.info(f"Ban status for student {student_id} in course {course_id} updated to {enrolment.is_banned}")
+    notify.send(
+        sender=request.user,
+        recipient=enrolment.student,
+        verb=f"You have been banned from {enrolment.course.name}. \n\n Please email ",
+    )
+    banStudentEmail(enrolment.student, enrolment.course)
+    logger.info(
+        f"Ban status for student {student_id} in course {course_id} updated to {enrolment.is_banned}"
+    )
 
-    html_content = render_to_string("partials/ban_button.html", {'enrolment': enrolment})
-    
+    html_content = render_to_string(
+        "partials/ban_button.html", {"enrolment": enrolment}
+    )
+
     return HttpResponse(html_content)
 
 
@@ -659,7 +776,9 @@ def upload_material(request, course_id, week_number):
                             week_number=form.cleaned_data["week_number"],
                             material=material,
                         )
-                        num_of_materials += 1  # Increment the counter for successful uploads
+                        num_of_materials += (
+                            1  # Increment the counter for successful uploads
+                        )
                     except Exception as e:
                         # Log the error and add the failed material to the list
                         failed_materials.append(
@@ -697,22 +816,19 @@ def upload_material(request, course_id, week_number):
                     materialsUpdateEmail(
                         students_enrolled, course, week_number, num_of_materials
                     )
-                    
+
                     course_link = f'<a href="{course.get_absolute_url()}?week={week_number}">{course.name}</a>'
                     verb = f"<span class='fw-bold'>{num_of_materials} materials</span> added to {course_link}"
 
-                    
                     try:
                         # Send notification to all students in the course
                         notify.send(
-                            sender=request.user,
-                            recipient=students_enrolled,
-                            verb=verb
+                            sender=request.user, recipient=students_enrolled, verb=verb
                         )
                     except Exception as e:
                         # Log the exception
                         logger.error(f"Error occurred while sending notification: {e}")
-                    
+
             else:
                 # Form validation failed, add form errors to Django messages
                 for field, errors in form.errors.items():
@@ -756,13 +872,16 @@ def publish_course(request, course_id):
                 course.save()
 
                 messages.success(request, "Course published successfully.")
-                
+
                 chat_name = slugify(course.name)
-                
+
                 # create the chat room for the course
                 ChatRoom.objects.create(course=course, chat_name=chat_name)
         else:
-            messages.error(request, "Cannot publish course. All fields (name, summary, description, start_date) are required.")
+            messages.error(
+                request,
+                "Cannot publish course. All fields (name, summary, description, start_date) are required.",
+            )
             return redirect("draft", course_id=course_id)
 
     return redirect("dashboard")
@@ -802,6 +921,7 @@ def enrolmentEmail(user, course):
     recipient_list = [user.email]
 
     send_mail(subject, message, from_email, recipient_list)
+
 
 def materialsUpdateEmail(students, course, week, num_of_materials):
     """
@@ -853,75 +973,36 @@ def materialsUpdateEmail(students, course, week, num_of_materials):
         message = greeting + intro + instructions + call_to_action + closing
 
         # Sender email address (From address)
-        from_email = "awdtest04@gmail.com"  # Update with the desired sender email address
+        from_email = (
+            "awdtest04@gmail.com"  # Update with the desired sender email address
+        )
 
         recipient_list = [student.email]
 
         send_mail(subject, message, from_email, recipient_list)
 
-@custom_login_required
-def enroll(request, course_id):
+
+def banStudentEmail(student, course):
     """
-    Enroll a user in a course.
+    Sends anban confirmation email to the student
 
-    This view handles the enrollment process for a user in a course. It checks if the user is already enrolled,
-    and if not, creates a new enrollment for the user in the specified course. It also sends an enrollment email
-    to the user upon successful enrollment.
+    This function sends an email to the student to confirm their banned status
+    in the specified course. The email contains details about the course such as its name,
+    start date, end date, duration, teacher's name and email.
 
-    :param request: The HTTP request object.
-    :type request: HttpRequest
-    :param course_id: The ID of the course to enroll in.
-    :type course_id: int
-
-    :return: An HTTP response with html button or error message.
-    :rtype: JsonResponse or HttpResponse
+    :param user: The user who has been enrolled in the course.
+    :type user: django.contrib.auth.models.User
+    :param course: The course in which the user has been enrolled.
+    :type course: YourCourseModel
     """
-    course = get_object_or_404(Course, id=course_id)
+    subject = f"[Important] Banned from {course.name}"
+    message = (
+        f"Dear {student.get_full_name()},\n\n"
+        f"You have been banned from the enrolment '{course.name}'.\n"
+        f"If you have any questions, please send an enquiry to us with this email  \n\n"
+        f"Best regards,\nThe Course Management Team"
+    )
+    from_email = "awdtest04@gmail.com"  # Update with your email
+    recipient_list = [student.email]
 
-    # Check if the user is already enrolled in the course
-    if Enrolment.objects.filter(student=request.user, course=course).exists():
-        return JsonResponse(
-            {"message": "You are already enrolled in this course."}, status=400
-        )
-
-    # Create a new enrollment for the user and course
-    Enrolment.objects.create(student=request.user, course=course)
-
-    # Send enrollment email to the user
-    enrolmentEmail(request.user, course)
-    course_link = f'<a href="{course.get_absolute_url()}" class="disabled-link">{course.name}</a>'
-    notify.send(course.teacher, recipient=request.user, verb=f'You have enrolled into {course_link}.')
-    # Construct the HTML with the generated URL
-    url = reverse('official', args=[course_id])
-    html = f'<a href="{url}" class="btn btn-primary">View Course Materials</a>'
-
-    # Return the HTML in an HttpResponse
-    return HttpResponse(html, status=201)
-
-
-# def create_notification(actor, recipient_ids, verb, target):
-#     """
-#     Create and save a notification for multiple recipients.
-
-#     :param actor: The user performing the action that triggers the notification.
-#     :type actor: django.contrib.auth.models.User
-#     :param recipient_ids: The IDs of the users who will receive the notification.
-#     :type recipient_ids: list[int]
-#     :param verb: The action verb (e.g., 'uploaded', 'commented on', etc.).
-#     :type verb: str
-#     :param target: The object being acted upon (e.g., a material, a comment, etc.).
-#     :type target: Any
-#     """
-#     # Get the recipient users
-#     recipients = User.objects.filter(id__in=recipient_ids)
-
-#     # Create and save the notification for each recipient
-#     for recipient in recipients:
-#         notification = Notification.objects.create(
-#             recipient=recipient,
-#             actor=actor,
-#             verb=verb,
-#             target=target
-#         )
-#         notification.save()
-        
+    send_mail(subject, message, from_email, recipient_list)

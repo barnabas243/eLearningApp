@@ -19,8 +19,9 @@ class MessageAdmin(admin.ModelAdmin):
     search_fields = ("content", "user__username", "chat_room__chat_name")
     ordering = ("-timestamp",)
 
+
 @admin.register(ChatMembership)
 class ChatMembershipAdmin(admin.ModelAdmin):
-    list_display = ('user', 'chat_room', 'last_viewed_message', 'last_online_timestamp')
-    list_filter = ('chat_room',)
-    search_fields = ('user__username',)
+    list_display = ("user", "chat_room", "last_viewed_message", "last_online_timestamp")
+    list_filter = ("chat_room",)
+    search_fields = ("user__username",)

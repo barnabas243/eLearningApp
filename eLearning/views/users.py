@@ -7,8 +7,9 @@ from django.views.generic import TemplateView, View, ListView, FormView
 from django.contrib.auth.mixins import UserPassesTestMixin
 
 from chat.models import ChatRoom
-from eLearning.forms import *
-from eLearning.models import *
+
+# from eLearning.forms import *
+# from eLearning.models import *
 from django.http import (
     HttpResponse,
     JsonResponse,
@@ -21,8 +22,13 @@ from django.db.models.functions import Concat
 from django.views.decorators.csrf import csrf_exempt
 
 import logging
+from eLearning.forms import CreateCourseForm, ProfilePictureForm, StatusUpdateForm
+
+from eLearning.models import Assignment, Enrolment, StatusUpdate, User
+from eLearning.tasks import process_image
 
 logger = logging.getLogger(__name__)
+
 
 class LandingView(TemplateView):
     """
@@ -43,7 +49,7 @@ class LandingView(TemplateView):
         :type args: tuple
         :param kwargs: Arbitrary keyword arguments.
         :type kwargs: dict
-        
+
         :return: Redirects authenticated users to the dashboard,
                  otherwise renders the landing page template.
         :rtype: HttpResponseRedirect
@@ -51,6 +57,7 @@ class LandingView(TemplateView):
         if request.user.is_authenticated:
             return redirect("dashboard")
         return super().dispatch(request, *args, **kwargs)
+
 
 class DashboardView(View):
     """
@@ -99,7 +106,9 @@ class DashboardView(View):
         :rtype: HttpResponse
         """
         user = request.user
-        status_updates = StatusUpdate.objects.filter(user=user).order_by("-created_at")[:5]
+        status_updates = StatusUpdate.objects.filter(user=user).order_by("-created_at")[
+            :5
+        ]
 
         if user.user_type == User.STUDENT:
             # Retrieve all enrollments for the student
@@ -109,7 +118,9 @@ class DashboardView(View):
             # Query ChatRoom objects for registered courses
             course_chats = ChatRoom.objects.filter(course__in=registered_courses)
             # Query Assignment objects for registered courses
-            deadlines = Assignment.objects.filter(course__in=registered_courses).order_by('course')
+            deadlines = Assignment.objects.filter(
+                course__in=registered_courses
+            ).order_by("course")
 
             # Group assignments by course
             grouped_deadlines = {}
@@ -122,8 +133,10 @@ class DashboardView(View):
                 "status_updates": status_updates,
                 "course_chats": course_chats,
                 "grouped_deadlines": grouped_deadlines,
+                "statusUpdateForm": StatusUpdateForm,
             }
             return render(request, self.template_student, context)
+
         elif user.user_type == User.TEACHER:
             teacher = request.user
             draft_courses = teacher.courses_taught.filter(status="draft")
@@ -139,6 +152,18 @@ class DashboardView(View):
 
             return render(request, self.template_teacher, context)
 
+    def post(self, request, *args, **kwargs):
+        # post status update
+        form = StatusUpdateForm(data=request.POST)
+
+        if form.is_valid:
+            status_update = form.save(commit=False)
+            status_update.user = request.user
+            status_update.save()
+
+            return redirect("dashboard")
+
+
 def userSearchFilter(user_id, user_type, query):
     """
     Function to filter users based on the search query and user type.
@@ -151,7 +176,7 @@ def userSearchFilter(user_id, user_type, query):
     :type user_type: str
     :param query: The search query entered by the user.
     :type query: str
-    
+
     :return: The filtered queryset of users.
     :rtype: QuerySet
     """
@@ -182,6 +207,7 @@ def userSearchFilter(user_id, user_type, query):
             .exclude(id=user_id)
         )
 
+
 class AutocompleteView(View):
     """
     View for handling autocomplete functionality.
@@ -199,6 +225,7 @@ class AutocompleteView(View):
     :return: An HTTP response with HTML containing autocomplete options.
     :rtype: HttpResponse
     """
+
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         """
@@ -222,8 +249,8 @@ class AutocompleteView(View):
 
         user_type = self.request.user.user_type
         user_id = self.request.user.id
-        
-        users = userSearchFilter(user_id,user_type, query)
+
+        users = userSearchFilter(user_id, user_type, query)
 
         print("Users:", users)  # Debugging: Print the queryset
 
@@ -232,6 +259,7 @@ class AutocompleteView(View):
         )
         print(options_html)
         return HttpResponse(options_html)
+
 
 class UserHomePage(View):
     """
@@ -306,7 +334,7 @@ class UserHomePage(View):
                 "-created_at"
             )[:5]
             context = {
-                "current_user": request.user,
+                "other_user": request.user,
                 "user": user,
                 "registered_courses": registered_courses,
                 "status_updates": status_updates,
@@ -317,7 +345,7 @@ class UserHomePage(View):
             official_courses = teacher.courses_taught.filter(status="official")
 
             context = {
-                "current_user": request.user,
+                "other_user": request.user,
                 "user": teacher,
                 "draft_courses": [],
                 "official_courses": official_courses,
@@ -325,6 +353,7 @@ class UserHomePage(View):
             }
 
             return render(request, "user/teacher_dashboard.html", context)
+
 
 class SearchUsersView(UserPassesTestMixin, ListView):
     """
@@ -396,6 +425,7 @@ class SearchUsersView(UserPassesTestMixin, ListView):
         context = super().get_context_data(**kwargs)
         context["query"] = self.request.GET.get("q", "")
         return context
+
 
 class ProfileView(View):
     """
@@ -488,6 +518,7 @@ class ProfileView(View):
             print("error: ", e)
             return JsonResponse({"error": str(e)}, status=500)
 
+
 class UploadPictureView(FormView):
     """
     View for uploading a profile picture.
@@ -510,7 +541,7 @@ class UploadPictureView(FormView):
 
         :param form: The form instance containing the uploaded picture.
         :type form: Form
-        
+
         :return: A response indicating successful form submission.
         :rtype: HttpResponse
         """
@@ -518,6 +549,10 @@ class UploadPictureView(FormView):
         user = self.request.user
         # Save the uploaded file to the user's photo field
         user.photo = form.cleaned_data["photo"]
+
+        if user.photo:
+            process_image.delay(user.photo.path)
+
         user.save()
         return super().form_valid(form)
 
@@ -531,5 +566,3 @@ class UploadPictureView(FormView):
         :rtype: str
         """
         return reverse("profile")
-
-

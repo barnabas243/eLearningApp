@@ -2,10 +2,10 @@
 {% load notifications_tags %}
 
 <nav class="container navbar navbar-expand-lg navbar-light bg-light">
-     <div class="container-fluid">
+    <div class="container-fluid">
         <a class="navbar-brand" href="/">Your eLearning App</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
@@ -25,10 +25,10 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'chat' %}">chat</a>
                         </li>
-                        
+
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                                <i class="fas fa-bell"></i> 
+                                <i class="fas fa-bell"></i>
                                 {% live_notify_badge badge_class="badge rounded-pill bg-danger" %}
                             </a>
                             <ul id="notification-list"class="dropdown-menu dropdown-menu-xl-end" aria-labelledby="notificationDropdown" data-bs-auto-close="outside">

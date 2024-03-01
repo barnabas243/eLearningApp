@@ -1,5 +1,8 @@
-<div class="mb-4">
-    <div class=""
+<li class="list-group-item">
+    <div class="header d-flex justify-content-start">
+        <h3>{{ feedback.user }}</h3>
+        <time datetime="{{ feedback.created_at }}">{{ feedback.created_at }}</time>
+    </div>
     <p>Course Rating:
         {% for star in stars %}
             {% if star <= feedback.course_rating %}
@@ -30,9 +33,5 @@
             {% endif %}
         {% endfor %}
     </p>
-    
-    </p>
-    <p>Comments: {{ feedback.comments }}</p>
-    <p>Submitted By: {{ feedback.user }}</p>
-    <p>Submitted At: {{ feedback.created_at }}</p>
-</div>
+    <p>{{ feedback.comments }}</p>
+</li>

@@ -26,90 +26,120 @@
     <!-- Registered Courses and Status Updates -->
     <div class="row">
       <div class="col-md-6">
-          <h2>Registered Courses</h2>
-          {% if registered_courses %}
-          <div class="row">
-              {% for course in registered_courses %}
+        <h2>Registered Courses</h2>
+        {% if registered_courses %}
+          <div class="row mb-3">
+            {% for course in registered_courses %}
               <div class="col-md-12">
                 <ul class="list-group">
                   <a href="{% url 'official' course.id %}" class="list-group-item list-group-item-action" >{{ course.name }}</a>
                 </ul>
               </div>
-              {% endfor %}
+            {% endfor %}
           </div>
-          {% else %}
+        {% else %}
           <div class="col-md-12">
-              <p>You haven't enrolled into any courses yet.</p>
-              <a href="{% url 'courses' %}">View Courses <i class="fas fa-chevron-right"></i></a>
+            <p>You haven't enrolled into any courses yet.</p>
+            <a href="{% url 'courses' %}">View Courses <i class="fas fa-chevron-right"></i></a>
           </div>
-          {% endif %}
-          <div class="row">
-            <div class="col-md-12 mb-4">
-                <h2>Deadlines</h2>
+        {% endif %}
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <h2>Deadlines</h2>
                 <!-- Deadline content here -->
-                {% for course, course_deadlines in grouped_deadlines.items %}
-                  <div class="accordion" id="course{{ course.id }}Accordion">
-                    <div class="accordion-item">
-                      <h2 class="accordion-header" id="heading{{ course.id }}">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ course.id }}" aria-expanded="true" aria-controls="collapse{{ course.id }}">
-                          {{ course.name }}
-                        </button>
-                      </h2>
-                      <div id="collapse{{ course.id }}" class="accordion-collapse collapse show" aria-labelledby="heading{{ course.id }}" data-bs-parent="#course{{ course.id }}Accordion">
-                        <div class="accordion-body">
-                          <ul class="list-group">
-                            {% for deadline in course_deadlines %}
-                              <li class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <a href="{% url 'official' deadline.course.id %}?week={{ deadline.week_number }}" class="course-link">
-                                            <span class="course-name">{{ deadline.name }}</span>
-                                        </a>
-                                    </div>
-                                    <div class="deadline-info">
-                                        <span>Due by:</span>
-                                        <span>{{ deadline.get_assignment_deadline }}</span>
-                                    </div>
-                                </div>
-                              </li>
-                            {% endfor %}
-                          </ul>
-                        </div>
-                      </div>
+            {% for course, course_deadlines in grouped_deadlines.items %}
+              <div class="accordion" id="course{{ course.id }}Accordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="heading{{ course.id }}">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ course.id }}" aria-expanded="true" aria-controls="collapse{{ course.id }}">
+                      {{ course.name }}
+                    </button>
+                  </h2>
+                  <div id="collapse{{ course.id }}" class="accordion-collapse collapse show" aria-labelledby="heading{{ course.id }}" data-bs-parent="#course{{ course.id }}Accordion">
+                    <div class="accordion-body">
+                      <ul class="list-group">
+                        {% for deadline in course_deadlines %}
+                          <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                              <div>
+                                <a href="{% url 'official' deadline.course.id %}?week={{ deadline.week_number }}" class="course-link">
+                                  <span class="course-name">{{ deadline.name }}</span>
+                                </a>
+                              </div>
+                              <div class="deadline-info">
+                                <span>Due by:</span>
+                                <span>{{ deadline.get_assignment_deadline }}</span>
+                              </div>
+                            </div>
+                          </li>
+                        {% endfor %}
+                      </ul>
                     </div>
                   </div>
-                {% endfor %}
-
-            </div>
-            <div class="col-md-12 mb-4">
-                <h2>List of Chats</h2>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <h2>List of Chats</h2>
                 <!-- List of chat content here -->
-                {% for chat in course_chats %}
-                  <li class="list-group-item">
-                    <a href="{% url 'room' chat.chat_name|slugify %}"> {{ chat.chat_name }}</a>
-                  </li>
-                {% endfor %}
-            </div>
+            {% for chat in course_chats %}
+              <li class="list-group-item">
+                <a href="{% url 'room' chat.chat_name|slugify %}"> {{ chat.chat_name }}</a>
+              </li>
+            {% endfor %}
+          </div>
         </div>
       </div>
-  
+
       <div class="col-md-6">
-          <div class="row">
-              <div class="col-md-12">
-                  <h2>Latest Status Updates</h2>
-                  <!-- Status update content here -->
-                  <div class="status-updates">
-                    {% for update in status_updates %}
-                      <div class="update">
-                        <p>{{ update.content }}</p>
-                        <p>Posted at: {{ update.timestamp|date:'D, d M Y H:i:s' }}</p>
-                      </div>
-                      {% empty %}
-                      <p>No status updates yet.</p>
-                    {% endfor %}
-                  </div>
-              </div>
+        <div class="row">
+          <div class="col-md-12">
+            <div class="d-flex justify-content-center gap-3 align-items-center">
+              <h2>Latest Status Updates</h2>
+              {% if not other_user %}
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#statusUpdateModel">add Status</button>
+              {% endif %}
+            </div>
+             <!-- Status update content here -->
+            <ul class="list-group overflow-auto internal-shadow-lg" style=" max-height: 50vh;">
+              {% for update in status_updates %}
+                <li class="list-group-item border-0 m-3 internal-shadow-sm">
+                  <p>{{ update.content }}</p>
+                  <p>{{ update.created_at|date:'D, d M Y H:i:s' }}</p>
+                </li>
+              {% empty %}
+                <p>No status updates yet.</p>
+              {% endfor %}
+
+            </ul>
+            <div>
+            </div>
           </div>
+        </div>
       </div>
-  </div>
+    </div>
+
+    {% if not other_user %}
+      <div class="modal fade" id="statusUpdateModel" tabindex="-1" role="dialog" aria-labelledby="statusUpdateModelLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="statusUpdateModelLabel">Add a new Status</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+          <!-- Form for profile picture upload -->
+              <form id="addStatusUpdateForm" action="{% url 'dashboard' %}" method="post">
+                {% csrf_token %}
+                {{ statusUpdateForm}}
+                <button type="submit" class="btn btn-primary">Upload</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
 {% endblock %}

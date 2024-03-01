@@ -3,10 +3,9 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.views import PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.views.generic import  FormView
+from django.views.generic import FormView
 
-from eLearning.forms import *
-from eLearning.models import *
+from eLearning.forms import UserLoginForm, UserRegistrationForm
 
 
 import logging
@@ -58,7 +57,7 @@ class LoginView(FormView):
         :type args: tuple
         :param kwargs: Arbitrary keyword arguments.
         :type kwargs: dict
-        
+
         :return: Redirects authenticated users to the dashboard,
                  otherwise renders the login page.
         :rtype: HttpResponseRedirect or HttpResponse
@@ -79,7 +78,7 @@ class LoginView(FormView):
         :type args: tuple
         :param kwargs: Arbitrary keyword arguments.
         :type kwargs: dict
-        
+
         :return: Redirects the user to the dashboard upon successful login,
                  otherwise displays an error message.
         :rtype: HttpResponseRedirect or HttpResponse
@@ -91,18 +90,20 @@ class LoginView(FormView):
             messages.error(self.request, "Invalid username or password.")
             return self.form_invalid(form)
 
+
 def logout_user(request):
     """
     Logs out the user and redirects to the login page.
 
     :param request: The HTTP request object.
     :type request: HttpRequest
-    
+
     :return: Redirects the user to the login page after logout.
     :rtype: HttpResponseRedirect
     """
     logout(request)
     return redirect("login")
+
 
 class RegisterView(FormView):
     """
@@ -130,7 +131,7 @@ class RegisterView(FormView):
 
         :param form: The validated form instance.
         :type form: forms.Form
-        
+
         :return: Redirects to the dashboard upon successful registration, or re-renders
             the registration form with error messages if registration fails.
         :rtype: HttpResponseRedirect or HttpResponse
@@ -155,7 +156,7 @@ class RegisterView(FormView):
 
         :param request: The HTTP request object.
         :type request: HttpRequest
-        
+
         :return: Redirects to the dashboard if the user is authenticated, otherwise
             renders the registration form.
         :rtype: HttpResponseRedirect or HttpResponse
@@ -173,7 +174,7 @@ class RegisterView(FormView):
 
         :param request: The HTTP request object.
         :type request: HttpRequest
-        
+
         :return: Redirects to the dashboard upon successful registration, or re-renders
             the registration form with error messages if form validation fails.
         :rtype: HttpResponseRedirect or HttpResponse

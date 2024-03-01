@@ -71,7 +71,7 @@ window.onload = function () {
     if (teacher_rating && course_rating) {
         const teacher_star_inputs = teacher_rating.querySelectorAll('.star-rating input[type="checkbox"]');
         const course_star_inputs = course_rating.querySelectorAll('.star-rating input[type="checkbox"]');
-
+        
         starInputListener(teacher_star_inputs)
         starInputListener(course_star_inputs)
     }
