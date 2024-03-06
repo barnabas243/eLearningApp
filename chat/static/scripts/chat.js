@@ -33,7 +33,7 @@ chatSocket.onopen = function (event) {
 chatSocket.onmessage = function (event) {
     // Parse the received data (assuming it's JSON)
     const data = JSON.parse(event.data);
-    console.log("data: ", data);
+    // console.log("data: ", data);
 
     // Process the received message based on its type
     switch (data.type) {
@@ -132,7 +132,7 @@ function handleMessage(data) {
     // Handle other types of messages
     if (data.action === "send_message") {
         appendMessage(data.message);
-        console.log("data.message.id: ", data.message.id)
+        
         last_viewed_message = data.message.id
     } else {
         console.error('Unknown action in message data:', data.action);
@@ -155,24 +155,27 @@ function appendMessage(message) {
         return;
     }
 
-    const localTime = formatISOtoLocalTime(message.timestamp);
-
+    const localDate = new Date(message.timestamp).getDate();
+    const localTime = formatDateToHourMin(message.timestamp);
+    
     // Find the last message element with a data-timestamp attribute
     const lastMessage = messageContainer.querySelector('div[data-timestamp]:last-child');
+    const lastMessageDate = new Date(lastMessage.dataset.timestamp).getDate();
 
     // Check if the chat log is empty or if the new message has a different date from the last message
-    if (!lastMessage || new Date(formatISOtoLocalTime(lastMessage.dataset.timestamp)).toDateString() !== new Date(localTime).toDateString()) {
+    if (!lastMessage || lastMessageDate < localDate ) {
         // Create a date header
+        console.log("why isnt this not working?")
         const dateHeader = document.createElement('div');
         dateHeader.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'my-3');
         dateHeader.innerHTML = `
             <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
             <div class="message-date-header">
-                <span class="badge bg-light text-secondary">${localTime.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                <span class="badge bg-light text-secondary">${localDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
             <hr style="border-top: 1px solid #ccc; flex-grow: 1; margin: 0;">
         `;
-        // Append the date header to the chat log
+
         messageContainer.appendChild(dateHeader);
     }
 
@@ -278,12 +281,12 @@ messageInput.focus();
 // format dates with dayjs
 document.querySelectorAll('div[data-timestamp]').forEach((timestamp) => {
     const ISOtimestamp = timestamp.dataset.timestamp;
-    const localTime = formatISOtoLocalTime(ISOtimestamp);
+    const localTime = formatDateToHourMin(ISOtimestamp);
 
     timestamp.querySelector('span').textContent = localTime;
 });
 
-function formatISOtoLocalTime(timestamp) {
+function formatDateToHourMin(timestamp) {
     const localTime = dayjs(timestamp).tz(dayjs.tz.guess()).format('h:mm a');
 
     return localTime;

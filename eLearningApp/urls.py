@@ -14,23 +14,26 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
-from django.urls import path, include 
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from ckeditor_uploader.views import upload
 from django.views.generic import RedirectView
-from eLearning.decorators import custom_login_required 
+from elearning_auth.decorators import custom_login_required
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('eLearning.urls')),
-    path("chat/", include("chat.urls")),  # Include the chat app's URLs under the 'chat/' path
-    path('ckeditor/upload/', custom_login_required(upload), name='ckeditor_upload'),
-    path('ckeditor/', include('ckeditor_uploader.urls')),
-    
-    path('docs/', RedirectView.as_view(url='/docs/index.html', permanent=False)),
-
+    path("admin/", admin.site.urls),
+    path("", include("courses.urls")),
+    path("", include("users.urls")),
+    path("auth/", include("elearning_auth.urls")),
+    path(
+        "chat/", include("chat.urls")
+    ),  # Include the chat app's URLs under the 'chat/' path
+    path("ckeditor/upload/", custom_login_required(upload), name="ckeditor_upload"),
+    path("ckeditor/", include("ckeditor_uploader.urls")),
+    path("docs/", RedirectView.as_view(url="/docs/index.html", permanent=False)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-urlpatterns += static('/docs/', document_root=settings.BASE_DIR / 'static/docs/build')
+urlpatterns += static("/docs/", document_root=settings.BASE_DIR / "static/docs/build")

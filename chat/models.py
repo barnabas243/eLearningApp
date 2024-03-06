@@ -1,5 +1,5 @@
 from django.db import models
-from eLearning.models import Course, User
+from courses.models import Course, User
 from django.utils import timezone
 
 

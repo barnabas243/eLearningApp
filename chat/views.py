@@ -1,11 +1,10 @@
 from django.shortcuts import redirect, render, get_object_or_404
 from chat.models import ChatMembership, ChatRoom
-from eLearning.models import Enrolment, User
-from eLearning.decorators import custom_login_required
+from courses.models import Enrolment, User
+from elearning_auth.decorators import custom_login_required
 from django.contrib import messages
 from django.db.models import OuterRef, F, Subquery, Value
 from django.db.models.functions import Coalesce
-from django.db.models.functions import Concat
 from django.utils import timezone
 import logging
 
@@ -136,24 +135,3 @@ def room(request, room_name):
         # Redirect the user to the index page with an error message
         messages.error(request, "You are not authorized to enter the chatroom.")
         return redirect("/")
-
-
-def search_users(request, chat_room_id):
-    search_query = request.GET.get("chatUserSearchInput", "")
-
-    chat_room = ChatRoom.objects.filter(
-        id=chat_room_id
-    ).first()  # Use first() to get the first object in the queryset
-
-    if chat_room:
-        users = User.objects.filter(
-            enrolment__course=chat_room.course
-        ) | User.objects.filter(pk=chat_room.course.teacher_id)
-
-        # Filter users based on the search query
-        filtered_users = users.annotate(
-            full_name=Concat("first_name", Value(" "), "last_name")
-        ).filter(full_name__icontains=search_query)
-
-    # Render a partial template with the filtered user data
-    return render(request, "chat/partials/user.html", {"users": filtered_users})

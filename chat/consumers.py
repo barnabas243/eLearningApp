@@ -2,10 +2,10 @@ from django.utils import timezone
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from chat.serializers import ChatMembershipSerializer, MessageSerializer
+from chat.serializers import MessageSerializer
 from django.core.serializers import serialize
 from .models import ChatMembership, ChatRoom
-from eLearning.models import Enrolment
+from courses.models import Enrolment
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.exceptions import ValidationError
 import logging

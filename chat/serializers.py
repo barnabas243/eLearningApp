@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import ChatRoom, Message, ChatMembership
-from eLearning.serializers import CourseSerializer, UserSerializer
+from chat.models import ChatRoom, Message, ChatMembership
+from courses.serializers import CourseSerializer, UserSerializer
 import logging
 
 logger = logging.getLogger(__name__)
