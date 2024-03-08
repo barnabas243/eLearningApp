@@ -126,7 +126,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+# allow is_active=false users to authenticate.
+# the inactive users to be handled with 403
+AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.AllowAllUsersModelBackend"]
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
@@ -206,10 +208,10 @@ EMAIL_HOST_USER = "awdtest04@gmail.com"
 EMAIL_HOST_PASSWORD = "khfm yqfy sagi ociu"  # Google-generated App Password. email password auth is deprecated.
 
 # Celery backend
-# CELERY_BROKER_URL = 'redis://127.0.0.1:6379/0' # docker redis config. change to localhost:6379 if running directly from django
-# CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/0' # docker redis config. change to localhost:6379 if running directly from django
-CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config. change to localhost:6379 if running directly from django
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config. change to localhost:6379 if running directly from django
+# CELERY_BROKER_URL = "redis://localhost:6379/0"  # running directly from django
+# CELERY_RESULT_BACKEND = "redis://localhost:6379/0"  # running directly from django
+CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
 
 # daphne
 ASGI_APPLICATION = "eLearningApp.asgi.application"

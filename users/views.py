@@ -2,29 +2,29 @@ from itertools import groupby
 import json
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.decorators import method_decorator
-
-from django.views.generic import TemplateView, View, ListView, FormView
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.views.generic import TemplateView, View, ListView
+from django.contrib import messages
 
 from chat.models import ChatRoom
 
 from django.http import (
     HttpResponse,
+    HttpResponseRedirect,
     JsonResponse,
 )
 from django.template.loader import render_to_string
-from django.urls import reverse
 from elearning_auth.decorators import custom_login_required
 from django.db.models import Q, Value
 from django.db.models.functions import Concat
 from django.views.decorators.csrf import csrf_exempt
 
 import logging
-from courses.forms import CreateCourseForm, ProfilePictureForm
+from courses.forms import CreateCourseForm
 
 from courses.models import Assignment, Enrolment, User
-from users.forms import StatusUpdateForm
+from users.forms import StatusUpdateForm, ProfilePictureForm
 from users.models import StatusUpdate
+from users.serializers import UserUpdateSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class LandingView(TemplateView):
     If the user is authenticated, redirects to the dashboard page.
     """
 
-    template_name = "public/landing.html"
+    template_name = "users/public/landing.html"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -56,8 +56,8 @@ class DashboardView(View):
         template_teacher (str): The template file path for the teacher dashboard.
     """
 
-    template_student = "user/student_dashboard.html"
-    template_teacher = "user/teacher_dashboard.html"
+    template_student = "users/private/student_dashboard.html"
+    template_teacher = "users/private/teacher_dashboard.html"
 
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -79,6 +79,7 @@ class DashboardView(View):
         :return: The rendered dashboard page.
         :rtype: HttpResponse
         """
+
         user = request.user
         status_updates = StatusUpdate.objects.filter(user=user).order_by("-created_at")[
             :5
@@ -116,11 +117,16 @@ class DashboardView(View):
             draft_courses = teacher.courses_taught.filter(status="draft")
             official_courses = teacher.courses_taught.filter(status="official")
 
+            status_updates = StatusUpdate.objects.filter(user=user).order_by(
+                "-created_at"
+            )[:5]
+
             context = {
                 "user": teacher,
                 "draft_courses": draft_courses,
                 "official_courses": official_courses,
                 "status_updates": status_updates,
+                "statusUpdateForm": StatusUpdateForm,
                 "createCourseForm": CreateCourseForm,  # Assuming CourseForm is your form for creating a new course
             }
 
@@ -129,15 +135,33 @@ class DashboardView(View):
     def post(self, request, *args, **kwargs):
         user = request.user
 
-        # post status update
-        form = StatusUpdateForm(data=request.POST)
+        try:
+            form = StatusUpdateForm(data=request.POST)
 
-        if form.is_valid:
-            status_update = form.save(commit=False)
-            status_update.user = user
-            status_update.save()
+            if form.is_valid():
+                status_update = form.save(commit=False)
+                status_update.user = user
+                status_update.save()
 
-            return redirect("dashboard")
+                messages.success(request, "Status update posted successfully.")
+                redirect_url = request.META.get("HTTP_REFERER", "/")
+                return HttpResponseRedirect(redirect_url, status=201)
+            else:
+                # Form validation failed
+                messages.error(request, "Invalid form data. Please check your input.")
+                logger.error("Invalid form data submitted: %s", form.errors)
+                # Get the referrer URL or default to '/'
+                redirect_url = request.META.get("HTTP_REFERER", "/")
+                return HttpResponseRedirect(redirect_url, status=400)
+        except Exception as e:
+            # Unexpected error occurred
+            messages.error(
+                request, "An error occurred while posting the status update."
+            )
+            logger.exception("Error occurred while posting status update: %s", str(e))
+
+            redirect_url = request.META.get("HTTP_REFERER", "/")
+            return HttpResponseRedirect(redirect_url, status=500)
 
 
 def userSearchFilter(user_id, user_type, query):
@@ -156,31 +180,24 @@ def userSearchFilter(user_id, user_type, query):
     :return: The filtered queryset of users.
     :rtype: QuerySet
     """
+
     if user_type == "student":
         # Fetch only students if the current user is a student
-        return (
-            User.objects.annotate(
-                full_name=Concat("first_name", Value(" "), "last_name")
-            )
-            .filter(
-                Q(username__icontains=query, user_type=User.STUDENT)
-                | Q(email__icontains=query, user_type=User.STUDENT)
-                | Q(full_name__icontains=query, user_type=User.STUDENT)
-            )
-            .exclude(id=user_id)
+        return User.objects.annotate(
+            full_name=Concat("first_name", Value(" "), "last_name")
+        ).filter(
+            Q(username__icontains=query, user_type=User.STUDENT)
+            | Q(email__icontains=query, user_type=User.STUDENT)
+            | Q(full_name__icontains=query, user_type=User.STUDENT)
         )
     elif user_type == "teacher":
         # Fetch both students and teachers if the current user is a teacher
-        return (
-            User.objects.annotate(
-                full_name=Concat("first_name", Value(" "), "last_name")
-            )
-            .filter(
-                Q(username__icontains=query)
-                | Q(email__icontains=query)
-                | Q(full_name__icontains=query)
-            )
-            .exclude(id=user_id)
+        return User.objects.annotate(
+            full_name=Concat("first_name", Value(" "), "last_name")
+        ).filter(
+            Q(username__icontains=query)
+            | Q(email__icontains=query)
+            | Q(full_name__icontains=query)
         )
 
 
@@ -233,7 +250,7 @@ class AutocompleteView(View):
         print("Users:", users)  # Debugging: Print the queryset
 
         options_html = render_to_string(
-            "partials/autocomplete_options.html", {"users": users}
+            "users/partials/autocomplete_options.html", {"users": users}
         )
         print(options_html)
         return HttpResponse(options_html)
@@ -278,6 +295,7 @@ class UserHomePage(View):
         :return: An HTTP response with the rendered home page.
         :rtype: HttpResponse
         """
+
         username = kwargs["username"]  # Retrieve the username from URL parameters
         current_user = request.user
 
@@ -304,23 +322,36 @@ class UserHomePage(View):
                 "registered_courses": registered_courses,
                 "status_updates": status_updates,
             }
-            return render(request, "user/student_dashboard.html", context)
-        elif searched_user.user_type == User.TEACHER:
+            return render(request, "users/private/student_dashboard.html", context)
+        elif current_user == User.TEACHER and searched_user.user_type == User.TEACHER:
             teacher = searched_user
             official_courses = teacher.courses_taught.filter(status="official")
 
+            # Now you have the list of registered courses for the user
+            status_updates = StatusUpdate.objects.filter(user=searched_user).order_by(
+                "-created_at"
+            )[:5]
             context = {
                 "other_user": current_user,
                 "user": teacher,
-                "draft_courses": [],
+                # "draft_courses": [],
                 "official_courses": official_courses,
+                "status_updates": status_updates,
                 "createCourseForm": CreateCourseForm,  # Assuming CourseForm is your form for creating a new course
             }
 
-            return render(request, "user/teacher_dashboard.html", context)
+            return render(request, "users/private/teacher_dashboard.html", context)
+
+        else:
+            messages.error(
+                request, "You are not authorized to access this user's homepage."
+            )
+
+            redirect_url = request.META.get("HTTP_REFERER", "/")
+            return HttpResponseRedirect(redirect_url, status=403)
 
 
-class SearchUsersView(UserPassesTestMixin, ListView):
+class SearchUsersView(ListView):
     """
     View for searching users based on a query.
 
@@ -338,26 +369,13 @@ class SearchUsersView(UserPassesTestMixin, ListView):
     :rtype: HttpResponse
     """
 
-    template_name = "user/search_users.html"
+    template_name = "users/private/search_users.html"
     context_object_name = "users"
     paginate_by = 10
 
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
-
-    def test_func(self):
-        """
-        Checks if the current user is authorized to access the view.
-
-        This method verifies whether the current user is either a student or a teacher,
-        as only students and teachers are allowed to access this view.
-
-        :return: True if the user is authorized, False otherwise.
-        :rtype: bool
-        """
-        user = self.request.user
-        return user.user_type == User.STUDENT or user.user_type == User.TEACHER
 
     @csrf_exempt
     def get_queryset(self):
@@ -371,6 +389,7 @@ class SearchUsersView(UserPassesTestMixin, ListView):
         :return: A queryset containing the users matching the search query.
         :rtype: QuerySet
         """
+
         query = self.request.GET.get("q", "")
 
         user = self.request.user
@@ -393,6 +412,7 @@ class SearchUsersView(UserPassesTestMixin, ListView):
         :return: The context data dictionary.
         :rtype: dict
         """
+
         context = super().get_context_data(**kwargs)
         context["query"] = self.request.GET.get("q", "")
         return context
@@ -437,10 +457,11 @@ class ProfileView(View):
         :return: An HTTP response with the rendered profile page.
         :rtype: HttpResponse
         """
+
         user = request.user
         return render(
             request,
-            "user/profile.html",
+            "users/private/profile.html",
             {"user": user, "profileForm": ProfilePictureForm},
         )
 
@@ -461,6 +482,7 @@ class ProfileView(View):
         :return: An HTTP response with a success or error message.
         :rtype: HttpResponse
         """
+
         user = request.user
 
         try:
@@ -472,71 +494,48 @@ class ProfileView(View):
                 if hasattr(user, field_name):
                     setattr(user, field_name, field_value)
                 else:
-                    print("failed")
+                    logger.error("Invalid field name: %s", field_name)
                     return JsonResponse(
                         {"error": f"Invalid field name: {field_name}"}, status=400
                     )
 
-            # Save the user object to persist changes
-            user.save()
+            serializer = UserUpdateSerializer(user, data=data, partial=True)
+            # Validate and save the user object to persist changes
+            if serializer.is_valid():
+                serializer.save()
+                # Return success response
+                return JsonResponse({"success": "Profile updated successfully"})
+            else:
+                logger.error("Serializer errors: %s", serializer.errors)
+                return JsonResponse(serializer.errors, status=400)
 
-            # Return success response
-            return JsonResponse({"success": "Profile updated successfully"})
         except json.JSONDecodeError:
-            # Return error response for invalid JSON data
-            print("error: invalid JSON data")
+            # Log the error and return error response for invalid JSON data
+            logger.error("Invalid JSON data in the request body")
             return JsonResponse({"error": "Invalid JSON data"}, status=400)
+
         except Exception as e:
-            # Return error response for unexpected errors
-            print("error: ", e)
-            return JsonResponse({"error": str(e)}, status=500)
+            # Log the unexpected error and return error response with status code 500
+            logger.exception("An unexpected error occurred: %s", e)
+            return JsonResponse({"error": "An unexpected error occurred"}, status=500)
 
 
-class UploadPictureView(FormView):
-    """
-    View for uploading a profile picture.
-
-    This view allows users to upload a profile picture by providing a form to select an image file.
-    Upon successful upload, the profile picture is associated with the current user.
-
-    :param form_class: The form class used for uploading the profile picture.
-    :type form_class: Form
-    """
-
-    form_class = ProfilePictureForm
-
+class UploadPictureView(View):
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        """
-        Handles form submission when the form data is valid.
+    def post(self, request, *args, **kwargs):
+        form = ProfilePictureForm(request.POST, request.FILES, instance=request.user)
 
-        This method is called when the form data submitted by the user is valid.
-        It saves the uploaded file to the user's profile picture field.
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profile photo has been updated successfully")
 
-        :param form: The form instance containing the uploaded picture.
-        :type form: Form
-
-        :return: A response indicating successful form submission.
-        :rtype: HttpResponse
-        """
-        # Get the current user instance
-        user = self.request.user
-        # Save the uploaded file to the user's photo field
-        user.photo = form.cleaned_data["photo"]
-
-        user.save()
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        """
-        Retrieves the URL to redirect to after successful form submission.
-
-        This method returns the URL to redirect to after successfully uploading the profile picture.
-
-        :return: The URL to redirect to.
-        :rtype: str
-        """
-        return reverse("profile")
+            redirect_url = request.META.get("HTTP_REFERER", "/")
+            return redirect("profile")
+        else:
+            error_message = f"Error(s) in the form: {form.errors.as_text()}"
+            messages.error(request, error_message)
+            redirect_url = request.META.get("HTTP_REFERER", "/")
+            return HttpResponseRedirect(redirect_url, status=400)

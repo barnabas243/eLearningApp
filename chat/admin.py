@@ -22,6 +22,6 @@ class MessageAdmin(admin.ModelAdmin):
 
 @admin.register(ChatMembership)
 class ChatMembershipAdmin(admin.ModelAdmin):
-    list_display = ("user", "chat_room", "last_viewed_message", "last_online_timestamp")
+    list_display = ("user", "chat_room", "last_viewed_message", "last_active_timestamp")
     list_filter = ("chat_room",)
     search_fields = ("user__username",)

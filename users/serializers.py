@@ -18,12 +18,18 @@ class UserSerializer(serializers.ModelSerializer):
             "date_of_birth",
             "user_type",
         ]
-        read_only_fields = ["id", "username", "email"]
+        read_only_fields = ["id", "username", "email", "user_type"]
 
 
-class StatusUpdateSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-
+class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = StatusUpdate
-        fields = "__all__"
+        model = User
+        fields = ["username", "first_name", "last_name", "email", "date_of_birth"]
+
+
+# class StatusUpdateSerializer(serializers.ModelSerializer):
+#     user = UserSerializer(read_only=True)
+
+#     class Meta:
+#         model = StatusUpdate
+#         fields = "__all__"

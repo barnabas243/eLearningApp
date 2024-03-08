@@ -6,6 +6,13 @@ password: jLD!>54t
 # eLearning Web Application
 [Description of your project]
 
+
+python manage.py makemigrations
+
+python manage.py migrate users 
+python manage.py migrate 
+
+
 ## License
 This project is licensed under the [License Name] - see the [LICENSE](LICENSE) file for details.
 

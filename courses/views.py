@@ -1,4 +1,5 @@
 from datetime import datetime
+import time
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.decorators import method_decorator
 from django.contrib import messages
@@ -7,8 +8,10 @@ from django.contrib.auth.mixins import UserPassesTestMixin
 from django.views.decorators.http import require_http_methods
 
 from notifications.signals import notify
+from courses.tasks import upload_materials
 from elearning_auth.decorators import custom_login_required
 from users.decorators import (
+    check_student_banned,
     student_required,
     teacher_required,
 )
@@ -62,7 +65,7 @@ class CoursesView(ListView):
     """
 
     model = Course
-    template_name = "public/view_courses.html"
+    template_name = "courses/public/view_courses.html"
     context_object_name = "courses"
 
     @csrf_exempt
@@ -109,7 +112,7 @@ def course_details(request, course_id):
     # Render the course details template with the course object and enrollment status
     return render(
         request,
-        "public/course_details.html",
+        "courses/public/course_details.html",
         {"course": course, "is_enrolled": is_enrolled, "user": user},
     )
 
@@ -133,19 +136,19 @@ def enroll(request, course_id):
     :return: An HTTP response with html button or error message.
     :rtype: JsonResponse or HttpResponse
     """
-    course = get_object_or_404(Course, id=course_id)
 
     # Force evaluation of request.user
     user = request.user
+
+    logger.info("request.user type: %s", type(request.user))
+    logger.info("request.user value: %s", request.user)
+    course = get_object_or_404(Course, id=course_id)
 
     # Check if the user is already enrolled in the course
     if Enrolment.objects.filter(student=user, course=course).exists():
         return JsonResponse(
             {"message": "You are already enrolled in this course."}, status=400
         )
-
-    logger.info("request.user type: %s", type(user))
-    logger.info("request.user value: %s", user)
 
     # Create a new enrollment for the user and course
     Enrolment.objects.create(student=user, course=course)
@@ -266,7 +269,7 @@ class WeekView(View):
 
         # Render the HTML markup for the new week
         new_week_html = render_to_string(
-            "partials/week_item.html",
+            "courses/partials/week_item.html",
             {"course_id": course_id, "week_number": new_week_number},
             request=request,
         )
@@ -299,7 +302,7 @@ class WeekView(View):
             # Ensure the duration_weeks does not go below 1
             messages.error(request, "Weeks can not be lesser than 1")
             error_msg = render_to_string(
-                "partials/messages.html",
+                "courses/partials/messages.html",
                 {"messages": messages.get_messages(request)},
                 request=request,
             )
@@ -319,7 +322,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 
     """
 
-    template_name = "user/course.html"
+    template_name = "courses/private/course.html"
 
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -447,7 +450,7 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 
 
 @custom_login_required
-@student_required
+@check_student_banned
 @require_http_methods(["POST"])
 def submit_feedback(request, course_id, student_id):
     try:
@@ -606,7 +609,7 @@ def get_week_materials(request, course_id, week_number):
     # Render the materials template with the materials data and the upload form
     return render(
         request,
-        "partials/materials.html",
+        "courses/partials/materials.html",
         {
             "course_id": course_id,
             "week_number": week_number,
@@ -706,7 +709,8 @@ def upload_assignment_material(request, course_id, week_number):
 
 
 @custom_login_required
-@student_required
+@check_student_banned
+@require_http_methods(["POST"])
 def upload_student_submission(request, assignment_id):
     """
     Handles the submission of an assignment by a student.
@@ -719,29 +723,26 @@ def upload_student_submission(request, assignment_id):
     :return: An HTTP redirect response.
     :rtype: HttpResponseRedirect
     """
-    if request.method == "POST":
-        try:
-            assignment = Assignment.objects.get(id=assignment_id)
-            form = AssignmentSubmissionForm(data=request.POST, files=request.FILES)
-            user = request.user
+    try:
+        assignment = Assignment.objects.get(id=assignment_id)
+        form = AssignmentSubmissionForm(data=request.POST, files=request.FILES)
+        user = request.user
 
-            if form.is_valid():
-                submission = form.save(
-                    commit=False
-                )  # Save the form data but don't commit to the database yet
-                submission.assignment = assignment  # Set the assignment
-                submission.student = user  # Set the student
-                submission.grade = form.cleaned_data.get("grade", None)
-                submission.save()  # Now save the submission to the database
-            else:
-                error_message = "Failed to submit Assignment. Please check the form."
-                error_message += "<br>" + str(form.errors)
-                messages.error(request, error_message)
-                logger.error(error_message)
-        except Assignment.DoesNotExist:
-            error_message = "Assignment does not exist."
+        if form.is_valid():
+            submission = form.save(commit=False)
+            submission.assignment = assignment
+            submission.student = user
+            submission.grade = form.cleaned_data.get("grade", None)
+            submission.save()
+        else:
+            error_message = "Failed to submit Assignment. Please check the form."
+            error_message += "<br>" + str(form.errors)
             messages.error(request, error_message)
             logger.error(error_message)
+    except Assignment.DoesNotExist:
+        error_message = "Assignment does not exist."
+        messages.error(request, error_message)
+        logger.error(error_message)
 
     return redirect(
         "get_week_materials",
@@ -819,7 +820,7 @@ def student_ban_status_update(request, course_id, student_id):
     )
 
     html_content = render_to_string(
-        "partials/ban_button.html", {"enrolment": enrolment}
+        "courses/partials/ban_button.html", {"enrolment": enrolment}
     )
 
     return HttpResponse(html_content)
@@ -827,6 +828,7 @@ def student_ban_status_update(request, course_id, student_id):
 
 @custom_login_required
 @teacher_required
+@require_http_methods(["POST"])
 def upload_material(request, course_id, week_number):
     """
     Handles the upload of materials for a specific course and week.
@@ -846,90 +848,71 @@ def upload_material(request, course_id, week_number):
         # Retrieve the course object or return a 404 error if not found
         course = get_object_or_404(Course, id=course_id, teacher=user)
 
-        if request.method == "POST":
-            # Create a form instance with the POST data
-            form = MaterialUploadForm(request.POST, request.FILES)
+        form = MaterialUploadForm(request.POST, request.FILES)
 
-            # Check if the form is valid
-            if form.is_valid():
-                num_of_materials = 0  # Counter for successfully uploaded materials
-                failed_materials = []  # List to store failed uploads
+        if form.is_valid():
+            files = request.FILES.getlist("material")
 
-                # Iterate over each uploaded material
-                for material in request.FILES.getlist("material"):
-                    try:
-                        # Create a CourseMaterial object for the uploaded material
-                        course_material = CourseMaterial.objects.create(
-                            course=course,
-                            week_number=form.cleaned_data["week_number"],
-                            material=material,
-                        )
-                        num_of_materials += (
-                            1  # Increment the counter for successful uploads
-                        )
-                    except Exception as e:
-                        # Log the error and add the failed material to the list
-                        failed_materials.append(
-                            {"material_name": material.name, "error_message": str(e)}
-                        )
-                        logger.error(
-                            f"Failed to upload material: {material.name}. Error: {e}"
-                        )
+            # Call the Celery task asynchronously
+            task = upload_materials.delay(course_id, week_number, files)
 
-                # Check if any materials failed to upload
-                if failed_materials:
-                    error_message = (
-                        f"{len(failed_materials)} materials failed to upload:\n"
-                    )
-                    for failed_material in failed_materials:
-                        error_message += f"- {failed_material['material_name']}: {failed_material['error_message']}\n"
-                    messages.error(request, error_message)
+            logger.info("Materials upload started.")
 
-                if num_of_materials > 0:
-                    # Send success message for successful uploads
-                    success_message = (
-                        f"{num_of_materials} materials uploaded successfully."
-                    )
-                    messages.success(request, success_message)
+            # Poll the task result until it's ready
+            while not task.ready():
+                time.sleep(1)  # Sleep for 1 second before checking again
 
-                    # Retrieve all enrollments for the specified course
-                    enrollments = Enrolment.objects.filter(course=course)
+            logger.info("Materials upload completed.")
 
-                    # Retrieve the associated students from the enrollments
-                    students_enrolled = [
-                        enrollment.student for enrollment in enrollments
-                    ]
+            # Retrieve the result once the task is ready
+            result = task.result
 
-                    # Send notification to all students in the course
-                    materialsUpdateEmail(
-                        students_enrolled, course, week_number, num_of_materials
-                    )
+            # Extract num_of_materials and num_of_failed_uploads from the result
+            num_of_materials, num_of_failed_uploads = result
 
-                    course_link = f'<a href="{course.get_absolute_url()}?week={week_number}">{course.name}</a>'
-                    verb = f"<span class='fw-bold'>{num_of_materials} materials</span> added to {course_link}"
+            # add any failed uploads to the error message
+            if num_of_failed_uploads:
+                error_message = (
+                    f"{len(num_of_failed_uploads)} materials failed to upload:\n"
+                )
 
-                    try:
-                        # Send notification to all students in the course
-                        notify.send(sender=user, recipient=students_enrolled, verb=verb)
-                    except Exception as e:
-                        # Log the exception
-                        logger.error(f"Error occurred while sending notification: {e}")
+                for failed_material in num_of_failed_uploads:
+                    error_message += f"- {failed_material['material_name']}: {failed_material['error_message']}\n"
 
-            else:
-                # Form validation failed, add form errors to Django messages
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        messages.error(request, f"{field}: {error}")
+                messages.error(request, error_message)
+
+            if num_of_materials > 0:
+                # Send success message for successful uploads
+                success_message = f"{num_of_materials} materials uploaded successfully."
+                messages.success(request, success_message)
+
+                # Retrieve the associated students from the enrollments
+                enrollments = Enrolment.objects.filter(course=course)
+                students_enrolled = [enrollment.student for enrollment in enrollments]
+
+                # Send email notification to all students in the course
+                materialsUpdateEmail(
+                    students_enrolled, course, week_number, num_of_materials
+                )
+
+                # Send django notification to all students in the course
+                course_link = f'<a href="{course.get_absolute_url()}?week={week_number}">{course.name}</a>'
+                verb = f"<span class='fw-bold'>{num_of_materials} materials</span> added to {course_link}"
+
+                try:
+                    notify.send(sender=user, recipient=students_enrolled, verb=verb)
+                except Exception as e:
+                    logger.error(f"Error occurred while sending notification: {e}")
+
         else:
-            # Unsupported request method, log a warning
-            logger.warning(
-                "Upload Material view accessed with an unsupported request method."
-            )
+            # Form validation failed
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+
     except Exception as e:
-        # Log any unexpected errors
         logger.error(f"An unexpected error occurred: {e}")
 
-    # Redirect to the 'get_week_materials' view for the specified course and week
     return redirect("get_week_materials", course_id=course_id, week_number=week_number)
 
 

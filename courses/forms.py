@@ -7,27 +7,6 @@ from courses.models import (
     CourseMaterial,
     Feedback,
 )
-from users.models import User
-
-from courses.tasks import process_image
-
-
-class ProfilePictureForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ["photo"]
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        # Call Celery task to process the image
-        if instance.photo:
-            process_image.delay(instance.photo.path)
-
-        if commit:
-            instance.save()
-
-        return instance
 
 
 class CreateCourseForm(forms.ModelForm):

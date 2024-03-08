@@ -1,0 +1,8 @@
+{% for update in status_updates %}
+  <li class="list-group-item border-0 m-3 internal-shadow-sm">
+    <p>{{ update.content }}</p>
+    <p>{{ update.created_at|date:'D, d M Y H:i:s' }}</p>
+  </li>
+{% empty %}
+  <p>No status updates yet.</p>
+{% endfor %}

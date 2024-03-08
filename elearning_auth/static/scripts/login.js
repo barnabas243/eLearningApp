@@ -61,7 +61,7 @@ form.addEventListener('submit', (event) => {
     
                 } else if (response.status === 401) {
                     // Handle 401 Unauthorized errors
-                    if (data.error === "Invalid username or password.") {
+                    if (data.error === "Invalid username or password." || data.error === "User account is disabled.") {
                         // Display error message for invalid credentials
                         console.error('Error:', data.error);
                         const usernameErrorMessage = document.getElementById('username-error-message')
@@ -70,10 +70,6 @@ form.addEventListener('submit', (event) => {
                         const usernameInput = document.getElementById('id_username');
                         usernameInput.classList.add('is-invalid');
 
-                    } else if (data.error === "User account is disabled.") {
-                        // Display error message for disabled account
-                        console.error('Error:', data.error);
-                        // Handle disabled account error
                     } else {
                         // Handle other 401 errors
                         console.error('Error:', data.error);

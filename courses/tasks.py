@@ -1,27 +1,58 @@
-from PIL import Image
 from celery import shared_task
+from .models import CourseMaterial
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 @shared_task
-def process_image(photo_path):
+def upload_materials(course, week_number, files):
     """
-    Process an image asynchronously.
+    Upload materials asynchronously.
 
-    This task processes an image by resizing it to a thumbnail of 256x256 pixels.
-    The processed image is then saved back to the original path.
+    This task uploads materials for a specified course and week asynchronously,
+    creating CourseMaterial objects for each uploaded file.
 
-    :param photo_path: The path to the image file.
-    :type photo_path: str
+    :param course: The Course instance for which materials are being uploaded.
+    :type course: Course
+    :param week_number: The week number for which materials are being uploaded.
+    :type week_number: int
+    :param files: A dictionary containing the uploaded files.
+    :type files: dict
+
+    :return: A tuple containing the number of successfully uploaded materials and a list of failed uploads.
+    :rtype: tuple[int, list[dict]]
+
+    :raises: Any exception raised during the upload process.
+
+    The function iterates over each uploaded file and attempts to create a CourseMaterial object
+    for it. If successful, the counter for successful uploads is incremented. If an error occurs
+    during the upload process, the details of the failed upload are logged, and the file is added
+    to the list of failed uploads.
+
+    Example Usage:
+    ```
+    num_of_materials, failed_materials = upload_materials(course_instance, 3, {'file1': <File>, 'file2': <File>})
+    ```
     """
-    try:
-        with Image.open(photo_path) as img:
-            img.thumbnail((256, 256))
-            img.save(photo_path)
+    num_of_materials = 0
+    failed_materials = []
 
-        logger.info("Image processing successful: %s", photo_path)
-    except Exception as e:
-        # Log the exception and any relevant details
-        logger.error("Error processing image: %s", e, exc_info=True)
+    # Iterate over each uploaded material
+    for material in files:
+        try:
+            # Create a CourseMaterial object for the uploaded material
+            course_material = CourseMaterial.objects.create(
+                course=course,
+                week_number=week_number,
+                material=material,
+            )
+            num_of_materials += 1  # Increment the counter for successful uploads
+        except Exception as e:
+            # Log the error and add the failed material to the list
+            failed_materials.append(
+                {"material_name": material.name, "error_message": str(e)}
+            )
+            logger.error(f"Failed to upload material: {material.name}. Error: {e}")
+
+    return num_of_materials, failed_materials

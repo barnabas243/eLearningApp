@@ -1,0 +1,12 @@
+{% for course in registered_courses %}
+  <div class="col-md-12">
+    <ul class="list-group">
+      <a href="{% url 'official' course.id %}" class="list-group-item list-group-item-action" >{{ course.name }}</a>
+    </ul>
+  </div>
+{% empty %}
+  <div class="col-md-12">
+    <p>You haven't enrolled into any courses yet.</p>
+    <a href="{% url 'courses' %}">View Courses <i class="fas fa-chevron-right"></i></a>
+  </div>
+{% endfor %}

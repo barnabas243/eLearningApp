@@ -1,0 +1,57 @@
+{% extends 'base/base.html' %}
+
+{% block canonical_path %}
+  {% url 'login' %}
+{% endblock %}
+
+{% block title %}
+  Login | My eLearning App
+{% endblock %}
+
+{% block description %}
+  Login page for the eLearning Application
+{% endblock %}
+
+{% block scripts %}
+  {% load static %}
+  {{ block.super }}
+  <!-- Include custom script here -->
+  <script src="{% static 'scripts/login.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card mt-5">
+          <div class="card-header">
+            <h2 class="text-center">Login</h2>
+          </div>
+          <div class="card-body">
+            {% include 'messages/messages.html' %}
+            <form id="login-form" method="post" class="needs-validation" novalidate>
+              {% csrf_token %}
+              <div class="form-group mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Username</label>
+                {{ form.username }}
+                <div class="invalid-feedback" id="username-error-message">username cannot be empty</div>
+              </div>
+              <div class="form-group mb-3">
+                <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                {{ form.password }}
+                <div class="invalid-feedback" id="password-error-message">password cannot be empty</div>
+              </div>
+              <button id="LoginBtn" type="submit" form="login-form" class="btn btn-primary shadow-none">
+                <span id="loginSpinner" class="spinner-border spinner-border-sm visually-hidden" role="status"></span>
+                <span id="loginBtnText">Login</span>
+              </button>
+            </form>
+            <p class="text-center mt-3">
+              Don't have an account? <a href="{% url 'register' %}">Register</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

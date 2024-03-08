@@ -66,9 +66,13 @@ function handleSpanKeyDown(event) {
     }
 }
 
+
+const profileMessage = document.querySelector('#profile-message');
 // Function to handle blur event on span elements
 function handleSpanBlur(event) {
     // Get the field name from the id of the span
+
+  
     const field = this.id;
 
     // Get the new value of the span
@@ -90,8 +94,16 @@ function handleSpanBlur(event) {
         .then(response => {
             // Check if the response is OK
             if (!response.ok) {
-                // Throw an error if the response is not OK
-                throw new Error(`Failed to update ${field}`);
+                response.json().then(error => {
+                    console.error('Error:', error);
+
+                    // Rollback the span value to the initial value
+                    this.innerText = oldValue;
+
+                    // Display the error message in the profile message span
+                    profileMessage.textContent = error;
+
+                })
             }
         })
         .catch(error => {
@@ -102,7 +114,7 @@ function handleSpanBlur(event) {
             this.innerText = oldValue;
 
             // Display the error message in the profile message span
-            document.querySelector('#profile-message').textContent = error;
+            profileMessage.textContent = error;
         });
 }
 

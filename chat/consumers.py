@@ -630,7 +630,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             # Update the last_viewed_message field with the message_id
             chat_membership.last_viewed_message_id = message_id
-            chat_membership.last_online_timestamp = timezone.now()
+            chat_membership.last_active_timestamp = timezone.now()
 
             logger.info("ChatMembership instance before saving: %s", chat_membership)
 

@@ -42,7 +42,7 @@ def index(request):
     context = {"chat_rooms": chat_rooms}
 
     # Render the template with the context
-    return render(request, "chat/partials/index.html", context)
+    return render(request, "chat/private/index.html", context)
 
 
 @custom_login_required
@@ -80,17 +80,17 @@ def room(request, room_name):
             chat_room_id=chat_room.id
         )
 
-        # Subquery to get the last_online_timestamp for each user
-        last_online_subquery = chat_membership_queryset.filter(
+        # Subquery to get the last_active_timestamp for each user
+        last_active_subquery = chat_membership_queryset.filter(
             user_id=OuterRef("pk")
-        ).values("last_online_timestamp")[
+        ).values("last_active_timestamp")[
             :1
         ]  # Limit to 1 since each user has only one timestamp per chat room
 
-        # Annotate each user with the last_online_timestamp from ChatMembership
-        users_with_last_online = users.annotate(
-            last_online_timestamp=Coalesce(
-                Subquery(last_online_subquery), F("last_login"), Value(None)
+        # Annotate each user with the last_active_timestamp from ChatMembership
+        users_with_last_active = users.annotate(
+            last_active_timestamp=Coalesce(
+                Subquery(last_active_subquery), F("last_login"), Value(None)
             )
         )
 
@@ -121,14 +121,14 @@ def room(request, room_name):
         logger.info("message_blocks: %s", message_blocks)
         return render(
             request,
-            "chat/partials/chat_room.html",
+            "chat/private/chat_room.html",
             {
                 "chat_room_id": chat_room.id,
                 "room_name": room_name,
                 "course": course,
                 "current_user": request.user.username,
-                "users": users_with_last_online,
-                "messages": message_blocks,
+                "users": users_with_last_active,
+                "message_blocks": message_blocks,
             },
         )
     else:

@@ -1,0 +1,110 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block canonical_path %}
+  {% url 'dashboard' %}
+{% endblock %}
+
+{% block title %}
+  Student Dashboard | {{ user.username }}
+{% endblock %}
+
+{% block description %}
+  This is the dashboard page for the user
+{% endblock %}
+
+{% block content %}
+  <div class="container text-center">
+    {% include 'messages/messages.html' %}
+    {% comment %} <h1>Welcome, {{ user.username }}</h1> {% endcomment %}
+
+    <!-- Profile Section -->
+    <div class="row mb-5 d-flex align-items-center justify-content-center">
+      {% include 'users/partials/profile_section.html' %}
+    </div>
+
+    <!-- Registered Courses and Status Updates -->
+    <div class="row">
+      <div class="col-md-6">
+        <h2>Registered Courses</h2>
+        {% if registered_courses %}
+          <div class="row mb-3">
+            {% include 'users/partials/registered_courses.html' %}
+          </div>
+        {% endif %}
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <h2>Deadlines</h2>
+                <!-- Deadline content here -->
+            {% for course, course_deadlines in grouped_deadlines.items %}
+              <div class="accordion" id="course{{ course.id }}Accordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="heading{{ course.id }}">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ course.id }}" aria-expanded="true" aria-controls="collapse{{ course.id }}">
+                      {{ course.name }}
+                    </button>
+                  </h2>
+                  <div id="collapse{{ course.id }}" class="accordion-collapse collapse show" aria-labelledby="heading{{ course.id }}" data-bs-parent="#course{{ course.id }}Accordion">
+                    <div class="accordion-body">
+                      <ul class="list-group">
+                        {% include 'users/partials/course_deadlines.html' %}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="fst-italic">There are no assigments.</p>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <h2>List of Chats</h2>
+                <!-- List of chat content here -->
+            {% include 'users/partials/course_chats.html' %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="d-flex justify-content-center gap-3 align-items-center">
+              <h2>Latest Status Updates</h2>
+              {% if not other_user %}
+                <button type="button" class="btn text-primary border-primary" data-bs-toggle="modal" data-bs-target="#statusUpdateModel">add Status</button>
+              {% endif %}
+            </div>
+             <!-- Status update content here -->
+            <ul class="list-group overflow-auto internal-shadow-lg" style=" max-height: 50vh;">
+              {% include 'users/partials/status_update.html' %}
+            </ul>
+            <div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if not other_user %}
+      <div class="modal fade" id="statusUpdateModel" tabindex="-1" role="dialog" aria-labelledby="statusUpdateModelLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="statusUpdateModelLabel">Add a new Status</h5>
+              <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+          <!-- Form for profile picture upload -->
+              <form id="addStatusUpdateForm" action="{% url 'dashboard' %}" method="post">
+                {% csrf_token %}
+                {{ statusUpdateForm }}
+                <button type="submit" class="btn btn-primary">Upload</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+{% endblock %}

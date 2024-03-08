@@ -1,0 +1,11 @@
+<ul class="list-group">
+  {% for chat in course_chats %}
+    <li class="list-group-item">
+      <a href="{% url 'room' chat.chat_name|slugify %}"> {{ chat.chat_name }}</a>
+    </li>
+  {% empty %}
+    <li class="list-group-item">
+      <p>You are not in any chat.</p>
+    </li>
+  {% endfor %}
+</ul>

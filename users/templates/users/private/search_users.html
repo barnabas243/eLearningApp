@@ -1,0 +1,47 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block canonical_path %}
+  {% url 'search' %}?q={{ query }}
+{% endblock %}
+
+{% block title %}
+  Search User | My eLearning App
+{% endblock %}
+
+{% block description %}
+  Search for student or teacher home pages
+{% endblock %}
+
+{% block content %}
+  <header class="d-flex justify-content-center align-items-center">
+    <h1>Search Results for "{{ query }}"</h1>
+  </header>
+
+  <div class="row d-flex justify-content-center align-items-center">
+    {% for user in users %}
+      <div class="col-md-7">
+        <div class="card mb-3">
+          <div class="row g-0">
+            <div class="col-md-2 m-3">
+              <div class="profile-picture-sm">
+                <img src="{{ user.photo.url }}" alt="{{ user.username }}'s Profile Picture" class="profile-img"/>
+              </div>
+            </div>
+            <div class="col-md-8 d-flex justify-content-start align-items-center">
+              <div class="card-body">
+                <h2 class="card-title fs-4"><a href="{% url 'user_home' user.username %}">{{ user.get_full_name }}</a></h5>
+                <p class="card-text">
+                  <strong>Email:</strong> {{ user.email }} | {{user.user_type}}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    {% empty %}
+      <p class="fst-italics m-2"> There are no users with "{{ query }}" found.</p>
+    {% endfor %}
+
+{% endblock %}

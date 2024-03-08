@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.hashers import check_password
 from django.contrib.auth import authenticate
 import logging
 
@@ -16,24 +16,20 @@ class UserLoginSerializer(serializers.Serializer):
     password = serializers.CharField()
 
     def validate(self, attrs):
-        username = attrs.get("username")
-        password = attrs.get("password")
-
-        if not username or not password:
-            raise serializers.ValidationError(
-                "Username and password must be provided.", code="required"
-            )
+        username = attrs.get("username", "").strip()
+        password = attrs.get("password", "").strip()
 
         user = authenticate(username=username, password=password)
 
         if not user:
+            logger.info("user: %s", user)
             raise serializers.ValidationError(
-                "Invalid username or password.", code="invalid"
+                detail="Invalid username or password.", code="invalid"
             )
 
         if not user.is_active:
             raise serializers.ValidationError(
-                "User account is disabled.", code="inactive"
+                detail="User account is disabled.", code="inactive"
             )
 
         attrs["user"] = user
@@ -64,10 +60,8 @@ class UserRegistrationSerializer(serializers.Serializer):
         """
         Validate the password1 field against Django's password validators.
         """
-        try:
-            validate_password(value)
-        except ValidationError as e:
-            raise serializers.ValidationError(list(e.messages))
+
+        validate_password(value)
         return value
 
     def validate(self, data):
@@ -114,6 +108,8 @@ class PasswordChangeSerializer(serializers.Serializer):
     def validate(self, data):
         new_password = data.get("new_password")
         confirm_password = data.get("confirm_password")
+
+        validate_password(new_password)
 
         if new_password != confirm_password:
             raise ValidationError(

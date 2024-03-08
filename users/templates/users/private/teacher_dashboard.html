@@ -1,0 +1,122 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block canonical_path %}
+    {% url 'dashboard' %}
+{% endblock %}
+
+{% block title %}
+    Teacher Dashboard - {{ user.username }}
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5 text-center">
+        {% include 'messages/messages.html' %}
+    {% comment %} <h1 class="mb-4">Teacher Dashboard</h1> {% endcomment %}
+
+    <!-- Profile Section -->
+        <div class="row mb-5 d-flex align-items-center justify-content-center">
+            {% include 'users/partials/profile_section.html' %}
+        </div>
+
+    <!-- Draft and Official Courses -->
+        <div class="row">
+        <!-- Draft Courses Section -->
+            <div class="col-md-6">
+                {% if not other_user %}
+                    <section class="col-md-12">
+                        <h2>Draft Courses</h2>
+
+                    <!-- Create Course Button -->
+                        <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createCourseModal">Create New Course</button>
+
+                        <div class="row">
+                            {% include 'users/partials/draft_courses.html' %}
+                        </div>
+                    </section>
+                {% endif %}
+
+            <!-- Official Courses Section -->
+                <section class="col-md-12">
+                    <h2>Official Courses</h2>
+                    <div class="row">
+                        {% include 'users/partials/official_courses.html' %}
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-md-6">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="d-flex justify-content-center gap-3 align-items-center">
+                            <h2>Latest Status Updates</h2>
+                            {% if not other_user %}
+                                <button type="button" class="btn text-primary border-primary" data-bs-toggle="modal" data-bs-target="#statusUpdateModel">add Status</button>
+                            {% endif %}
+                        </div>
+                     <!-- Status update content here -->
+                        <ul class="list-group overflow-auto internal-shadow-lg" style=" max-height: 50vh;">
+                            {% include 'users/partials/status_update.html' %}
+                        </ul>
+                        <div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not other_user %}
+        <div class="modal fade" id="statusUpdateModel" tabindex="-1" role="dialog" aria-labelledby="statusUpdateModelLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="statusUpdateModelLabel">Add a new Status</h5>
+                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+            <!-- Form for profile picture upload -->
+                        <form id="addStatusUpdateForm" action="{% url 'dashboard' %}" method="post">
+                            {% csrf_token %}
+                            {{ statusUpdateForm }}
+                            <button type="submit" class="btn btn-primary">Upload</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <!-- Create Course Modal -->
+        <div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="createCourseModalLabel">Create New Course</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="{% url 'create_course' %}" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                {{ createCourseForm.name.label_tag }}
+                                {{ createCourseForm.name }}
+                                <div class="invalid-feedback">{{ createCourseForm.name.errors }}</div>
+                            </div>
+                            <div class="mb-3">
+                                {{ createCourseForm.summary.label_tag }}
+                                {{ createCourseForm.summary }}
+                                <div class="invalid-feedback">{{ createCourseForm.summary.errors }}</div>
+                            </div>
+                            <div class="mb-3">
+                                {{ createCourseForm.duration_weeks.label_tag }}
+                                {{ createCourseForm.duration_weeks }}
+                                <div class="invalid-feedback">{{ createCourseForm.duration_weeks.errors }}</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}

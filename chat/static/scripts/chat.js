@@ -90,7 +90,7 @@ function handleUserDataMessage(data) {
 }
 // Function to process connected users
 function processConnectedUsers(users) {
-    // Update UI to show users as online
+    // Update UI to show users as active
     users.forEach((user) => {
         updateUserStatus(user, true);
     });
@@ -103,16 +103,16 @@ function processDisconnectedUser(user) {
 }
 
 // Function to update user status in the UI
-function updateUserStatus(user, isOnline) {
+function updateUserStatus(user, isActive) {
     const userBadgeElement = document.getElementById(`${user}_status_badge`);
     const userStatusElement = document.getElementById(`${user}_status_text`);
     if (userBadgeElement && userStatusElement) {
-        if (isOnline) {
+        if (isActive) {
             userBadgeElement.classList.remove("bg-secondary");
             userBadgeElement.classList.add("bg-success");
             userStatusElement.classList.remove("text-secondary");
             userStatusElement.classList.add("text-success");
-            userStatusElement.textContent = "Online";
+            userStatusElement.textContent = "active";
         } else {
             userBadgeElement.classList.remove("bg-success");
             userBadgeElement.classList.add("bg-secondary");
@@ -121,7 +121,7 @@ function updateUserStatus(user, isOnline) {
             userStatusElement.textContent = "Offline";
         }
 
-        updateLastOnlineStatus()
+        updateLastActiveStatus()
     } else {
         console.error(`Element(s) with ID '${user}' not found.`);
     }
@@ -155,17 +155,19 @@ function appendMessage(message) {
         return;
     }
 
-    const localDate = new Date(message.timestamp).getDate();
-    const localTime = formatDateToHourMin(message.timestamp);
+    const localDate = new Date(message.timestamp);
+    const localTime = formatDateToHourMin(localDate);
     
     // Find the last message element with a data-timestamp attribute
     const lastMessage = messageContainer.querySelector('div[data-timestamp]:last-child');
-    const lastMessageDate = new Date(lastMessage.dataset.timestamp).getDate();
+    let lastMessageDate;
+    if (lastMessage) {
+        lastMessageDate = new Date(lastMessage.dataset.timestamp).getDate();
+    }
 
     // Check if the chat log is empty or if the new message has a different date from the last message
-    if (!lastMessage || lastMessageDate < localDate ) {
+    if (!lastMessage || lastMessageDate < localDate.getDate() ) {
         // Create a date header
-        console.log("why isnt this not working?")
         const dateHeader = document.createElement('div');
         dateHeader.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'my-3');
         dateHeader.innerHTML = `
@@ -186,7 +188,7 @@ function appendMessage(message) {
 
     // Create a new message element
     const messageElement = document.createElement('div');
-    messageElement.classList.add('row');
+    messageElement.classList.add('row', 'mb-3');
     messageElement.innerHTML = `
         <div class="col">
             <div class="message text-break ${messageClass}" data-message-id="${message.id}" data-timestamp="${message.timestamp}">
@@ -225,30 +227,30 @@ window.addEventListener('beforeunload', function (event) {
 });
 
 
-// Function to update last online status
-function updateLastOnlineStatus() {
-    const users_last_online = document.querySelectorAll('div[data-last-online]');
+// Function to update last active status
+function updateLastActiveStatus() {
+    const users_last_active = document.querySelectorAll('div[data-last-active]');
 
-    if (users_last_online) {
-        users_last_online.forEach((user) => {
-            const last_online_span = user.querySelectorAll('span')[1];
+    if (users_last_active) {
+        users_last_active.forEach((user) => {
+            const last_active_span = user.querySelectorAll('span')[1];
 
-            if (last_online_span && last_online_span.classList.contains('text-secondary')) {
-                const timestamp = user.dataset.lastOnline;
+            if (last_active_span && last_active_span.classList.contains('text-secondary')) {
+                const timestamp = user.dataset.lastActive;
                 if (timestamp) {
                     const time_since_timestamp = dayjs.utc(timestamp).from(dayjs());
-                    last_online_span.textContent = `online ${time_since_timestamp}`;
+                    last_active_span.textContent = `active ${time_since_timestamp}`;
                 }
             }
         });
     }
 }
 
-// Initial call to update last online status
-updateLastOnlineStatus();
+// Initial call to update last active status
+updateLastActiveStatus();
 
-// Polling function to update last online status every 1 minute
-setInterval(updateLastOnlineStatus, 60000); // 60000 milliseconds = 1 minute
+// Polling function to update last active status every 1 minute
+setInterval(updateLastActiveStatus, 60000); // 60000 milliseconds = 1 minute
 
 const chatUserSearchInput = document.getElementById('chatUserSearchInput');
 const usersList = document.getElementById('usersList');
@@ -277,6 +279,34 @@ autosize(messageInput); // initialize autosize for textarea
 
 messageInput.dispatchEvent(new Event('input', { bubbles: true }));
 messageInput.focus();
+
+// Event listener for Enter and Shift+Enter
+messageInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        // prevent line breaking 
+        event.preventDefault();
+
+        // Trigger the submission of the message
+        document.querySelector('#messageSubmit').click();
+
+
+
+    } else if (event.key === 'Enter' && event.shiftKey) {
+        // Insert a newline character
+        const start = messageInput.selectionStart;
+        const end = messageInput.selectionEnd;
+        const value = messageInput.value;
+
+        messageInput.value = value.substring(0, start) + '\n' + value.substring(end);
+
+        // Move the cursor to the next line
+        messageInput.selectionStart = messageInput.selectionEnd = start + 1;
+        
+        autosize.update(messageInput)
+        // Prevent the default behavior of Enter (inserting a newline character)
+        event.preventDefault();
+    }
+});
 
 // format dates with dayjs
 document.querySelectorAll('div[data-timestamp]').forEach((timestamp) => {
@@ -311,7 +341,7 @@ function replaceURLsWithAnchors(text) {
 document.querySelector('#chat-message-form').onsubmit = function (e) {
     e.preventDefault();
     const messageInputDom = document.querySelector('#chat-message-input');
-    const content = messageInputDom.value;
+    const content = messageInputDom.value.trim()
 
     // Ensure all required fields are provided
     if (content && chatRoomId) {
@@ -324,7 +354,8 @@ document.querySelector('#chat-message-form').onsubmit = function (e) {
             'message': message
         }));
         messageInputDom.value = '';
-        messageInputDom.rows = 1;
+
+        autosize.update(messageInput)
 
     } else {
         console.error("Missing required fields for message creation.");

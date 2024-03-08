@@ -22,16 +22,18 @@
                 </div>
             </div>
 
-            <!-- Username and online status column -->
+            <!-- Username and active status column -->
             <div class="col-12 col-md-8 order-0 order-md-1">
                 <div class="d-flex flex-column justify-content-between align-items-start">
                     <!-- full_name -->
                     <a href="{% url 'user_home' user.username %}" class="text-decoration-none">{{ user.get_full_name }}</a>
                     <span class="fw-bold fst-italic"> {{user.user_type}}</span>
 
-                    <!-- Online status -->
-                    <div class="d-flex align-items-center gap-2" data-last-online="{{user.last_online_timestamp|date:"c"  }}">
+                    <!-- active status -->
+                    <div class="d-flex align-items-center gap-2" data-last-active="{{user.last_active_timestamp|date:"c"  }}">
                         <span id="{{ user.username }}_status_badge" class="p-1 bg-secondary border rounded-circle"></span>
+
+                        <!-- if text "offline is shown, there is an error in retrieving data-last-active-->
                         <span id="{{ user.username }}_status_text" class="text text-secondary">Offline</span>
                     </div>
                 </div>

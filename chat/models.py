@@ -76,6 +76,6 @@ class ChatMembership(models.Model):
     last_viewed_message = models.ForeignKey(
         Message, on_delete=models.CASCADE, null=True, blank=True
     )
-    last_online_timestamp = models.DateTimeField(
+    last_active_timestamp = models.DateTimeField(
         default=timezone.now, help_text="The timestamp when the user disconnects"
     )

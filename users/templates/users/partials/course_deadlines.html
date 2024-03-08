@@ -1,0 +1,15 @@
+{% for deadline in course_deadlines %}
+  <li class="list-group-item">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <a href="{% url 'official' deadline.course.id %}?week={{ deadline.week_number }}" class="course-link">
+          <span class="course-name">{{ deadline.name }}</span>
+        </a>
+      </div>
+      <div class="deadline-info">
+        <span>Due by:</span>
+        <span>{{ deadline.get_assignment_deadline }}</span>
+      </div>
+    </div>
+  </li>
+{% endfor %}
