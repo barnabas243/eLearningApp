@@ -35,6 +35,12 @@ class CourseMaterialSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class MaterialUploadSerializer(serializers.Serializer):
+    course_id = serializers.IntegerField()
+    week_number = serializers.IntegerField()
+    material = serializers.ListField(child=serializers.FileField())
+
+
 class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment

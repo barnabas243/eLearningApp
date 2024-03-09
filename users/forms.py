@@ -13,8 +13,8 @@ class ProfilePictureForm(forms.ModelForm):
         instance = super().save(commit=False)
 
         # Call Celery task to process the image
-        # if instance.photo:
-        #     process_image.delay(instance.photo.path)
+        if instance.photo:
+            process_image.delay(instance.photo.path)
 
         if commit:
             instance.save()

@@ -2,13 +2,20 @@
   <li class="list-group-item">
     <div class="d-flex justify-content-between align-items-center">
       <div>
-        <a href="{% url 'official' deadline.course.id %}?week={{ deadline.week_number }}" class="course-link">
-          <span class="course-name">{{ deadline.name }}</span>
+        <a href="{% url 'official' deadline.assignment.course.id %}?week={{ deadline.assignment.week_number }}" class="course-link">
+          <span class="course-name">{{ deadline.assignment.name }}</span>
         </a>
       </div>
       <div class="deadline-info">
-        <span>Due by:</span>
-        <span>{{ deadline.get_assignment_deadline }}</span>
+        {% with assignment_deadline=deadline.assignment.get_assignment_deadline|date:"Y-m-d H:i:s" %}
+          {% if current_datetime > assignment_deadline %}
+            <span class="text-primary">Due by: {{ deadline.assignment.get_assignment_deadline }}</span>
+          {% elif deadline.submitted_at  %}
+            <span class="text-success">submmitted: {{ deadline.submitted_at}}</span>
+          {% else %}
+            <span class="text-danger">Overdue</span>
+          {% endif %}
+        {% endwith %}
       </div>
     </div>
   </li>

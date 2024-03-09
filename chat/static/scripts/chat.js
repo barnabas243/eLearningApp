@@ -154,19 +154,21 @@ function appendMessage(message) {
         console.error("Chat log container not found.");
         return;
     }
-
+    
     const localDate = new Date(message.timestamp);
     const localTime = formatDateToHourMin(localDate);
     
-    // Find the last message element with a data-timestamp attribute
-    const lastMessage = messageContainer.querySelector('div[data-timestamp]:last-child');
+    // Get the last message element with a data-timestamp attribute
+    const lastMessage = messageContainer.lastElementChild.querySelector('div[data-timestamp')
     let lastMessageDate;
     if (lastMessage) {
         lastMessageDate = new Date(lastMessage.dataset.timestamp).getDate();
     }
 
     // Check if the chat log is empty or if the new message has a different date from the last message
-    if (!lastMessage || lastMessageDate < localDate.getDate() ) {
+    if (!lastMessage || !lastMessageDate || lastMessageDate < localDate.getDate() ) {
+        console.log("localDate: ", localDate.getDate())
+        console.log("lastMessageDate: ",lastMessageDate)
         // Create a date header
         const dateHeader = document.createElement('div');
         dateHeader.classList.add('d-flex', 'justify-content-center', 'align-items-center', 'my-3');

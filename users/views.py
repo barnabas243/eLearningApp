@@ -21,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 import logging
 from courses.forms import CreateCourseForm
 
-from courses.models import Assignment, Enrolment, User
+from courses.models import Assignment, AssignmentSubmission, Enrolment, User
 from users.forms import StatusUpdateForm, ProfilePictureForm
 from users.models import StatusUpdate
 from users.serializers import UserUpdateSerializer
@@ -99,8 +99,30 @@ class DashboardView(View):
 
             # Group assignments by course
             grouped_deadlines = {}
+
             for course, assignments in groupby(deadlines, key=lambda x: x.course):
-                grouped_deadlines[course] = list(assignments)
+                grouped_deadlines[course] = []
+                for assignment in assignments:
+                    # Check if a submission exists for this assignment
+                    student_submission = AssignmentSubmission.objects.filter(
+                        assignment=assignment
+                    ).first()
+                    if student_submission:
+                        # If a submission exists, add it to the grouped data with a custom submitted_at field
+                        grouped_deadlines[course].append(
+                            {
+                                "assignment": assignment,
+                                "submitted_at": student_submission.submitted_at,
+                            }
+                        )
+                    else:
+                        # If no submission exists, add the original assignment with a null submitted_at field
+                        grouped_deadlines[course].append(
+                            {
+                                "assignment": assignment,
+                                "submitted_at": None,
+                            }
+                        )
 
             context = {
                 "user": user,
@@ -144,15 +166,14 @@ class DashboardView(View):
                 status_update.save()
 
                 messages.success(request, "Status update posted successfully.")
-                redirect_url = request.META.get("HTTP_REFERER", "/")
-                return HttpResponseRedirect(redirect_url, status=201)
+                return redirect("dashboard")
             else:
                 # Form validation failed
                 messages.error(request, "Invalid form data. Please check your input.")
                 logger.error("Invalid form data submitted: %s", form.errors)
                 # Get the referrer URL or default to '/'
-                redirect_url = request.META.get("HTTP_REFERER", "/")
-                return HttpResponseRedirect(redirect_url, status=400)
+
+                return redirect("dashboard")
         except Exception as e:
             # Unexpected error occurred
             messages.error(
@@ -160,8 +181,7 @@ class DashboardView(View):
             )
             logger.exception("Error occurred while posting status update: %s", str(e))
 
-            redirect_url = request.META.get("HTTP_REFERER", "/")
-            return HttpResponseRedirect(redirect_url, status=500)
+            return redirect("dashboard")
 
 
 def userSearchFilter(user_id, user_type, query):

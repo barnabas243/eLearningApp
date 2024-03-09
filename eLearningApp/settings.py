@@ -208,10 +208,10 @@ EMAIL_HOST_USER = "awdtest04@gmail.com"
 EMAIL_HOST_PASSWORD = "khfm yqfy sagi ociu"  # Google-generated App Password. email password auth is deprecated.
 
 # Celery backend
-# CELERY_BROKER_URL = "redis://localhost:6379/0"  # running directly from django
-# CELERY_RESULT_BACKEND = "redis://localhost:6379/0"  # running directly from django
-CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
+CELERY_BROKER_URL = "redis://localhost:6379/0"  # running directly from django
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"  # running directly from django
+# CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
+# CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
 
 # daphne
 ASGI_APPLICATION = "eLearningApp.asgi.application"

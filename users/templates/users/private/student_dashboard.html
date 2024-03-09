@@ -13,6 +13,13 @@
   This is the dashboard page for the user
 {% endblock %}
 
+{% load tz %}  <!-- Load timezone tags -->
+{% get_current_timezone as TIME_ZONE %}  <!-- Get the current timezone -->
+{% timezone TIME_ZONE %}  <!-- Set the timezone for now tag -->
+  {% now "Y-m-d H:i:s" as current_datetime %}  <!-- Get the current date and time -->
+{% endtimezone %}
+
+
 {% block content %}
   <div class="container text-center">
     {% include 'messages/messages.html' %}

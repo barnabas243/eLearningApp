@@ -43,7 +43,7 @@ urlpatterns = [
         name="upload_assignment_material",
     ),
     path(
-        "upload-student-submission/<int:assignment_id>/",
+        "upload-student-submission/<int:course_id>/<int:assignment_id>/",
         upload_student_submission,
         name="upload_student_submission",
     ),
@@ -58,7 +58,7 @@ urlpatterns = [
         name="delete_course_material",
     ),
     path(
-        "submit-feedback/<int:course_id>/<int:student_id>/",
+        "submit-feedback/<int:course_id>/",
         submit_feedback,
         name="submit_feedback",
     ),

@@ -30,7 +30,7 @@ class CourseMaterialFactory(DjangoModelFactory):
         model = CourseMaterial
 
     course = SubFactory(CourseFactory)
-    material = Faker("file_name", category="document")
+    material = Faker("file_name")
     week_number = Faker("random_int", min=1, max=20)  # Adjust max week number as needed
 
 
@@ -52,7 +52,7 @@ class AssignmentSubmissionFactory(DjangoModelFactory):
     assignment = SubFactory(AssignmentFactory)
     student = SubFactory(UserFactory)
     submitted_at = Faker("date_time_this_year")
-    assignment_file = Faker("file_name", category="document")
+    assignment_file = Faker("file_name", category="office")
     teacher_comments = Faker("text")
     grade = Faker("random_int", min=0, max=100)
 

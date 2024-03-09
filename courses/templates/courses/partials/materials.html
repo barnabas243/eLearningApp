@@ -82,7 +82,7 @@
                                     {% if user_assignments %}
                                         {% for submission in user_assignments %}
                                             {% if submission.assignment_id == assignment.id %}
-                                                <form id="student-submission-form-{{ assignment.id }}" hx-post="{% url 'upload_student_submission' assignment.id  %}" hx-confirm="Are you sure you want to submit your assignment? Previous submissions may be overwritten" hx-target="#materials-container" hx-on:submit="showLoadingIndicator('material')" hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }' enctype="multipart/form-data">
+                                                <form id="student-submission-form-{{ assignment.id }}" hx-post="{% url 'upload_student_submission' course_id assignment.id  %}" hx-confirm="Are you sure you want to submit your assignment? Previous submissions may be overwritten" hx-target="#materials-container" hx-on:submit="showLoadingIndicator('material')" hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }' enctype="multipart/form-data">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="submission_id" value="{{ submission.id }}">
                                                     <!-- Display link to the uploaded file -->
@@ -92,7 +92,7 @@
                                                         <span class="fst-italic"> Submitted at {{submission.submitted_at}} </span>
                                                     </div>
                                                     {% with assignment_deadline=assignment.get_assignment_deadline|date:"Y-m-d H:i:s" %}
-                                                        {% if not submission.grade and  current_datetime < assignment_deadline %}
+                                                        {% if not submission.grade and current_datetime < assignment_deadline %}
                                                             <div class="mb-3 bg-light p-2 shadow-sm">
                                                                 <label for="id_assignment_file" class="form-label">Upload New Assignment File (pdf only)</label>
                                                                 <input type="file" class="form-control mb-3" name="assignment_file" id="id_assignment_file" accept=".pdf">
@@ -109,7 +109,7 @@
                                     {% else %}
                                         {% with assignment_deadline=assignment.get_assignment_deadline|date:"Y-m-d H:i:s" %}
                                             {% if current_datetime < assignment_deadline %}
-                                                <form id="student-submission-form-{{ assignment.id }}" hx-post="{% url 'upload_student_submission' assignment.id  %}" hx-confirm="Are you sure you want to submit your assignment?" hx-target="#materials-container" hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }' enctype="multipart/form-data">
+                                                <form id="student-submission-form-{{ assignment.id }}" hx-post="{% url 'upload_student_submission' course_id assignment.id  %}" hx-confirm="Are you sure you want to submit your assignment?" hx-target="#materials-container" hx-headers='{ "X-CSRFToken": "{{ csrf_token }}" }' enctype="multipart/form-data">
                                                     {% csrf_token %}
                                                     <div class="mb-3 bg-light p-2 shadow-sm">
                                                         <label for="id_assignment_file" class="form-label">Assignment File Upload (.pdf)</label>

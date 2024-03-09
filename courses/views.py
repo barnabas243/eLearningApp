@@ -1,4 +1,7 @@
+from django.conf import settings
 from datetime import datetime
+import os
+from django.core.files.uploadedfile import InMemoryUploadedFile
 import time
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.decorators import method_decorator
@@ -6,7 +9,7 @@ from django.contrib import messages
 from django.views.generic import TemplateView, View, ListView
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.views.decorators.http import require_http_methods
-
+from django.utils import timezone
 from notifications.signals import notify
 from courses.tasks import upload_materials
 from elearning_auth.decorators import custom_login_required
@@ -35,6 +38,7 @@ from courses.models import (
 )
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
+    Http404,
     HttpResponse,
     HttpResponseRedirect,
     JsonResponse,
@@ -302,7 +306,7 @@ class WeekView(View):
             # Ensure the duration_weeks does not go below 1
             messages.error(request, "Weeks can not be lesser than 1")
             error_msg = render_to_string(
-                "courses/partials/messages.html",
+                "messages/messages.html",
                 {"messages": messages.get_messages(request)},
                 request=request,
             )
@@ -452,20 +456,14 @@ class OfficialCourseView(UserPassesTestMixin, TemplateView):
 @custom_login_required
 @check_student_banned
 @require_http_methods(["POST"])
-def submit_feedback(request, course_id, student_id):
+def submit_feedback(request, course_id):
+
+    if not Course.objects.filter(id=course_id).exists():
+        messages.error(request, "Course doesn't exist.")
+        return redirect("dashboard")
+
     try:
         user = request.user
-        if user.id != student_id:
-            messages.error("Invalid user.")
-            return redirect(
-                "official", course_id=course_id
-            )  # Redirect to the dashboard or any other desired page
-
-        if not Course.objects.filter(id=course_id).exists():
-            messages.error("Course doesn't exist.")
-            return redirect(
-                "dashboard"
-            )  # Redirect to the dashboard or any other desired page
 
         logger.info(f"POST data received: {request.POST}")
 
@@ -497,9 +495,6 @@ def submit_feedback(request, course_id, student_id):
                 teacher_ratings
             )  # Handle the case when teacher_ratings is not a list
 
-        # logger.info(f"teacher_rating_sum: {teacher_rating_sum}")
-        # logger.info(f"course_rating_sum: {course_rating_sum}")
-
         # Update the request.POST data with the sums
         feedback_object = {
             "teacher_rating": teacher_rating_sum,
@@ -518,7 +513,7 @@ def submit_feedback(request, course_id, student_id):
             # update the existing feedback instance or create a new one
             feedback, created = Feedback.objects.update_or_create(
                 course_id=course_id,
-                user_id=student_id,
+                user_id=user.id,
                 defaults={
                     "teacher_rating": teacher_rating,
                     "course_rating": course_rating,
@@ -533,17 +528,14 @@ def submit_feedback(request, course_id, student_id):
                     recipient=feedback.course.teacher,
                     verb=f"A new feedback for {feedback.course.name}",
                 )
-
+            messages.success(request, "Submitted a feedback successfully.")
         else:
             # Get the form errors and include them in the error message
-            error_message = "Invalid form data. Please check your inputs."
+            error_message = "Invalid form data."
             for field, errors in form.errors.items():
                 error_message += f' {field}: {", ".join(errors)}'
             messages.error(request, error_message)
 
-    except KeyError as e:
-        logger.error(f"KeyError occurred: {e}")
-        messages.error(request, "Invalid form data. Required fields are missing.")
     except ValueError as e:
         logger.error(f"Error processing feedback: {e}")
         messages.error(request, "Invalid data format. Please provide integer ratings.")
@@ -594,9 +586,7 @@ def get_week_materials(request, course_id, week_number):
         else:
             user_assignments = None
 
-        start_date = course.datetime_from_start_date(week_number).strftime("%d %b")
-        end_date = course.datetime_from_start_date(week_number + 1).strftime("%d %b")
-        course_week_date_range = f"{start_date} - {end_date}"
+        course_week_date_range = getCourseDateRange(course, week_number)
 
     except Exception as e:
         logger.error("Unexpected Error occured while getting week materials: %s", e)
@@ -622,6 +612,14 @@ def get_week_materials(request, course_id, week_number):
             "course_week_date_range": course_week_date_range,
         },
     )
+
+
+def getCourseDateRange(course, week_number):
+    start_date = course.datetime_from_start_date(week_number).strftime("%d %b")
+    end_date = course.datetime_from_start_date(week_number + 1).strftime("%d %b")
+    course_week_date_range = f"{start_date} - {end_date}"
+
+    return course_week_date_range
 
 
 @custom_login_required
@@ -683,10 +681,10 @@ def upload_assignment_material(request, course_id, week_number):
                 logger.error(f"Error occurred while sending notification: {e}")
 
         else:
-            messages.error(
-                request,
-                "Failed to upload assignment material. Please check the form.",
-            )
+            error_message = "Invalid form data."
+            for field, errors in form.errors.items():
+                error_message += f' {field}: {", ".join(errors)}'
+            messages.error(request, error_message)
             logger.error(
                 "Failed to upload assignment material for course %s, week %s.",
                 course_id,
@@ -711,7 +709,7 @@ def upload_assignment_material(request, course_id, week_number):
 @custom_login_required
 @check_student_banned
 @require_http_methods(["POST"])
-def upload_student_submission(request, assignment_id):
+def upload_student_submission(request, course_id, assignment_id):
     """
     Handles the submission of an assignment by a student.
 
@@ -725,7 +723,15 @@ def upload_student_submission(request, assignment_id):
     """
     try:
         assignment = Assignment.objects.get(id=assignment_id)
-        form = AssignmentSubmissionForm(data=request.POST, files=request.FILES)
+        existing_submission = AssignmentSubmission.objects.filter(
+            assignment=assignment, student=request.user
+        )
+        form = AssignmentSubmissionForm(
+            data=request.POST,
+            files=request.FILES,
+            instance=existing_submission.first(),
+        )
+
         user = request.user
 
         if form.is_valid():
@@ -733,7 +739,10 @@ def upload_student_submission(request, assignment_id):
             submission.assignment = assignment
             submission.student = user
             submission.grade = form.cleaned_data.get("grade", None)
+            submission.submitted_at = timezone.now()
             submission.save()
+
+            messages.success(request, "Assignment submitted successfully.")
         else:
             error_message = "Failed to submit Assignment. Please check the form."
             error_message += "<br>" + str(form.errors)
@@ -743,6 +752,15 @@ def upload_student_submission(request, assignment_id):
         error_message = "Assignment does not exist."
         messages.error(request, error_message)
         logger.error(error_message)
+
+        return redirect(
+            "get_week_materials",
+            course_id=course_id,
+            week_number=1,
+        )
+    except Exception as e:
+        messages.error(request, e)
+        logger.error(e)
 
     return redirect(
         "get_week_materials",
@@ -766,21 +784,27 @@ def delete_course_material(request, course_material_id):
     :return: An HTTP response indicating successful deletion.
     :rtype: HttpResponse
     """
-    material = get_object_or_404(CourseMaterial, id=course_material_id)
-    material.delete()
-    messages.success(request, "Material deleted successfully.")
+    try:
+        material = get_object_or_404(CourseMaterial, id=course_material_id)
+        material.delete()
+        messages.success(request, "Material deleted successfully.")
 
-    # Construct the URL for the get_week_materials view
-    redirect_url = reverse(
-        "get_week_materials",
-        kwargs={
-            "course_id": material.course_id,
-            "week_number": material.week_number,
-        },
-    )
+        # Construct the URL for the get_week_materials view
+        redirect_url = reverse(
+            "get_week_materials",
+            kwargs={
+                "course_id": material.course_id,
+                "week_number": material.week_number,
+            },
+        )
 
-    # Return a redirect response with status code 303
-    return HttpResponse(status=303, headers={"Location": redirect_url})
+        # Return a redirect response with status code 303
+        return HttpResponse(status=303, headers={"Location": redirect_url})
+    except Http404:
+        messages.error(request, "The material you want to delete does not exist")
+        return HttpResponse(
+            status=303, headers={"Location": request.META.get("HTTP_REFERER", "/")}
+        )
 
 
 @custom_login_required
@@ -851,12 +875,33 @@ def upload_material(request, course_id, week_number):
         form = MaterialUploadForm(request.POST, request.FILES)
 
         if form.is_valid():
-            files = request.FILES.getlist("material")
+
+            temporary_paths = []
+            for file in request.FILES.getlist("material"):
+                # Check if file is InMemoryUploadedFile
+                if isinstance(file, InMemoryUploadedFile):
+
+                    # Create a temporary file in the proj dir.
+                    temp_file_path = os.path.join(settings.BASE_DIR, "tmp", file.name)
+
+                    # Write the contents of the InMemoryUploadedFile to the temporary file
+                    with open(temp_file_path, "wb") as temp_file:
+                        temp_file.write(file.read())
+
+                    # Check if the temporary file exists
+                    if os.path.exists(temp_file_path):
+                        temporary_paths.append(temp_file_path)
+                    else:
+                        # log the case if the temporary file is not created
+                        logger.info(f"Failed to create temporary file for {file.name}")
+                else:
+                    # skip the case if the file is not an InMemoryUploadedFile
+                    pass
+
+            logger.info("temp paths: %s", temporary_paths)
 
             # Call the Celery task asynchronously
-            task = upload_materials.delay(course_id, week_number, files)
-
-            logger.info("Materials upload started.")
+            task = upload_materials.delay(course_id, week_number, temporary_paths)
 
             # Poll the task result until it's ready
             while not task.ready():
@@ -918,6 +963,7 @@ def upload_material(request, course_id, week_number):
 
 @custom_login_required
 @teacher_required
+@require_http_methods(["POST"])
 def publish_course(request, course_id):
     """
     Publishes a course.
@@ -932,30 +978,26 @@ def publish_course(request, course_id):
     """
     # Get the course object
     course = get_object_or_404(Course, id=course_id)
-
-    if request.method == "POST":
-        # Check if all necessary fields are not null
-        if course.name and course.summary and course.description and course.start_date:
-            if course.status == "official":
-                messages.error(request, "Course is already published.")
-            else:
-                course.status = "official"
-                course.save()
-
-                messages.success(request, "Course published successfully.")
-
-                chat_name = slugify(course.name)
-
-                # create the chat room for the course
-                ChatRoom.objects.create(course=course, chat_name=chat_name)
+    # Check if all necessary fields are not null
+    if course.name and course.summary and course.description and course.start_date:
+        if course.status == "official":
+            messages.error(request, "Course is already published.")
         else:
-            messages.error(
-                request,
-                "Cannot publish course. All fields (name, summary, description, start_date) are required.",
-            )
-            return redirect("draft", course_id=course_id)
+            course.status = "official"
+            course.save()
 
-    return redirect("dashboard")
+            messages.success(request, "Course published successfully.")
+
+            chat_name = slugify(course.name)
+
+            # create the chat room for the course
+            ChatRoom.objects.create(course=course, chat_name=chat_name)
+    else:
+        messages.error(
+            request,
+            "Cannot publish course. All fields (name, summary, description, start_date) are required.",
+        )
+    return redirect("draft", course_id=course_id)
 
 
 # ===============================================

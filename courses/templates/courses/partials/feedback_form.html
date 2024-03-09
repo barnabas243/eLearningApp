@@ -1,5 +1,5 @@
 <!-- Your HTML form -->
-<form id="feedback-form" method="POST" action="{% url 'submit_feedback' course_id user.id %}">
+<form id="feedback-form" method="POST" action="{% url 'submit_feedback' course_id %}">
   {% csrf_token %}
 
   <div id="course_rating_stars" class="star-rating mb-3">

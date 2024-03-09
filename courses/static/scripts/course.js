@@ -1,35 +1,6 @@
 let materialsScriptLoaded;
 window.onload = function () {
 
-    // Get the course tabs (for teachers only)
-    const courseTabs = document.getElementById('courseTabs');
-    if (courseTabs) {
-        // Add event listener for tab clicks
-        courseTabs.addEventListener('click', function (event) {
-            // Get the clicked tab's id
-            const clickedTabId = event.target.id;
-
-            // Save the id of the clicked tab to sessionStorage
-            sessionStorage.setItem('activeTabId', clickedTabId);
-        });
-
-        // Check if there's a saved active tab id in sessionStorage
-
-        const activeTabId = sessionStorage.getItem('activeTabId');
-        if (activeTabId) {
-            // Find the tab button with the saved id and trigger a click event on it
-            const tabButton = document.getElementById(activeTabId);
-            if (tabButton) {
-                tabButton.click();
-            } else {
-                courseTabs.querySelector('button').click();
-            }
-        } else {
-            courseTabs.querySelector('button').click();
-        }
-    }
-
-
     // Get the current URL
     const url = window.location.href;
 
@@ -38,17 +9,46 @@ window.onload = function () {
 
     // Get the value of the 'week' parameter
     const weekValue = params.get('week');
+    
+    // Get the course tabs 
+    const courseTabs = document.getElementById('courseTabs');
 
+    if (courseTabs) {
+        // Add event listener for tab clicks
+        courseTabs.addEventListener('click', function (event) {
+         // Get the clicked tab's id
+        const clickedTabId = event.target.id;
+
+        // Save the id of the clicked tab to sessionStorage
+        sessionStorage.setItem('activeTabId', clickedTabId);
+        });
+    }
+    
     // Check if 'weekValue' is null (meaning 'week' parameter doesn't exist) or not a number
     if (weekValue === null || isNaN(weekValue)) {
         console.log("Week parameter is not a valid number");
+        
+        // Check if there's a saved active tab id in sessionStorage
 
-        // get the 1st week by default
+        const activeTabId = sessionStorage.getItem('activeTabId');
+        if (activeTabId) {
+            // Find the tab button with the saved id and trigger a click event on it
+             const tabButton = document.getElementById(activeTabId);
+            if (tabButton) {
+                tabButton.click();
+            } else {
+                courseTabs.querySelector('button').click();
+            }
+        } else {
+            courseTabs.querySelector('button').click();
+        } 
+        
         document.querySelector('a[data-week="1"]').click();
     } else {
         // Convert weekValue to integer
         const weekNumber = parseInt(weekValue);
-
+        const courseMaterialTab = document.querySelector('#courseMaterials-tab')
+        courseMaterialTab.click();
         // Select the link element corresponding to weekNumber
         const weekLink = document.querySelector(`a[data-week="${weekNumber}"]`);
 

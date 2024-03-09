@@ -187,7 +187,15 @@ class TestDashboardView:
         response = DashboardView.as_view()(request)
 
         # Assertions
-        assert response.status_code == 201  # Redirects after successful submission
+        assert response.status_code == 302  # Redirects after successful submission
+
+        # Get messages from the request
+        messages = list(get_messages(request))
+
+        # Assertions for correct error message
+        assert len(messages) == 1  # Ensure only one message is present
+        assert messages[0].level == 25  # default error level
+        assert str(messages[0]) == "Status update posted successfully."
 
     def test_post_empty_content_request(self):
         # Create a user
@@ -201,8 +209,7 @@ class TestDashboardView:
 
         response_invalid = DashboardView.as_view()(request_invalid)
 
-        # Assertions for the invalid request
-        assert response_invalid.status_code == 400
+        assert response_invalid.status_code == 302
 
         # Get messages from the request
         messages = list(get_messages(request_invalid))

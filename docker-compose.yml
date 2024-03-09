@@ -33,6 +33,7 @@ services:
       - DJANGO_SETTINGS_MODULE=eLearningApp.settings
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - CELERY_BROKER_URL=redis://redis:6379/0  # Set Celery broker URL
     restart: always
     depends_on:
       - redis
@@ -50,3 +51,4 @@ services:
     restart: always
     depends_on:
       - django
+      - celery

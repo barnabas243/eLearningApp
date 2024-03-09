@@ -1,15 +1,10 @@
 import os
-from django.contrib.auth.models import Group
-from django.db import IntegrityError, models
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
-from django.dispatch import receiver
+from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.utils.text import slugify
 from ckeditor.fields import RichTextField
-from django.db.models.signals import post_save
 from django.core.validators import (
     MinValueValidator,
     MaxValueValidator,
@@ -55,7 +50,7 @@ class Course(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     last_modified = models.DateTimeField(null=True)
 
-    start_date = models.DateTimeField(null=True)
+    start_date = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.name
@@ -224,7 +219,7 @@ class AssignmentSubmission(models.Model):
     student = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="assignment_submissions"
     )
-    submitted_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(default=timezone.now)
     assignment_file = models.FileField(
         upload_to=assignment_upload_path, validators=[FileExtensionValidator(["pdf"])]
     )
