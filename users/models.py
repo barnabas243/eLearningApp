@@ -28,7 +28,7 @@ class User(AbstractUser):
     """
     Custom user model representing different types of users in the eLearning application.
 
-    Attributes:
+    Customized Attributes:
         user_type (str): The type of user, either 'student' or 'teacher'.
         photo (ImageField): The profile photo of the user.
         username (str): The unique username of the user.

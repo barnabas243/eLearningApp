@@ -14,7 +14,7 @@ ENV PYTHONUNBUFFERED=1
 # Set the working directory in the container
 WORKDIR /eLearningApp/
 
-RUN apt-get update && apt-get install -y redis-server
+# RUN apt-get update && apt-get install -y redis-server
 
 # Copy the nginx.conf file to /etc/nginx/
 # COPY nginx.conf /etc/nginx/
@@ -45,4 +45,4 @@ COPY docs /eLearningApp/static/docs/
 EXPOSE 8000
 
 # Define the command to run the Django app with Daphne
-CMD service redis-server start && celery -A eLearningApp worker -l INFO && daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application
+CMD celery -A eLearningApp worker -l INFO && daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application
