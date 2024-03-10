@@ -24,7 +24,7 @@ services:
   # Celery instance
   - type: worker
     name: celery
-    runtime: docker
+    runtime: python3
     startCommand: celery -A eLearningApp worker -l INFO
     envVars:
       - key: DJANGO_SETTINGS_MODULE
