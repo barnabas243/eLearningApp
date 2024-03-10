@@ -26,18 +26,25 @@ SECRET_KEY = "django-insecure-kt@57@9xcrs*5=c^-%m99!h!_1cq!!9qx&3!a=1(o=i&$i#b98
 DEBUG = True
 
 # Consolidate similar values
-local_hosts = ["localhost", "127.0.0.1", "192.168.10.134"]
+local_hosts = [
+    # "localhost",
+    # "127.0.0.1",
+    # "192.168.10.134",
+    "elearningapp-ibrf.onrender.com",
+]
 trusted_origins = [
-    "http://localhost:8000",
-    "https://localhost",
-    "https://192.168.10.134",
+    "https://elearningapp-ibrf.onrender.com"
+    # "http://localhost:8000",
+    # "https://localhost",
+    # "https://192.168.10.134",
 ]
 
 # Set CSRF_TRUSTED_ORIGINS and CORS_ORIGIN_WHITELIST
 CSRF_TRUSTED_ORIGINS = trusted_origins
-CORS_ORIGIN_WHITELIST = trusted_origins + [
-    "http://" + host + ":8000" for host in local_hosts
-]
+CORS_ORIGIN_WHITELIST = trusted_origins
+# CORS_ORIGIN_WHITELIST = trusted_origins + [
+#     "http://" + host + ":8000" for host in local_hosts
+# ]
 
 # Set ALLOWED_HOSTS
 ALLOWED_HOSTS = local_hosts
@@ -208,10 +215,10 @@ EMAIL_HOST_USER = "awdtest04@gmail.com"
 EMAIL_HOST_PASSWORD = "khfm yqfy sagi ociu"  # Google-generated App Password. email password auth is deprecated.
 
 # Celery backend
-CELERY_BROKER_URL = "redis://localhost:6379/0"  # running directly from django
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"  # running directly from django
-# CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
-# CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
+# CELERY_BROKER_URL = "redis://localhost:6379/0"  # running directly from django
+# CELERY_RESULT_BACKEND = "redis://localhost:6379/0"  # running directly from django
+CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
 
 # daphne
 ASGI_APPLICATION = "eLearningApp.asgi.application"
