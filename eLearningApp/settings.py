@@ -223,10 +223,10 @@ EMAIL_HOST_PASSWORD = "khfm yqfy sagi ociu"  # Google-generated App Password. em
 ASGI_APPLICATION = "eLearningApp.asgi.application"
 
 CELERY_BROKER_URL = (
-    "redis://awd_elearning_app:6379/0"  # Redis instance name on Render.com
+    "redis://red-cnmr84021fec7398jt4g:6379"  # Redis instance name on Render.com
 )
 CELERY_RESULT_BACKEND = (
-    "redis://awd_elearning_app:6379/0"  # Redis instance name on Render.com
+    "redis://red-cnmr84021fec7398jt4g:6379"  # Redis instance name on Render.com
 )
 
 # Channels
@@ -234,7 +234,9 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("awd_elearning_app", 6379)],  # Redis instance name on Render.com
+            "hosts": [
+                ("red-cnmr84021fec7398jt4g", 6379)
+            ],  # Redis instance name on Render.com
         },
     },
 }
