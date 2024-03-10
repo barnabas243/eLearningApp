@@ -33,31 +33,31 @@ class LandingView(TemplateView):
     """
     Renders the landing page template for unauthenticated users.
 
-    If the user is authenticated, redirects to the dashboard page.
+    If the user is authenticated, redirects to the Home page.
     """
 
     template_name = "users/public/landing.html"
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("dashboard")
+            return redirect("home")
         return super().dispatch(request, *args, **kwargs)
 
 
-class DashboardView(View):
+class HomeView(View):
     """
-    View for rendering the dashboard page.
+    View for rendering the Home page.
 
-    This view handles requests to render the dashboard page for both students and teachers.
-    The dashboard displays registered courses, status updates, course chats, and deadlines for the user.
+    This view handles requests to render the Home page for both students and teachers.
+    The Home displays registered courses, status updates, course chats, and deadlines for the user.
 
     Attributes:
-        template_student (str): The template file path for the student dashboard.
-        template_teacher (str): The template file path for the teacher dashboard.
+        template_student (str): The template file path for the student home.
+        template_teacher (str): The template file path for the teacher home.
     """
 
-    template_student = "users/private/student_dashboard.html"
-    template_teacher = "users/private/teacher_dashboard.html"
+    template_student = "users/private/student_home.html"
+    template_teacher = "users/private/teacher_home.html"
 
     @method_decorator(custom_login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -66,17 +66,17 @@ class DashboardView(View):
     @csrf_exempt
     def get(self, request, *args, **kwargs):
         """
-        Handle GET requests to render the dashboard page.
+        Handle GET requests to render the Home page.
 
         This method retrieves necessary data based on the user type (student or teacher),
-        and renders the corresponding dashboard template with the context.
+        and renders the corresponding Home template with the context.
 
         :param request: The HTTP request object.
         :type request: HttpRequest
         :param args: Additional positional arguments.
         :param kwargs: Additional keyword arguments.
 
-        :return: The rendered dashboard page.
+        :return: The rendered Home page.
         :rtype: HttpResponse
         """
 
@@ -166,14 +166,14 @@ class DashboardView(View):
                 status_update.save()
 
                 messages.success(request, "Status update posted successfully.")
-                return redirect("dashboard")
+                return redirect("home")
             else:
                 # Form validation failed
                 messages.error(request, "Invalid form data. Please check your input.")
                 logger.error("Invalid form data submitted: %s", form.errors)
                 # Get the referrer URL or default to '/'
 
-                return redirect("dashboard")
+                return redirect("home")
         except Exception as e:
             # Unexpected error occurred
             messages.error(
@@ -181,7 +181,7 @@ class DashboardView(View):
             )
             logger.exception("Error occurred while posting status update: %s", str(e))
 
-            return redirect("dashboard")
+            return redirect("home")
 
 
 def userSearchFilter(user_id, user_type, query):
@@ -320,8 +320,8 @@ class UserHomePage(View):
         current_user = request.user
 
         if current_user.username == username:
-            # Redirect the current user to the dashboard
-            return redirect("dashboard")
+            # Redirect the current user to the Home
+            return redirect("home")
 
         searched_user = get_object_or_404(User, username=username)
 
@@ -342,7 +342,7 @@ class UserHomePage(View):
                 "registered_courses": registered_courses,
                 "status_updates": status_updates,
             }
-            return render(request, "users/private/student_dashboard.html", context)
+            return render(request, "users/private/student_home.html", context)
         elif current_user == User.TEACHER and searched_user.user_type == User.TEACHER:
             teacher = searched_user
             official_courses = teacher.courses_taught.filter(status="official")
@@ -360,7 +360,7 @@ class UserHomePage(View):
                 "createCourseForm": CreateCourseForm,  # Assuming CourseForm is your form for creating a new course
             }
 
-            return render(request, "users/private/teacher_dashboard.html", context)
+            return render(request, "users/private/teacher_home.html", context)
 
         else:
             messages.error(

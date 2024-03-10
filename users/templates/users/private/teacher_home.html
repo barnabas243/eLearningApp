@@ -2,17 +2,17 @@
 {% load static %}
 
 {% block canonical_path %}
-    {% url 'dashboard' %}
+    {% url 'home' %}
 {% endblock %}
 
 {% block title %}
-    Teacher Dashboard - {{ user.username }}
+    Teacher home - {{ user.username }}
 {% endblock %}
 
 {% block content %}
     <div class="container mt-5 text-center">
         {% include 'messages/messages.html' %}
-    {% comment %} <h1 class="mb-4">Teacher Dashboard</h1> {% endcomment %}
+    {% comment %} <h1 class="mb-4">Teacher home</h1> {% endcomment %}
 
     <!-- Profile Section -->
         <div class="row mb-5 d-flex align-items-center justify-content-center">
@@ -76,7 +76,7 @@
                     </div>
                     <div class="modal-body">
             <!-- Form for profile picture upload -->
-                        <form id="addStatusUpdateForm" action="{% url 'dashboard' %}" method="post">
+                        <form id="addStatusUpdateForm" action="{% url 'home' %}" method="post">
                             {% csrf_token %}
                             {{ statusUpdateForm }}
                             <button type="submit" class="btn btn-primary">Upload</button>

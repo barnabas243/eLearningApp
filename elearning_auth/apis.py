@@ -27,7 +27,7 @@ class LoginAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("dashboard")
+            return redirect("home")
         form = UserLoginForm()
         return Response({"form": form}, template_name=self.template_name)
 
@@ -79,7 +79,7 @@ class RegisterAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("dashboard")
+            return redirect("home")
         form = UserRegistrationForm()
         return Response({"form": form}, template_name=self.template_name)
 

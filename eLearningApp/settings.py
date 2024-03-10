@@ -23,20 +23,20 @@ print(BASE_DIR)
 SECRET_KEY = "django-insecure-kt@57@9xcrs*5=c^-%m99!h!_1cq!!9qx&3!a=1(o=i&$i#b98"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 # Consolidate similar values
 local_hosts = [
-    "localhost",
-    "127.0.0.1",
-    "192.168.10.134",
+    # "localhost",
+    # "127.0.0.1",
+    # "192.168.10.134",
     "elearningapp-a9zu.onrender.com",
 ]
 trusted_origins = [
     "https://elearningapp-a9zu.onrender.com",
-    "http://localhost:8000",
-    "https://localhost",
-    "https://192.168.10.134",
+    # "http://localhost:8000",
+    # "https://localhost",
+    # "https://192.168.10.134",
 ]
 
 # Set CSRF_TRUSTED_ORIGINS and CORS_ORIGIN_WHITELIST
@@ -237,6 +237,7 @@ CHANNEL_LAYERS = {
         "CONFIG": {
             "hosts": [
                 ("red-cnmr84021fec7398jt4g", 6379)
+                # ("redis", 6379)
             ],  # Redis instance name on Render.com
         },
     },

@@ -188,7 +188,7 @@ def create_course(request):
     using the data submitted in the form. If successful, redirects to
     the draft page for the newly created course. If a course with the
     same name already exists for the current user, displays an error
-    message and redirects to the dashboard.
+    message and redirects to the home.
 
     :param request: The HTTP request object.
     :type request: HttpRequest
@@ -206,7 +206,7 @@ def create_course(request):
         try:
             existing_course = Course.objects.get(name=course.name, teacher=user)
             messages.error(request, "Course with the same name already exists.")
-            return redirect("dashboard")
+            return redirect("home")
         except ObjectDoesNotExist:
             course.save()
             messages.success(request, "Course created successfully.")
@@ -215,7 +215,7 @@ def create_course(request):
         logger.error("Error while validating form: %s", form.errors)
         messages.error(request, "Failed to create course. Please check the form.")
 
-    return redirect("dashboard")
+    return redirect("home")
 
 
 class WeekView(View):
@@ -460,7 +460,7 @@ def submit_feedback(request, course_id):
 
     if not Course.objects.filter(id=course_id).exists():
         messages.error(request, "Course doesn't exist.")
-        return redirect("dashboard")
+        return redirect("home")
 
     try:
         user = request.user
@@ -973,7 +973,7 @@ def publish_course(request, course_id):
     :param course_id: The ID of the course to be published.
     :type course_id: int
 
-    :return: An HTTP redirect response to the dashboard.
+    :return: An HTTP redirect response to the home.
     :rtype: HttpResponseRedirect
     """
     # Get the course object

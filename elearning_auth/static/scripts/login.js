@@ -37,7 +37,7 @@ form.addEventListener('submit', (event) => {
             if (nextUrl) {
                 window.location.href = nextUrl;
             } else {
-                window.location.href = '/dashboard/';
+                window.location.href = '/home/';
             }
         } else {
             // Handle errors and display error messages
