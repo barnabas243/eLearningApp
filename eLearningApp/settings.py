@@ -33,7 +33,8 @@ local_hosts = [
     "elearningapp-ibrf.onrender.com",
 ]
 trusted_origins = [
-    "https://elearningapp-ibrf.onrender.com" "http://localhost:8000",
+    "https://elearningapp-ibrf.onrender.com",
+    "http://localhost:8000",
     "https://localhost",
     "https://192.168.10.134",
 ]
@@ -41,9 +42,9 @@ trusted_origins = [
 # Set CSRF_TRUSTED_ORIGINS and CORS_ORIGIN_WHITELIST
 CSRF_TRUSTED_ORIGINS = trusted_origins
 # CORS_ORIGIN_WHITELIST = trusted_origins
-CORS_ORIGIN_WHITELIST = trusted_origins + [
-    "http://" + host + ":8000" for host in local_hosts
-]
+CORS_ORIGIN_WHITELIST = trusted_origins
+#     "http://" + host + ":8000" for host in local_hosts
+# ]
 
 # Set ALLOWED_HOSTS
 ALLOWED_HOSTS = local_hosts
