@@ -1,6 +1,5 @@
 from django import forms
 from users.models import StatusUpdate, User
-
 from users.tasks import process_image
 
 
@@ -14,6 +13,7 @@ class ProfilePictureForm(forms.ModelForm):
 
         # Call Celery task to process the image
         if instance.photo:
+            # Synchronously execute the Celery task and wait for it to complete
             process_image.delay(instance.photo.path)
 
         if commit:

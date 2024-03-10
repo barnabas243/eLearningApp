@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 class UserLoginSerializer(serializers.Serializer):
-    username = serializers.CharField()
+    username = serializers.CharField(
+        max_length=User._meta.get_field("username").max_length
+    )
     password = serializers.CharField()
 
     def validate(self, attrs):

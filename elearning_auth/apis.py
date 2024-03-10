@@ -12,10 +12,13 @@ from elearning_auth.serializers import (
 from django.shortcuts import redirect
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
 from .forms import UserLoginForm
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
 
 logger = logging.getLogger(__name__)
 
 
+@method_decorator(ratelimit(key="ip", rate="5/m", method="POST"), name="post")
 class LoginAPIView(APIView):
     renderer_classes = [TemplateHTMLRenderer]
     template_name = "auth/public/login.html"
@@ -64,6 +67,7 @@ class LoginAPIView(APIView):
             )
 
 
+@method_decorator(ratelimit(key="ip", rate="5/m", method="POST"), name="post")
 class RegisterAPIView(APIView):
     """
     API view for user registration.
@@ -98,6 +102,7 @@ class RegisterAPIView(APIView):
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@method_decorator(ratelimit(key="ip", rate="5/m", method="POST"), name="post")
 class PasswordChangeAPIView(APIView):
     def post(self, request):
         logger.info("Received a POST request to change password.")
@@ -106,11 +111,9 @@ class PasswordChangeAPIView(APIView):
             # Create a serializer instance with parsed data and current user
             serializer = PasswordChangeSerializer(data=request.data, user=user)
 
-            # Validate the serializer data
             if serializer.is_valid():
-                # Save the validated data
                 serializer.save()
-                # Return success response
+
                 return Response(
                     {"detail": "Password changed successfully."},
                     status=status.HTTP_200_OK,
@@ -119,8 +122,10 @@ class PasswordChangeAPIView(APIView):
             # Handle validation errors
             errors = serializer.errors
             logger.error("errors: %s", errors)
+
             error_detail = None
             status_code = status.HTTP_400_BAD_REQUEST
+
             for key, value in errors.items():
                 if key == "old_password" and value[0].code == "invalid_old_password":
                     error_detail = "Incorrect old password."
@@ -140,9 +145,9 @@ class PasswordChangeAPIView(APIView):
                     error_detail = "Passwords do not match."
                     status_code = status.HTTP_400_BAD_REQUEST
                     break
-
-            if not error_detail:
-                error_detail = "Validation error occurred."
+                else:
+                    error_detail = value[0]
+                    status_code = status.HTTP_400_BAD_REQUEST
 
             return Response({"error": error_detail}, status=status_code)
 

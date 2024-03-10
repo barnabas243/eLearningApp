@@ -29,12 +29,12 @@
     <!-- Include static files -->
     {% block scripts %}
 
-      <script src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
+      <script type="text/javascript" src="{% static 'bootstrap5.0.2/bootstrap.min.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'scripts/htmx.min.js' %}" defer></script>
       <script type="text/javascript" src="https://unpkg.com/htmx.org/dist/ext/response-targets.js" defer></script>
 
       <!-- Scripts -->
-      <script src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
+      <script type="text/javascript" src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
       <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>
@@ -58,8 +58,8 @@
 
     <!-- CSS -->
     {% block styles %}
-      <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-      <link rel="stylesheet" href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}" />
+      <link rel="stylesheet" type="text/css"  href="{% static 'css/styles.css' %}" />
+      <link rel="stylesheet" type="text/css"  href="{% static 'bootstrap5.0.2/bootstrap.min.css' %}" />
     {% endblock %}
   </head>
 

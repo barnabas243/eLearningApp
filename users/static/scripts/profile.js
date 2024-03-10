@@ -84,7 +84,7 @@ function handleSpanBlur(event) {
     
     // Send a PUT request to update the field
     fetch(`/profile/`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRFToken': csrfToken
@@ -93,16 +93,25 @@ function handleSpanBlur(event) {
     })
         .then(response => {
             // Check if the response is OK
-            if (!response.ok) {
+            if(response.ok) {
+               profileMessage.innerHTML = ""
+            } else {
                 response.json().then(error => {
                     console.error('Error:', error);
 
                     // Rollback the span value to the initial value
                     this.innerText = oldValue;
 
-                    // Display the error message in the profile message span
-                    profileMessage.textContent = error;
+                    for (const key in error) {
+                        if (error.hasOwnProperty(key)) {
+                            // Create a new paragraph element to display the error message
+                            const errorMessage = document.createElement('p');
+                            errorMessage.innerText = `${key}: ${error[key][0]}`;
 
+                            // Append the error message to the profile message span
+                            profileMessage.appendChild(errorMessage);
+                        }
+                    }
                 })
             }
         })
@@ -114,7 +123,17 @@ function handleSpanBlur(event) {
             this.innerText = oldValue;
 
             // Display the error message in the profile message span
-            profileMessage.textContent = error;
+            for (const key in error) {
+                if (error.hasOwnProperty(key)) {
+                    // Create a new paragraph element to display the error message
+                    const errorMessage = document.createElement('p');
+                    
+                    errorMessage.innerText = `${key}: ${error[key][0]}`;
+
+                    // Append the error message to the profile message span
+                    profileMessage.appendChild(errorMessage);
+                }
+            }
         });
 }
 
@@ -163,6 +182,7 @@ function clearInputValidClasses() {
     input.classList.remove("is-invalid","is-valid")
   })
 }
+
 /**
  * updatePassForm submit event listener to send a fetch request that checks the validity of the old password and new passwords.
  * Error handling is done when either of the input is determined as invalid from the server 
@@ -208,18 +228,12 @@ if (updatePassForm) {
         } else if (res.status === 400) {
             res.json().then((data) => {
                 // Display error messages for new_password and confirm_password
-                console.log("data: ", data)
                 
                 Object.keys(data).forEach((key) => {
-                    console.log("ERROR 400 data[key]: ", data[key])
                     const errorMessage = data[key]; // Get the error message
                     
-                    console.log("errorMessage:", errorMessage);
-                    console.log("Type: ",typeof(data[key])) // sting
-                    console.log("Length:", errorMessage.length);
                     if (errorMessage.trim() === "New password cannot be the same as old password.") {
 
-                        console.log("why did this fail?")
                         newPasswordFeedback.textContent = errorMessage;
 
                         password.classList.add('is-invalid')
@@ -241,19 +255,7 @@ if (updatePassForm) {
 
             oldPassword.classList.add('is-invalid');
 
-        } else {
-            res.json().then((data) => {
-                // Display error messages for each field
-                Object.keys(data).forEach((key) => {
-                  console.log("data[key]: ",data[key])
-                  const errorMessage = data[key][0];
-                  // Display error message for the corresponding field
-
-                  // You can handle other fields similarly if needed
-                });
-            })
-
-        }
+        } 
       })
       .catch((error) => {
         console.error(error);
@@ -307,6 +309,7 @@ if (password) {
       }
     });
   }
+
   /**
    * password confirm input event listener to check whether password conforms to the password regex
    * includes the visibility toggle
@@ -336,6 +339,7 @@ if (password) {
       }
     });
   }
+
   /**
    * the profile page old password visibility toggle
    */

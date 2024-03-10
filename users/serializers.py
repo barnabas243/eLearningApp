@@ -26,10 +26,9 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ["username", "first_name", "last_name", "email", "date_of_birth"]
 
-
-# class StatusUpdateSerializer(serializers.ModelSerializer):
-#     user = UserSerializer(read_only=True)
-
-#     class Meta:
-#         model = StatusUpdate
-#         fields = "__all__"
+    def __init__(self, *args, **kwargs):
+        # Dynamically set the fields based on the data sent in the request
+        fields = kwargs.pop("fields", None)
+        if fields:
+            self.Meta.fields = fields
+        super().__init__(*args, **kwargs)

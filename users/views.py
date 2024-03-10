@@ -21,7 +21,7 @@ from django.views.decorators.csrf import csrf_exempt
 import logging
 from courses.forms import CreateCourseForm
 
-from courses.models import Assignment, AssignmentSubmission, Enrolment, User
+from courses.models import Assignment, AssignmentSubmission, Course, Enrolment, User
 from users.forms import StatusUpdateForm, ProfilePictureForm
 from users.models import StatusUpdate
 from users.serializers import UserUpdateSerializer
@@ -87,42 +87,37 @@ class HomeView(View):
 
         if user.user_type == User.STUDENT:
             # Retrieve all enrollments for the student
-            enrollments = Enrolment.objects.filter(student=user)
-            # Extract the courses from enrollments
-            registered_courses = [enrollment.course for enrollment in enrollments]
+            registered_courses = Course.objects.filter(enrolment__student=user)
             # Query ChatRoom objects for registered courses
             course_chats = ChatRoom.objects.filter(course__in=registered_courses)
-            # Query Assignment objects for registered courses
-            deadlines = Assignment.objects.filter(
-                course__in=registered_courses
-            ).order_by("course")
+
+            # Prefetch AssignmentSubmission objects related to Assignment objects
+            deadlines = (
+                Assignment.objects.filter(course__in=registered_courses)
+                .select_related("course")
+                .prefetch_related("submissions")
+                .order_by("course")
+            )
 
             # Group assignments by course
             grouped_deadlines = {}
 
-            for course, assignments in groupby(deadlines, key=lambda x: x.course):
-                grouped_deadlines[course] = []
-                for assignment in assignments:
-                    # Check if a submission exists for this assignment
-                    student_submission = AssignmentSubmission.objects.filter(
-                        assignment=assignment
-                    ).first()
-                    if student_submission:
-                        # If a submission exists, add it to the grouped data with a custom submitted_at field
-                        grouped_deadlines[course].append(
-                            {
-                                "assignment": assignment,
-                                "submitted_at": student_submission.submitted_at,
-                            }
-                        )
-                    else:
-                        # If no submission exists, add the original assignment with a null submitted_at field
-                        grouped_deadlines[course].append(
-                            {
-                                "assignment": assignment,
-                                "submitted_at": None,
-                            }
-                        )
+            for assignment in deadlines:
+                course = assignment.course
+                for submission in assignment.submissions.all():
+                    grouped_deadlines.setdefault(course, []).append(
+                        {
+                            "assignment": assignment,
+                            "submitted_at": submission.submitted_at,
+                        }
+                    )
+                if not assignment.submissions.exists():
+                    grouped_deadlines.setdefault(course, []).append(
+                        {
+                            "assignment": assignment,
+                            "submitted_at": None,
+                        }
+                    )
 
             context = {
                 "user": user,
@@ -138,10 +133,6 @@ class HomeView(View):
             teacher = user
             draft_courses = teacher.courses_taught.filter(status="draft")
             official_courses = teacher.courses_taught.filter(status="official")
-
-            status_updates = StatusUpdate.objects.filter(user=user).order_by(
-                "-created_at"
-            )[:5]
 
             context = {
                 "user": teacher,
@@ -184,11 +175,9 @@ class HomeView(View):
             return redirect("home")
 
 
-def userSearchFilter(user_id, user_type, query):
+def userSearchFilter(user_type, query):
     """
     Function to filter users based on the search query and user type.
-
-    This function filters users based on the provided search query and user type.
 
     :param user_id: The ID of the user performing the search.
     :type user_id: int
@@ -265,7 +254,7 @@ class AutocompleteView(View):
         user_type = user.user_type
         user_id = user.id
 
-        users = userSearchFilter(user_id, user_type, query)
+        users = userSearchFilter(user_type, query)
 
         print("Users:", users)  # Debugging: Print the queryset
 
@@ -416,7 +405,7 @@ class SearchUsersView(ListView):
         user_type = user.user_type
         user_id = user.id
 
-        users = userSearchFilter(user_id, user_type, query)
+        users = userSearchFilter(user_type, query)
 
         return users
 
@@ -485,9 +474,9 @@ class ProfileView(View):
             {"user": user, "profileForm": ProfilePictureForm},
         )
 
-    def put(self, request, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """
-        Handles PUT requests to update user profile information.
+        Handles PATCH requests to update user profile information.
 
         This method updates the user's profile information based on the data
         received in the request body.
@@ -508,34 +497,33 @@ class ProfileView(View):
         try:
             # Retrieve data from the request body
             data = json.loads(request.body)
-            # Iterate over each key-value pair in the data
-            for field_name, field_value in data.items():
-                # Check if the field exists in the user model and update it
-                if hasattr(user, field_name):
-                    setattr(user, field_name, field_value)
-                else:
-                    logger.error("Invalid field name: %s", field_name)
-                    return JsonResponse(
-                        {"error": f"Invalid field name: {field_name}"}, status=400
-                    )
+            # Get the field name from the data
+            field_name = next(iter(data.keys()))
 
-            serializer = UserUpdateSerializer(user, data=data, partial=True)
+            # Instantiate the serializer with the user object and data
+            serializer = UserUpdateSerializer(
+                user,
+                data=data,
+                partial=True,
+                fields=[field_name],  # Pass the field name to the serializer
+            )
+
             # Validate and save the user object to persist changes
             if serializer.is_valid():
                 serializer.save()
                 # Return success response
                 return JsonResponse({"success": "Profile updated successfully"})
             else:
-                logger.error("Serializer errors: %s", serializer.errors)
+                # Return error response with serializer errors
                 return JsonResponse(serializer.errors, status=400)
 
         except json.JSONDecodeError:
-            # Log the error and return error response for invalid JSON data
+            # Log and return error response for invalid JSON data
             logger.error("Invalid JSON data in the request body")
             return JsonResponse({"error": "Invalid JSON data"}, status=400)
 
         except Exception as e:
-            # Log the unexpected error and return error response with status code 500
+            # Log and return error response with status code 500 for unexpected errors
             logger.exception("An unexpected error occurred: %s", e)
             return JsonResponse({"error": "An unexpected error occurred"}, status=500)
 
@@ -552,7 +540,6 @@ class UploadPictureView(View):
             form.save()
             messages.success(request, "Profile photo has been updated successfully")
 
-            redirect_url = request.META.get("HTTP_REFERER", "/")
             return redirect("profile")
         else:
             error_message = f"Error(s) in the form: {form.errors.as_text()}"
