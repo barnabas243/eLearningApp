@@ -1,9 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
+# Use Python slim image as base
 ARG PYTHON_VERSION=3.10.12
 FROM python:${PYTHON_VERSION}-slim as base
 
@@ -17,17 +14,11 @@ ENV PYTHONUNBUFFERED=1
 # Set the working directory in the container
 WORKDIR /eLearningApp/
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
-# ARG UID=10001
-# RUN adduser \
-#     --disabled-password \
-#     --gecos "" \
-#     --home "/nonexistent" \
-#     --shell "/sbin/nologin" \
-#     --no-create-home \
-#     --uid "${UID}" \
-#     appuser
+# Install Nginx
+RUN apt-get update && apt-get install -y nginx
+
+# Copy the nginx.conf file to /etc/nginx/
+COPY nginx.conf /etc/nginx/
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -56,5 +47,3 @@ EXPOSE 8000
 
 # Define the command to run the Django app with Daphne
 CMD service redis-server start && celery -A eLearningApp worker -l INFO & nginx -g 'daemon off;' && daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application
-
-
