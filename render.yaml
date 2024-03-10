@@ -45,8 +45,9 @@ services:
   # Nginx service
   - type: web
     name: nginx
-    runtime: docker
-    image: nginx:latest  # Or any other version/tag you prefer
+    runtime: image
+    image:
+      url: docker.io/library/nginx:latest # Or any other version/tag you prefer
     ports:
       - 80
       - 443
