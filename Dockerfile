@@ -15,7 +15,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /eLearningApp/
 
 # Install Nginx
-RUN apt-get update && apt-get install redis-server
+RUN apt-get update && apt-get install -y redis-server
 #  && apt-get install -y nginx
 
 # Copy the nginx.conf file to /etc/nginx/
