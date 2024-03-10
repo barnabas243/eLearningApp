@@ -30,10 +30,10 @@ local_hosts = [
     "localhost",
     "127.0.0.1",
     "192.168.10.134",
-    "elearningapp-ibrf.onrender.com",
+    "elearningapp-a9zu.onrender.com",
 ]
 trusted_origins = [
-    "https://elearningapp-ibrf.onrender.com",
+    "https://elearningapp-a9zu.onrender.com",
     "http://localhost:8000",
     "https://localhost",
     "https://192.168.10.134",
