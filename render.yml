@@ -1,0 +1,41 @@
+services:
+  - name: django
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: eLearningApp.settings
+      - key: REDIS_HOST
+        value: redis
+      - key: REDIS_PORT
+        value: "6379"
+    startCommand: "daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application"
+    buildCommand: |
+      docker build -t elearning_django -f Dockerfile .
+    automaticDeployment:
+      branchFilters:
+        - main  # Adjust to your main branch name
+
+  - name: redis
+    startCommand: "redis-server"
+
+  - name: celery
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: eLearningApp.settings
+      - key: REDIS_HOST
+        value: redis
+      - key: REDIS_PORT
+        value: "6379"
+      - key: CELERY_BROKER_URL
+        value: "redis://redis:6379/0"
+    startCommand: "celery -A eLearningApp worker -l INFO"
+    buildCommand: |
+      docker build -t elearning_celery -f Dockerfile .
+    automaticDeployment:
+      branchFilters:
+        - main  # Adjust to your main branch name
+
+  - name: nginx
+    startCommand: "nginx -g 'daemon off;'"
+    automaticDeployment:
+      branchFilters:
+        - main  # Adjust to your main branch name
