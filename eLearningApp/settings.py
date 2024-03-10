@@ -132,8 +132,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# allow is_active=false users to authenticate.
-# the inactive users to be handled with 403
+# allow is_active=false users to authenticate. They will not login
+# server respond with custom message for such cases
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.AllowAllUsersModelBackend"]
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
