@@ -1,5 +1,6 @@
 services:
-  - name: django
+  - type: web
+    name: django
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: eLearningApp.settings
@@ -8,16 +9,19 @@ services:
       - key: REDIS_PORT
         value: "6379"
     startCommand: "daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application"
-    buildCommand: |
-      docker build -t elearning_django -f Dockerfile .
+    healthCheckPath: "/health-check" # You can adjust this accordingly
+    buildCommand: "docker build -t your_django_image -f Dockerfile ."
     automaticDeployment:
       branchFilters:
         - main  # Adjust to your main branch name
 
-  - name: redis
+  - type: redis
+    name: redis
     startCommand: "redis-server"
+    healthCheckPath: "/" # You can adjust this accordingly
 
-  - name: celery
+  - type: worker
+    name: celery
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: eLearningApp.settings
@@ -28,14 +32,16 @@ services:
       - key: CELERY_BROKER_URL
         value: "redis://redis:6379/0"
     startCommand: "celery -A eLearningApp worker -l INFO"
-    buildCommand: |
-      docker build -t elearning_celery -f Dockerfile .
+    healthCheckPath: "/" # You can adjust this accordingly
+    buildCommand: "docker build -t your_celery_image -f Dockerfile ."
     automaticDeployment:
       branchFilters:
         - main  # Adjust to your main branch name
 
-  - name: nginx
+  - type: web
+    name: nginx
     startCommand: "nginx -g 'daemon off;'"
+    healthCheckPath: "/" # You can adjust this accordingly
     automaticDeployment:
       branchFilters:
         - main  # Adjust to your main branch name
