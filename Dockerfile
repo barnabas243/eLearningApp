@@ -15,10 +15,11 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /eLearningApp/
 
 # Install Nginx
-RUN apt-get update && apt-get install -y nginx
+RUN apt-get update
+#  && apt-get install -y nginx
 
 # Copy the nginx.conf file to /etc/nginx/
-COPY nginx.conf /etc/nginx/
+# COPY nginx.conf /etc/nginx/
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
@@ -46,4 +47,4 @@ COPY docs /eLearningApp/static/docs/
 EXPOSE 8000
 
 # Define the command to run the Django app with Daphne
-CMD service redis-server start && celery -A eLearningApp worker -l INFO & nginx -g 'daemon off;' && daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application
+CMD service redis-server start && celery -A eLearningApp worker -l INFO && daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application
