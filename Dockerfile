@@ -14,9 +14,7 @@ ENV PYTHONUNBUFFERED=1
 # Set the working directory in the container
 WORKDIR /eLearningApp/
 
-# Install Nginx
 RUN apt-get update && apt-get install -y redis-server
-#  && apt-get install -y nginx
 
 # Copy the nginx.conf file to /etc/nginx/
 # COPY nginx.conf /etc/nginx/
