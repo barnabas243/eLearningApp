@@ -1,24 +1,43 @@
 services:
   - type: web
     name: django
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: eLearningApp.settings
+      - key: REDIS_HOST
+        value: redis
+      - key: REDIS_PORT
+        value: "6379"
     dockerfile: Dockerfile
-    context: .
+    healthCheckPath: "/" # You can adjust this accordingly
     branchFilters:
       - main  # Adjust to your main branch name
 
   - type: redis
     name: redis
-    image: redis:latest
+    dockerfile: https://github.com/docker-library/redis/blob/b77450d34ae54354f41970fc44bf840353f59ef4/7.2/debian/Dockerfile
+    healthCheckPath: "/" # You can adjust this accordingly
 
   - type: worker
     name: celery
-    dockerfile: Dockerfile
-    context: .
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: eLearningApp.settings
+      - key: REDIS_HOST
+        value: redis
+      - key: REDIS_PORT
+        value: "6379"
+      - key: CELERY_BROKER_URL
+        value: "redis://redis:6379/0"
+    startCommand: "celery -A eLearningApp worker -l INFO"
+    healthCheckPath: "/" # You can adjust this accordingly
+    buildCommand: "docker build -t elearning_celery -f Dockerfile ."
     branchFilters:
       - main  # Adjust to your main branch name
 
   - type: web
     name: nginx
-    image: nginx:latest
+    dockerfile: https://github.com/nginxinc/docker-nginx/blob/4bf0763f4977fff7e9648add59e0540088f3ca9f/mainline/debian/Dockerfile
+    healthCheckPath: "/" # You can adjust this accordingly
     branchFilters:
       - main  # Adjust to your main branch name
