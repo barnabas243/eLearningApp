@@ -35,6 +35,11 @@
 
       <!-- Scripts -->
       <script type="text/javascript" src="https://kit.fontawesome.com/eb16bb9206.js" crossorigin="anonymous" defer></script>
+
+      <!-- define the CKEDTIOR_BASEPATH for the ckeditor config.js and other files-->
+      <script type="text/javascript">
+        window.CKEDITOR_BASEPATH = '/static/ckeditor/ckeditor/';
+      </script>
       <script type="text/javascript" src="{% static 'ckeditor/ckeditor-init.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'ckeditor/ckeditor/ckeditor.js' %}" defer></script>
       <script type="text/javascript" src="{% static 'scripts/search_user.js' %}" defer></script>

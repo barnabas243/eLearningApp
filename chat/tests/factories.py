@@ -11,7 +11,7 @@ class ChatRoomFactory(DjangoModelFactory):
         model = ChatRoom
 
     course = SubFactory(CourseFactory)
-    chat_name = LazyAttribute(lambda _: slugify(Faker("word").generate()))
+    chat_name = LazyAttribute(lambda _: slugify(Faker("word")))
 
 
 class MessageFactory(DjangoModelFactory):

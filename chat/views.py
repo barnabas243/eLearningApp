@@ -12,7 +12,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_chat_rooms_for_user(user):
-    # Retrieve courses where the user is either enrolled or teaching
+    """
+    Retrieve courses where the user is either enrolled or teaching
+    """
 
     enrolled_course_ids = Enrolment.objects.filter(student=user).values_list(
         "course_id", flat=True

@@ -15,39 +15,21 @@ if (materialsScriptLoaded === undefined) {
                     downloadLink.href = URL.createObjectURL(file);
                     downloadLink.download = file.name;
 
-                    // Create a delete button
-                    const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.addEventListener('click', function () {
-                        // Remove the corresponding list item from the file preview container
-                        listItem.remove();
-
-                        // Remove the file from the file input
-                        const newFiles = Array.from(fileInput.files).filter(f => f !== file);
-                        fileInput.files = new FileList({ length: newFiles.length, 0: newFiles[0] });
-                    });
-
                     // Create a list item to contain the download link and delete button
                     const listItem = document.createElement('li');
                     listItem.appendChild(downloadLink);
-                    listItem.appendChild(deleteButton);
 
                     // Append the list item to the file preview container
                     filePreview.appendChild(listItem);
-                } else {
-                    // For other file types, display a message indicating that previews are not available
-                    const messageElement = document.createElement('p');
-                    messageElement.textContent = `Download link not available for ${file.name}.`;
+                } else if (file.type.startsWith('image/')) {
+                    // For image files, create an image preview
+                    const imagePreview = document.createElement('img');
+                    imagePreview.src = URL.createObjectURL(file);
+                    imagePreview.alt = file.name;
 
-                    // Create a delete button (disabled for non-previewable files)
-                    const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.disabled = true;
-
-                    // Create a list item to contain the message and delete button
+                    // Create a list item to contain the image preview
                     const listItem = document.createElement('li');
-                    listItem.appendChild(messageElement);
-                    listItem.appendChild(deleteButton);
+                    listItem.appendChild(imagePreview);
 
                     // Append the list item to the file preview container
                     filePreview.appendChild(listItem);

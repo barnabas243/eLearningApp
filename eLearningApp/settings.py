@@ -201,7 +201,6 @@ CKEDITOR_ALLOW_NONIMAGE_FILES = True  # Allow uploading non-image files, includi
 
 # Define CKEditor file upload handler URL
 CKEDITOR_REST_URL = "/ckeditor/upload/"
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -238,9 +237,9 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [
-                ("red-cnmr84021fec7398jt4g", 6379)
+                ("red-cnmr84021fec7398jt4g", 6379)  # Redis instance name on Render.com
                 # ("redis", 6379)
-            ],  # Redis instance name on Render.com
+            ],
         },
     },
 }

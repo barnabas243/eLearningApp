@@ -40,7 +40,7 @@ class TestLoginRegistrationAPIs:
         assert "form" in response.data
         assert response.data["form"].fields.keys() == UserLoginForm().fields.keys()
 
-    def test_get_authenticated_user_redirected_to_dashboard(self):
+    def test_get_authenticated_user_redirected_to_home(self):
         client = APIClient()
 
         # Log in the user
@@ -52,7 +52,7 @@ class TestLoginRegistrationAPIs:
 
         # Check if the response is a redirect
         assert response.status_code == 302
-        assert response.url == reverse("dashboard")
+        assert response.url == reverse("home")
 
     def test_successful_login(self):
         client = APIClient()
@@ -151,16 +151,16 @@ class TestRegisterAPIView:
         self.valid_user_payload = valid_user_payload
         self.registerURL = reverse("register")
 
-    def test_get_authenticated_user_redirect_to_dashboard(self):
+    def test_get_authenticated_user_redirect_to_home(self):
         # Log in the user
         self.client.force_authenticate(user=self.user)
 
         # Make a GET request to the register endpoint
         response = self.client.get(self.registerURL)
 
-        # Check if the response is a redirect to the dashboard
+        # Check if the response is a redirect to the home
         assert response.status_code == 302
-        assert response.url == reverse("dashboard")
+        assert response.url == reverse("home")
 
     def test_get_unauthenticated_user(self):
         # Make a GET request to the register endpoint

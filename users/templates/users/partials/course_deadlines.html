@@ -9,11 +9,11 @@
       <div class="deadline-info">
         {% with assignment_deadline=deadline.assignment.get_assignment_deadline|date:"Y-m-d H:i:s" %}
           {% if current_datetime > assignment_deadline %}
-            <span class="text-primary">Due by: {{ deadline.assignment.get_assignment_deadline }}</span>
+            <span class="badge bg-primary">Due by: {{ deadline.assignment.get_assignment_deadline|date:"m-d H:i:s" }}</span>
           {% elif deadline.submitted_at  %}
-            <span class="text-success">submmitted: {{ deadline.submitted_at}}</span>
+            <span class="badge bg-success">submitted: {{ deadline.submitted_at|date:"d-M H:i:s"}}</span>
           {% else %}
-            <span class="text-danger">Overdue</span>
+            <span class="badge bg-danger">Overdue</span>
           {% endif %}
         {% endwith %}
       </div>

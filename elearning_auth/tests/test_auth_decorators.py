@@ -19,23 +19,23 @@ class TestUserDecorators:
         self.client = APIClient()
         self.request_factory = request_factory
 
-    def test_authenticated_user_access_on_dashboard(self):
+    def test_authenticated_user_access_on_home(self):
         # Log in the user
         self.client.force_login(user=self.user)
 
-        # Make a GET request to the dashboard view
-        response = self.client.get(reverse("dashboard"))
+        # Make a GET request to the home view
+        response = self.client.get(reverse("home"))
 
         # Check if the response status code is 200 (OK)
         assert response.status_code == 200
 
-    def test_unauthenticated_user_access_on_dashboard(self):
+    def test_unauthenticated_user_access_on_home(self):
 
-        # Make a GET request to the dashboard view
-        response = self.client.get(reverse("dashboard"))
+        # Make a GET request to the home view
+        response = self.client.get(reverse("home"))
 
         # Check if the response status code is 200 (OK)
         assert response.status_code == 302
 
-        # check that next query pointing to dashboard
-        assert response.url == reverse("login") + "?next=/dashboard/"
+        # check that next query pointing to home
+        assert response.url == reverse("login") + "?next=/home/"

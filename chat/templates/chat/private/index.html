@@ -15,10 +15,7 @@
         </div>
 
         <ul class="list-group mt-4">
-            {% for chat_room in chat_rooms %}
-                <li class="list-group-item"><a href="{% url 'room' chat_room.chat_name %}">{{ chat_room.chat_name }}</a></li>
-            {% endfor %}
-
+            {% include 'chat/partials/chat_room_list.html' %}
         </ul>
     </div>
 

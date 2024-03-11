@@ -1,0 +1,3 @@
+{% for chat_room in chat_rooms %}
+<li class="list-group-item"><a href="{% url 'room' chat_room.chat_name %}">{{ chat_room.chat_name }}</a></li>
+{% endfor %}

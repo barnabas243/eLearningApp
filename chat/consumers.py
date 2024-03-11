@@ -69,10 +69,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             await self.close(code=4001, reason="User not authorized")
             return
 
-        # Store the user's WebSocket connection details
-        username = self.scope[
-            "user"
-        ].username  # Assuming user ID is used as a unique identifier
+        # Store the user's connection to room_group_name
+        username = self.scope["user"].username
         if username not in self.connected_users:
             self.connected_users[username] = []
         self.connected_users[username].append(self.room_group_name)
@@ -166,17 +164,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 connected_users.append(username)
         return connected_users
 
-    # def get_all_chat_members(self, chat_room_id):
-
-    #     get_all_users = ChatMembership.objects.filter(chat_room_id=chat_room_id)
-    #     if(get_all_users):
-    #         return get_all_users
-
-    #     return None
-
     # ===============================================
     # Socket Disconnection Functions
     # ===============================================
+
     async def disconnect(self, close_code):
         """
         Handles the disconnection of a WebSocket connection.

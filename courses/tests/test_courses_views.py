@@ -1,8 +1,6 @@
 from django.http import (
     Http404,
     HttpResponse,
-    HttpResponseForbidden,
-    HttpResponseNotFound,
     HttpResponseRedirect,
 )
 from django.core.exceptions import PermissionDenied
@@ -12,14 +10,12 @@ from faker import Faker
 import pytest
 from django.urls import reverse
 from chat.models import ChatRoom
-from courses.forms import MaterialUploadForm
 from courses.models import (
     AssignmentSubmission,
     Course,
     CourseMaterial,
     Enrolment,
     Feedback,
-    assignment_upload_path,
 )
 from courses.tests.fixtures import (
     assignmentMaterial,
@@ -249,9 +245,9 @@ class TestCreateCourseView:
         # Call your view function with the request
         response = create_course(request)
 
-        # Check that the user is redirected back to the dashboard
+        # Check that the user is redirected back to the home
         assert response.status_code == 302  # Redirect status code
-        assert response.url == reverse("dashboard")
+        assert response.url == reverse("home")
 
         # Check if the appropriate error message is displayed
 
@@ -281,9 +277,9 @@ class TestCreateCourseView:
         # Call your view function with the request
         response = create_course(request)
 
-        # Check that the user is redirected back to the dashboard
+        # Check that the user is redirected back to the home
         assert response.status_code == 302  # Redirect status code
-        assert response.url == reverse("dashboard")
+        assert response.url == reverse("home")
 
         # Check if the appropriate error message is displayed
 
@@ -619,7 +615,7 @@ class TestSubmitFeedbackView:
 
         assert response.status_code == 302
 
-        assert response.url == reverse("dashboard")
+        assert response.url == reverse("home")
 
         # Check if error message is present
         messages = list(get_messages(request))

@@ -3,6 +3,7 @@ from datetime import datetime
 import os
 from django.core.files.uploadedfile import InMemoryUploadedFile
 import time
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404, render, redirect
 from django.utils.decorators import method_decorator
 from django.contrib import messages
@@ -14,10 +15,10 @@ from notifications.signals import notify
 from courses.tasks import upload_materials
 from elearning_auth.decorators import custom_login_required
 from users.decorators import (
-    check_student_banned,
     student_required,
     teacher_required,
 )
+from courses.decorators import check_student_banned
 from chat.models import ChatRoom
 from courses.forms import (
     AssignmentForm,
@@ -199,18 +200,15 @@ def create_course(request):
     user = request.user
     form = CreateCourseForm(request.POST)
     if form.is_valid():
-        course = form.save(commit=False)
-        course.teacher = user
-
-        # Check if a course with the same name already exists for the current user
         try:
-            existing_course = Course.objects.get(name=course.name, teacher=user)
-            messages.error(request, "Course with the same name already exists.")
-            return redirect("home")
-        except ObjectDoesNotExist:
+            course = form.save(commit=False)
+            course.teacher = user
             course.save()
             messages.success(request, "Course created successfully.")
             return redirect(reverse("draft", args=[course.id]))
+        except IntegrityError:
+            messages.error(request, "Course with the same name already exists.")
+            return redirect("home")
     else:
         logger.error("Error while validating form: %s", form.errors)
         messages.error(request, "Failed to create course. Please check the form.")

@@ -5,7 +5,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.template.loader import render_to_string
 from users.views import (
     AutocompleteView,
-    DashboardView,
+    HomeView,
     LandingView,
     ProfileView,
     UploadPictureView,
@@ -27,7 +27,7 @@ from django.contrib.auth.models import AnonymousUser
 
 
 @pytest.mark.django_db
-class TestDashboardView:
+class TestHomeView:
     @pytest.fixture(autouse=True)
     def setup(
         self,
@@ -49,7 +49,7 @@ class TestDashboardView:
         self.official_course = official_course
         self.request_factory = request_factory
 
-    def test_authenticated_user_redirected_to_dashboard(self):
+    def test_authenticated_user_redirected_to_home(self):
         # Create an authenticated user
 
         request = self.request_factory.get(reverse("landing"))
@@ -57,9 +57,9 @@ class TestDashboardView:
 
         response = LandingView.as_view()(request)
 
-        # Assert that the response is a redirect to the dashboard page
+        # Assert that the response is a redirect to the home page
         assert response.status_code == 302
-        assert response.url == reverse("dashboard")
+        assert response.url == reverse("home")
 
     def test_unauthenticated_user_render_landing_page(self):
         request = self.request_factory.get(reverse("landing"))
@@ -71,9 +71,9 @@ class TestDashboardView:
         assert response.status_code == 200
         assert response.template_name == ["users/public/landing.html"]
 
-    def test_student_dashboard(self):
-        # Make a request to the dashboard view
-        request = self.request_factory.get(reverse("dashboard"))
+    def test_student_home(self):
+        # Make a request to the home view
+        request = self.request_factory.get(reverse("home"))
         request.user = self.student_user
         request.session = {}
 
@@ -81,7 +81,7 @@ class TestDashboardView:
         setattr(request, "_messages", FallbackStorage(request))
 
         # Get the response from the view
-        response = DashboardView.as_view()(request)
+        response = HomeView.as_view()(request)
         # Assertions
         assert response.status_code == 200
         rendered_content = response.content.decode("utf-8")
@@ -117,9 +117,9 @@ class TestDashboardView:
             in rendered_content
         )
 
-    def test_teacher_dashboard(self):
-        # Make a request to the dashboard view
-        request = self.request_factory.get(reverse("dashboard"))
+    def test_teacher_home(self):
+        # Make a request to the home view
+        request = self.request_factory.get(reverse("home"))
         request.user = self.teacher_user
         request.session = {}
 
@@ -127,10 +127,11 @@ class TestDashboardView:
         setattr(request, "_messages", FallbackStorage(request))
 
         # Get the response from the view
-        response = DashboardView.as_view()(request)
+        response = HomeView.as_view()(request)
 
         # Assertions
         assert response.status_code == 200
+
         rendered_content = response.content.decode("utf-8")
 
         # Check if the correct template is rendered with the correct context data
@@ -174,9 +175,9 @@ class TestDashboardView:
         # )
 
     def test_post_valid_request(self):
-        # Make a POST request to the dashboard view with valid data
+        # Make a POST request to the home view with valid data
         request = self.request_factory.post(
-            reverse("dashboard"), data={"content": "Test status update"}
+            reverse("home"), data={"content": "Test status update"}
         )
         request.user = self.student_user
         request.session = {}
@@ -184,7 +185,7 @@ class TestDashboardView:
         # Set up messages framework
         setattr(request, "_messages", FallbackStorage(request))
 
-        response = DashboardView.as_view()(request)
+        response = HomeView.as_view()(request)
 
         # Assertions
         assert response.status_code == 302  # Redirects after successful submission
@@ -200,14 +201,12 @@ class TestDashboardView:
     def test_post_empty_content_request(self):
         # Create a user
         invalid_data = {"content": ""}  # Empty content should be rejected
-        request_invalid = self.request_factory.post(
-            reverse("dashboard"), data=invalid_data
-        )
+        request_invalid = self.request_factory.post(reverse("home"), data=invalid_data)
         request_invalid.user = self.student_user
         request_invalid.session = {}
         setattr(request_invalid, "_messages", FallbackStorage(request_invalid))
 
-        response_invalid = DashboardView.as_view()(request_invalid)
+        response_invalid = HomeView.as_view()(request_invalid)
 
         assert response_invalid.status_code == 302
 
@@ -230,51 +229,51 @@ class TestUserSearchFilter:
 
     def test_student_search_by_username(self):
         query = self.student_user.username
-        filtered_users = userSearchFilter(self.student_user.id, "student", query)
+        filtered_users = userSearchFilter("student", query)
         assert self.student_user in filtered_users
 
     def test_student_search_by_email(self):
         query = self.student_user.email
-        filtered_users = userSearchFilter(self.student_user.id, "student", query)
+        filtered_users = userSearchFilter("student", query)
         assert self.student_user in filtered_users
 
     def test_student_search_by_full_name(self):
         query = self.student_user.get_full_name()
-        filtered_users = userSearchFilter(self.student_user.id, "student", query)
+        filtered_users = userSearchFilter("student", query)
         assert self.student_user in filtered_users
 
     def test_teacher_search_by_username(self):
         query = self.teacher_user.username
-        filtered_users = userSearchFilter(self.teacher_user.id, "teacher", query)
+        filtered_users = userSearchFilter("teacher", query)
         assert self.teacher_user in filtered_users
 
     def test_teacher_search_by_email(self):
         query = self.teacher_user.email
-        filtered_users = userSearchFilter(self.teacher_user.id, "teacher", query)
+        filtered_users = userSearchFilter("teacher", query)
         assert self.teacher_user in filtered_users
 
     def test_teacher_search_by_full_name(self):
         query = self.teacher_user.get_full_name()
-        filtered_users = userSearchFilter(self.teacher_user.id, "teacher", query)
+        filtered_users = userSearchFilter("teacher", query)
         assert self.teacher_user in filtered_users
 
     def test_no_matching_results(self):
         # Search query doesn't match any users
         query = "/??/??/??"
-        filtered_users = userSearchFilter(self.student_user.id, "student", query)
+        filtered_users = userSearchFilter("student", query)
         assert len(filtered_users) == 0
 
     def test_student_not_search_teacher(self):
         # students cannot search for teacher
         query = self.teacher_user.username
-        filtered_users = userSearchFilter(self.student_user.id, "student", query)
+        filtered_users = userSearchFilter("student", query)
         assert self.teacher_user not in filtered_users
         assert len(filtered_users) == 0
 
     def test_teacher_can_search_student(self):
         # teacher can search for student
         query = self.student_user.username
-        filtered_users = userSearchFilter(self.teacher_user.id, "teacher", query)
+        filtered_users = userSearchFilter("teacher", query)
         assert self.student_user in filtered_users
         assert len(filtered_users) == 1
 
@@ -341,7 +340,7 @@ class TestProfileView:
         # Create a request to update the username with unique value
         unique_username = "testing1"
         update_data = {"username": unique_username}  # Add your update data here
-        request = self.request_factory.put(
+        request = self.request_factory.patch(
             reverse("profile"),
             data=json.dumps(update_data),
             content_type="application/json",
@@ -372,7 +371,7 @@ class TestProfileView:
         assert old_username != self.teacher_user.username
 
         update_data = {"username": self.teacher_user.username}
-        request = self.request_factory.put(
+        request = self.request_factory.patch(
             reverse("profile"),
             data=json.dumps(update_data),
             content_type="application/json",
@@ -399,7 +398,7 @@ class TestProfileView:
         unique_email = "test123@gmail.com"
 
         update_data = {"email": unique_email}  # Add your update data here
-        request = self.request_factory.put(
+        request = self.request_factory.patch(
             reverse("profile"),
             data=json.dumps(update_data),
             content_type="application/json",
@@ -430,7 +429,7 @@ class TestProfileView:
         duplicate_email = self.teacher_user.email
 
         update_data = {"email": duplicate_email}  # Add your update data here
-        request = self.request_factory.put(
+        request = self.request_factory.patch(
             reverse("profile"),
             data=json.dumps(update_data),
             content_type="application/json",
@@ -462,7 +461,7 @@ class TestProfileView:
 
         update_data = {"email": invalid_email}  # Add your update data here
 
-        request = self.request_factory.put(
+        request = self.request_factory.patch(
             reverse("profile"),
             data=json.dumps(update_data),
             content_type="application/json",

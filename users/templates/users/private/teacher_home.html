@@ -25,11 +25,11 @@
             <div class="col-md-6">
                 {% if not other_user %}
                     <section class="col-md-12">
-                        <h2>Draft Courses</h2>
-
-                    <!-- Create Course Button -->
-                        <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createCourseModal">Create New Course</button>
-
+                        <div class="d-flex justify-content-center gap-3 align-items-center">
+                            <h2>Draft Courses</h2>
+                             <!-- Create Course Button -->
+                            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#createCourseModal">Create New Course</button>
+                        </div>
                         <div class="row">
                             {% include 'users/partials/draft_courses.html' %}
                         </div>
