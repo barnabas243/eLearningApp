@@ -1,7 +1,7 @@
 <li class="list-group-item">
-    <div class="header d-flex justify-content-start">
-        <h3>{{ feedback.user }}</h3>
-        <time datetime="{{ feedback.created_at }}">{{ feedback.created_at }}</time>
+    <div class="header d-flex justify-content-start gap-3 align-items-center">
+        <h3 class= >{{ feedback.user }}</h3>
+        <time datetime="{{ feedback.created_at }}">{{ feedback.created_at|date:"Y-m-d" }}</time>
     </div>
     <p>Course Rating:
         {% for star in stars %}

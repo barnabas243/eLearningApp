@@ -30,10 +30,10 @@ RUN python manage.py collectstatic --no-input
 RUN python manage.py migrate
 
 # Copy static docs directory
-COPY docs /eLearningApp/static/docs/
+# COPY docs /eLearningApp/static/docs/
 
 # Expose the port that the application listens on.
 EXPOSE 8000
 
 # Define the command to run the Django app with Daphne
-CMD celery -A eLearningApp worker -l INFO & daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application
+CMD daphne -b 0.0.0.0 -p 8000 eLearningApp.asgi:application

@@ -71,6 +71,10 @@ class Message(models.Model):
 
 
 class ChatMembership(models.Model):
+    """
+    Model to store user's last activity before disconnection
+    """
+
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     chat_room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
     last_viewed_message = models.ForeignKey(

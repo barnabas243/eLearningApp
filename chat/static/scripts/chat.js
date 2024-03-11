@@ -166,7 +166,7 @@ function appendMessage(message) {
     }
 
     // Check if the chat log is empty or if the new message has a different date from the last message
-    if (!lastMessage || !lastMessageDate || lastMessageDate < localDate.getDate() ) {
+    if (!lastMessage || lastMessageDate < localDate.getDate() ) {
         console.log("localDate: ", localDate.getDate())
         console.log("lastMessageDate: ",lastMessageDate)
         // Create a date header
