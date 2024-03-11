@@ -38,6 +38,13 @@
           <div class="row mb-3">
             {% include 'users/partials/registered_courses.html' %}
           </div>
+        {% else %}
+          <div class="row mb-3">
+            <div class="col-md-12">
+              <p>You haven't enrolled into any courses yet.</p>
+              <a href="{% url 'courses' %}">View Courses <i class="fas fa-chevron-right"></i></a>
+            </div>
+          </div>
         {% endif %}
         <div class="row mb-3">
           <div class="col-md-12">

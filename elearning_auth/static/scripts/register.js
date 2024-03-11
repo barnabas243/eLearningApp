@@ -195,7 +195,7 @@ form.addEventListener('submit', (event) => {
     .then(response => {
         if (response.ok) {
             // Registration successful, redirect or show a success message
-            window.location.href = '/dashboard/';
+            window.location.href = '/home/';
         } else {
             // Registration failed, handle errors
             return response.json();
