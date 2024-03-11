@@ -159,7 +159,7 @@ function appendMessage(message) {
     const localTime = formatDateToHourMin(localDate);
     
     // Get the last message element with a data-timestamp attribute
-    const lastMessage = messageContainer.lastElementChild.querySelector('div[data-timestamp')
+    const lastMessage = messageContainer.lastElementChild.querySelector('div[data-timestamp]')
     let lastMessageDate;
     if (lastMessage) {
         lastMessageDate = new Date(lastMessage.dataset.timestamp).getDate();
