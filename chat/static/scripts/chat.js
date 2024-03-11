@@ -159,10 +159,11 @@ function appendMessage(message) {
     const localTime = formatDateToHourMin(localDate);
     
     // Get the last message element with a data-timestamp attribute
-    const lastMessage = messageContainer.lastElementChild.querySelector('div[data-timestamp]')
+    const lastMessage = messageContainer.lastElementChild
     let lastMessageDate;
+    
     if (lastMessage) {
-        lastMessageDate = new Date(lastMessage.dataset.timestamp).getDate();
+        lastMessageDate = new Date(lastMessage.querySelector('div[data-timestamp]').dataset.timestamp).getDate();
     }
 
     // Check if the chat log is empty or if the new message has a different date from the last message
