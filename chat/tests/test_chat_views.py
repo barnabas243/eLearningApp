@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from django.urls import reverse
 import pytest
 from chat.tests.factories import ChatRoomFactory
+from chat.tests.fixtures import chatRoom
 from chat.views import get_chat_rooms_for_user, room
 from courses.tests.fixtures import (
     enrol,
