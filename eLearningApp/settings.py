@@ -216,18 +216,18 @@ EMAIL_HOST_PASSWORD = "khfm yqfy sagi ociu"  # Google-generated App Password. em
 # Celery backend
 # CELERY_BROKER_URL = "redis://localhost:6379/0"  # running directly from django
 # CELERY_RESULT_BACKEND = "redis://localhost:6379/0"  # running directly from django
-CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
+# CELERY_BROKER_URL = "redis://redis:6379/0"  # docker redis config
+# CELERY_RESULT_BACKEND = "redis://redis:6379/0"  # docker redis config
 
 # daphne
 ASGI_APPLICATION = "eLearningApp.asgi.application"
 
-# CELERY_BROKER_URL = (
-#     "redis://red-cnmr84021fec7398jt4g:6379"  # Redis instance name on Render.com
-# )
-# CELERY_RESULT_BACKEND = (
-#     "redis://red-cnmr84021fec7398jt4g:6379"  # Redis instance name on Render.com
-# )
+CELERY_BROKER_URL = (
+    "redis://red-cnmr84021fec7398jt4g:6379"  # Redis instance name on Render.com
+)
+CELERY_RESULT_BACKEND = (
+    "redis://red-cnmr84021fec7398jt4g:6379"  # Redis instance name on Render.com
+)
 
 # Channels
 CHANNEL_LAYERS = {
