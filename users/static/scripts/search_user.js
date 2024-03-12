@@ -14,7 +14,7 @@ function handleSearchInput(event) {
 
 // Function to navigate to the search URL
 function navigateToSearchURL(searchValue) {
-    window.location.href = `/dashboard/search?q=${encodeURIComponent(searchValue)}`;
+    window.location.href = `/home/search?q=${encodeURIComponent(searchValue)}`;
 }
 
 // Function to handle user input
@@ -31,7 +31,7 @@ function handleUserInput() {
 
 // Function to navigate to the user's home page
 function navigateToUserHomePage(selectedUser) {
-    window.location.href = `/dashboard/search/${encodeURIComponent(selectedUser)}`;
+    window.location.href = `/home/search/${encodeURIComponent(selectedUser)}`;
 }
 
 // Get the search input element

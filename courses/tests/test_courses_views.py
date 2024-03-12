@@ -1089,7 +1089,7 @@ class TestUploadMaterialView:
                 "week_number": self.week_number,
             },
         )
-
+        print("official_course id: ", self.official_course.id)
         # Assert success message is present
         messages = list(get_messages(request))
         assert len(messages) == 1
