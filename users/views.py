@@ -332,7 +332,10 @@ class UserHomePage(View):
                 "status_updates": status_updates,
             }
             return render(request, "users/private/student_home.html", context)
-        elif current_user == User.TEACHER and searched_user.user_type == User.TEACHER:
+        elif (
+            current_user.user_type == User.TEACHER
+            and searched_user.user_type == User.TEACHER
+        ):
             teacher = searched_user
             official_courses = teacher.courses_taught.filter(status="official")
 
