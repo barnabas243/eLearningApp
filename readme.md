@@ -31,4 +31,4 @@ Once Docker is installed, follow these steps to run the eLearningApp:
 
 
 ## License
-This project is licensed under the [License Name] - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License] - see the [LICENSE.md](LICENSE.md) file for details.
