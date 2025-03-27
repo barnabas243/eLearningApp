@@ -36,7 +36,7 @@ exceptiongroup==1.2.0
 factory-boy==3.3.0
 Faker==24.0.0
 furo==2024.1.29
-gunicorn==21.2.0
+gunicorn==23.0.0
 hyperlink==21.0.0
 idna==3.6
 imagesize==1.4.1
