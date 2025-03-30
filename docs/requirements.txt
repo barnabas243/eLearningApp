@@ -31,7 +31,7 @@ djangorestframework==3.14.0
 docutils==0.20.1
 drf-yasg==1.21.7
 furo==2024.1.29
-gunicorn==21.2.0
+gunicorn==23.0.0
 hyperlink==21.0.0
 idna==3.6
 imagesize==1.4.1
